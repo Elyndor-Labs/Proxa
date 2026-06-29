@@ -119,6 +119,6 @@ fn read_validate_stat_return() -> Result<bool> {
     let (program_id, data) = get_return_data().ok_or(error!(ProxaError::ProofRejected))?;
     require_keys_eq!(program_id, txoracle::ID, ProxaError::ProofRejected);
 
-    let mut slice: &[u8] = if data.len() > 8 { &data[8..] } else { &data[..] };
+    let mut slice: &[u8] = &data;
     bool::deserialize(&mut slice).map_err(|_| error!(ProxaError::ProofRejected))
 }

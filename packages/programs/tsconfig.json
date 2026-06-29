@@ -9,5 +9,6 @@
     "skipLibCheck": true,
     "types": ["mocha", "node"]
   },
-  "include": ["tests/**/*.ts"]
+  "include": ["tests/**/*.ts"],
+  "exclude": ["tests/probe-validate.ts"]
 }

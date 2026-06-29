@@ -14,5 +14,4 @@ packages/programs/.test-build/
 .env.*
 packages/programs/.env*
 packages/programs/scripts/bootstrap-txline-spike.ts
-packages/programs/tests/probe-validate.ts
 .DS_Store
