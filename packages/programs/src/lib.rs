@@ -94,8 +94,8 @@ pub mod proxa {
         crate::instructions::create_market::handler(ctx, args)
     }
 
-    pub fn place_bet(_ctx: Context<PlaceBet>, _bucket: u8, _amount: u64) -> Result<()> {
-        Ok(())
+    pub fn place_bet(ctx: Context<PlaceBet>, bucket: u8, amount: u64) -> Result<()> {
+        crate::instructions::place_bet::handler(ctx, bucket, amount)
     }
 
     pub fn resolve(_ctx: Context<Resolve>, _args: ResolveArgs) -> Result<()> {
@@ -125,8 +125,35 @@ pub struct ResolveArgs {
 }
 
 #[derive(Accounts)]
+#[instruction(bucket: u8)]
 pub struct PlaceBet<'info> {
+    #[account(mut)]
     pub bettor: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [MARKET_SEED, &market.market_id.to_le_bytes()],
+        bump = market.bump
+    )]
+    pub market: Account<'info, state::Market>,
+    #[account(
+        mut,
+        seeds = [VAULT_SEED, &market.market_id.to_le_bytes()],
+        bump = market.vault_bump
+    )]
+    pub vault: InterfaceAccount<'info, TokenAccount>,
+    #[account(
+        init_if_needed,
+        payer = bettor,
+        space = 8 + state::Position::INIT_SPACE,
+        seeds = [POSITION_SEED, market.key().as_ref(), bettor.key().as_ref(), &[bucket]],
+        bump
+    )]
+    pub position: Account<'info, state::Position>,
+    #[account(mut)]
+    pub bettor_token_account: InterfaceAccount<'info, TokenAccount>,
+    pub stake_mint: InterfaceAccount<'info, Mint>,
+    pub token_program: Interface<'info, TokenInterface>,
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
