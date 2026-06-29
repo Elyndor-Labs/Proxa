@@ -12,13 +12,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v3
         with:
           version: 9
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
+
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
 
@@ -28,13 +31,16 @@ jobs:
     needs: lint
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v3
         with:
           version: 9
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
+
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec tsc -p packages/programs/tsconfig.json --noEmit
 
@@ -42,8 +48,10 @@ jobs:
     name: Build Anchor Programs
     runs-on: ubuntu-latest
     needs: lint
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/cache@v4
         with:
           path: |
@@ -51,35 +59,58 @@ jobs:
             ~/.cargo/git
             packages/programs/target
           key: ${{ runner.os }}-anchor-${{ hashFiles('**/Cargo.lock') }}
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-      - name: Install Solana (Agave) CLI
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            pkg-config \
+            libudev-dev
+
+      - name: Install Solana CLI
         run: |
           curl -sSfL https://release.anza.xyz/v2.1.21/install -o solana-install.sh
           sh solana-install.sh
-          echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
-      - name: Verify Solana toolchain
-        run: |
-          solana --version
-          cargo-build-sbf --version
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+
       - name: Install Anchor CLI
         run: cargo install anchor-cli --version 0.32.1 --locked
+
+      - name: Verify toolchain
+        run: |
+          rustc --version
+          cargo --version
+          solana --version
+          cargo-build-sbf --version
+          cargo build-sbf --help
+          which anchor
+          anchor --version
+
       - name: Build
-        run: cd packages/programs && anchor build
+        working-directory: packages/programs
+        run: anchor build
 
   test-programs:
     name: Test Anchor Programs
     runs-on: ubuntu-latest
     needs: build-programs
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v3
         with:
           version: 9
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
+
       - uses: actions/cache@v4
         with:
           path: |
@@ -87,18 +118,29 @@ jobs:
             ~/.cargo/git
             packages/programs/target
           key: ${{ runner.os }}-anchor-${{ hashFiles('**/Cargo.lock') }}
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-      - name: Install Solana (Agave) CLI
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            pkg-config \
+            libudev-dev
+
+      - name: Install Solana CLI
         run: |
           curl -sSfL https://release.anza.xyz/v2.1.21/install -o solana-install.sh
           sh solana-install.sh
-          echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
-      - name: Verify Solana toolchain
-        run: |
-          solana --version
-          cargo-build-sbf --version
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+
       - name: Install Anchor CLI
         run: cargo install anchor-cli --version 0.32.1 --locked
+
       - run: pnpm install --frozen-lockfile
-      - run: cd packages/programs && anchor test
+
+      - name: Test
+        working-directory: packages/programs
+        run: anchor test
