@@ -19,4 +19,4 @@ wallet = "~/.config/solana/id.json"
 members = ["."]
 
 [scripts]
-test = "../../node_modules/.bin/tsc -p tsconfig.json --outDir .test-build && ../../node_modules/.bin/mocha -t 1000000 \".test-build/**/*.js\""
+test = "pnpm exec ts-mocha -p ./tsconfig.json -t 1000000 \"tests/**/*.ts\"" 
