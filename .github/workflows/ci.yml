@@ -47,10 +47,6 @@ jobs:
             ~/.cargo/git
             packages/programs/target
           key: ${{ runner.os }}-anchor-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: "1.85.0"
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
@@ -63,6 +59,14 @@ jobs:
           curl -sSfL https://release.anza.xyz/v2.1.21/install -o solana-install.sh
           sh solana-install.sh
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.85.0"
+      - name: Override Rust toolchain
+        run: |
+          rustup override set 1.85.0
+          rustup default 1.85.0
       - name: Install Anchor CLI
         run: cargo install anchor-cli --version 0.32.1 --locked
       - name: Verify toolchain
@@ -70,9 +74,6 @@ jobs:
           rustc --version
           cargo --version
           solana --version
-          cargo-build-sbf --version
-          cargo build-sbf --help
-          which anchor
           anchor --version
       - name: Build
         working-directory: packages/programs
@@ -97,10 +98,6 @@ jobs:
             ~/.cargo/git
             packages/programs/target
           key: ${{ runner.os }}-anchor-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: "1.85.0"
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
@@ -113,6 +110,14 @@ jobs:
           curl -sSfL https://release.anza.xyz/v2.1.21/install -o solana-install.sh
           sh solana-install.sh
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.85.0"
+      - name: Override Rust toolchain
+        run: |
+          rustup override set 1.85.0
+          rustup default 1.85.0
       - name: Install Anchor CLI
         run: cargo install anchor-cli --version 0.32.1 --locked
       - run: pnpm install --frozen-lockfile
