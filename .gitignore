@@ -1,0 +1,12 @@
+node_modules/
+.next/
+dist/
+.turbo/
+target/
+.anchor/
+test-ledger/
+*.so
+*.keypair
+.env
+.env.local
+.DS_Store

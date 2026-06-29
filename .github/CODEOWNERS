@@ -1,0 +1,20 @@
+# CODEOWNERS
+# Assign default reviewers by area. Update with actual GitHub usernames.
+
+# Global fallback — repo owner reviews everything
+*                          @your-username
+
+# Smart contracts — extra caution, require contract lead
+/packages/programs/        @your-username
+
+# SDK changes affect all consumers
+/packages/sdk/             @your-username
+
+# Frontend
+/apps/web/                 @your-username
+
+# Keeper / settlement engine
+/apps/keeper/              @your-username
+
+# Docs — anyone can review
+/docs/                     @your-username
