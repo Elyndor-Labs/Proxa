@@ -55,7 +55,7 @@ pub fn handler(ctx: Context<crate::CreateMarket>, args: crate::CreateMarketArgs)
     config.market_count = config
         .market_count
         .checked_add(1)
-        .ok_or(error!(ProxaError::InvalidAmount))?;
+        .ok_or(error!(ProxaError::Overflow))?;
 
     emit!(MarketCreated {
         market_id,

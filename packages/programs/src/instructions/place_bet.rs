@@ -25,6 +25,26 @@ pub fn handler(ctx: Context<crate::PlaceBet>, bucket: u8, amount: u64) -> Result
     }
 
     require!(position.bucket == bucket, ProxaError::InvalidBucket);
+    require_keys_eq!(
+        ctx.accounts.bettor_token_account.mint,
+        ctx.accounts.stake_mint.key(),
+        ProxaError::InvalidStakeMint
+    );
+    require_keys_eq!(
+        ctx.accounts.bettor_token_account.owner,
+        ctx.accounts.bettor.key(),
+        ProxaError::Unauthorized
+    );
+    require_keys_eq!(
+        ctx.accounts.stake_mint.key(),
+        ctx.accounts.market.stake_mint,
+        ProxaError::InvalidStakeMint
+    );
+    require_keys_eq!(
+        ctx.accounts.vault.key(),
+        ctx.accounts.market.vault,
+        ProxaError::Unauthorized
+    );
 
     let decimals = ctx.accounts.stake_mint.decimals;
     let cpi_accounts = TransferChecked {
@@ -39,17 +59,17 @@ pub fn handler(ctx: Context<crate::PlaceBet>, bucket: u8, amount: u64) -> Result
     position.amount = position
         .amount
         .checked_add(amount)
-        .ok_or(error!(ProxaError::InvalidAmount))?;
+        .ok_or(error!(ProxaError::Overflow))?;
 
     let market = &mut ctx.accounts.market;
     market.total_pool = market
         .total_pool
         .checked_add(amount)
-        .ok_or(error!(ProxaError::InvalidAmount))?;
+        .ok_or(error!(ProxaError::Overflow))?;
     let idx = bucket as usize;
     market.bucket_pools[idx] = market.bucket_pools[idx]
         .checked_add(amount)
-        .ok_or(error!(ProxaError::InvalidAmount))?;
+        .ok_or(error!(ProxaError::Overflow))?;
 
     emit!(BetPlaced {
         market_id: market.market_id,

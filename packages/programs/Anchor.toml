@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-proxa = "FoavbfR6ePcmcvQsHcRSCuizHVTey9CKC48LvDEG8e2D"
+proxa = "6LAR9TGXRnsLVtc4MibivdgNgqWGpiXMsR64p21VCRDZ"
 
 [registry]
 url = "https://api.apr.dev"

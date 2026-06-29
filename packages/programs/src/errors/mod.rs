@@ -22,6 +22,8 @@ pub enum ProxaError {
     BettingClosed,
     #[msg("Amount must be greater than zero")]
     InvalidAmount,
+    #[msg("Arithmetic overflow")]
+    Overflow,
     #[msg("Invalid bucket")]
     InvalidBucket,
     #[msg("Resolve is too early")]

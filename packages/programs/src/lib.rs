@@ -138,7 +138,8 @@ pub struct PlaceBet<'info> {
     #[account(
         mut,
         seeds = [VAULT_SEED, &market.market_id.to_le_bytes()],
-        bump = market.vault_bump
+        bump = market.vault_bump,
+        constraint = vault.key() == market.vault @ ProxaError::Unauthorized,
     )]
     pub vault: InterfaceAccount<'info, TokenAccount>,
     #[account(
@@ -149,8 +150,13 @@ pub struct PlaceBet<'info> {
         bump
     )]
     pub position: Account<'info, state::Position>,
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = bettor_token_account.mint == stake_mint.key() @ ProxaError::InvalidStakeMint,
+        constraint = bettor_token_account.owner == bettor.key() @ ProxaError::Unauthorized,
+    )]
     pub bettor_token_account: InterfaceAccount<'info, TokenAccount>,
+    #[account(constraint = stake_mint.key() == market.stake_mint @ ProxaError::InvalidStakeMint)]
     pub stake_mint: InterfaceAccount<'info, Mint>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
@@ -195,7 +201,11 @@ pub struct Claim<'info> {
         constraint = vault.key() == market.vault @ ProxaError::Unauthorized,
     )]
     pub vault: InterfaceAccount<'info, TokenAccount>,
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = bettor_token_account.mint == stake_mint.key() @ ProxaError::InvalidStakeMint,
+        constraint = bettor_token_account.owner == bettor.key() @ ProxaError::Unauthorized,
+    )]
     pub bettor_token_account: InterfaceAccount<'info, TokenAccount>,
     #[account(constraint = stake_mint.key() == market.stake_mint @ ProxaError::InvalidStakeMint)]
     pub stake_mint: InterfaceAccount<'info, Mint>,
@@ -225,7 +235,10 @@ pub struct CollectFee<'info> {
     pub vault: InterfaceAccount<'info, TokenAccount>,
     #[account(mut)]
     pub treasury: InterfaceAccount<'info, TokenAccount>,
-    #[account(constraint = stake_mint.key() == market.stake_mint @ ProxaError::InvalidStakeMint)]
+    #[account(
+        constraint = stake_mint.key() == market.stake_mint @ ProxaError::InvalidStakeMint,
+        constraint = treasury.mint == stake_mint.key() @ ProxaError::InvalidTreasuryMint,
+    )]
     pub stake_mint: InterfaceAccount<'info, Mint>,
     pub token_program: Interface<'info, TokenInterface>,
 }

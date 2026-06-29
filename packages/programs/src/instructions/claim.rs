@@ -9,6 +9,22 @@ pub fn handler(ctx: Context<crate::Claim>) -> Result<()> {
     let market = &ctx.accounts.market;
     let position = &ctx.accounts.position;
 
+    require_keys_eq!(
+        ctx.accounts.bettor_token_account.mint,
+        ctx.accounts.stake_mint.key(),
+        ProxaError::InvalidStakeMint
+    );
+    require_keys_eq!(
+        ctx.accounts.bettor_token_account.owner,
+        ctx.accounts.bettor.key(),
+        ProxaError::Unauthorized
+    );
+    require_keys_eq!(
+        ctx.accounts.stake_mint.key(),
+        market.stake_mint,
+        ProxaError::InvalidStakeMint
+    );
+
     let payout = match market.status {
         MarketStatus::Voided => position.amount,
         MarketStatus::Resolved => {
@@ -16,11 +32,14 @@ pub fn handler(ctx: Context<crate::Claim>) -> Result<()> {
                 if market.winning_pool == 0 {
                     0
                 } else {
-                    (position.amount as u128)
-                        .checked_mul(market.net_pool as u128)
-                        .ok_or(error!(ProxaError::InvalidAmount))?
-                        .checked_div(market.winning_pool as u128)
-                        .ok_or(error!(ProxaError::InvalidAmount))? as u64
+                    u64::try_from(
+                        (position.amount as u128)
+                            .checked_mul(market.net_pool as u128)
+                            .ok_or(error!(ProxaError::Overflow))?
+                            .checked_div(market.winning_pool as u128)
+                            .ok_or(error!(ProxaError::Overflow))?,
+                    )
+                    .map_err(|_| error!(ProxaError::Overflow))?
                 }
             } else {
                 0

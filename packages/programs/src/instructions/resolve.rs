@@ -79,16 +79,18 @@ pub fn handler(ctx: Context<crate::Resolve>, args: crate::ResolveArgs) -> Result
     } else {
         value as u8
     };
+    require!(winning_bucket < num_buckets, ProxaError::InvalidBucket);
 
-    let fee = (market.total_pool as u128)
+    let fee_u128 = (market.total_pool as u128)
         .checked_mul(market.fee_bps as u128)
-        .ok_or(error!(ProxaError::InvalidAmount))?
+        .ok_or(error!(ProxaError::Overflow))?
         .checked_div(10_000)
-        .ok_or(error!(ProxaError::InvalidAmount))? as u64;
+        .ok_or(error!(ProxaError::Overflow))?;
+    let fee = u64::try_from(fee_u128).map_err(|_| error!(ProxaError::Overflow))?;
     let net_pool = market
         .total_pool
         .checked_sub(fee)
-        .ok_or(error!(ProxaError::InvalidAmount))?;
+        .ok_or(error!(ProxaError::Overflow))?;
     let winning_pool = market.bucket_pools[winning_bucket as usize];
 
     market.winning_bucket = winning_bucket;

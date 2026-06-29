@@ -26,11 +26,16 @@ pub fn handler(ctx: Context<crate::CollectFee>) -> Result<()> {
         market.vault,
         ProxaError::Unauthorized
     );
+    require_keys_eq!(
+        ctx.accounts.treasury.mint,
+        ctx.accounts.stake_mint.key(),
+        ProxaError::InvalidTreasuryMint
+    );
 
     let fee = market
         .total_pool
         .checked_sub(market.net_pool)
-        .ok_or(error!(ProxaError::InvalidAmount))?;
+        .ok_or(error!(ProxaError::Overflow))?;
     require!(fee > 0, ProxaError::InvalidAmount);
 
     let market_id = market.market_id.to_le_bytes();
