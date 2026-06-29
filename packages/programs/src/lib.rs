@@ -98,20 +98,20 @@ pub mod proxa {
         crate::instructions::place_bet::handler(ctx, bucket, amount)
     }
 
-    pub fn resolve(_ctx: Context<Resolve>, _args: ResolveArgs) -> Result<()> {
-        Ok(())
+    pub fn resolve(ctx: Context<Resolve>, args: ResolveArgs) -> Result<()> {
+        crate::instructions::resolve::handler(ctx, args)
     }
 
-    pub fn claim(_ctx: Context<Claim>) -> Result<()> {
-        Ok(())
+    pub fn claim(ctx: Context<Claim>) -> Result<()> {
+        crate::instructions::claim::handler(ctx)
     }
 
-    pub fn collect_fee(_ctx: Context<CollectFee>) -> Result<()> {
-        Ok(())
+    pub fn collect_fee(ctx: Context<CollectFee>) -> Result<()> {
+        crate::instructions::collect_fee::handler(ctx)
     }
 
-    pub fn void_market(_ctx: Context<VoidMarket>) -> Result<()> {
-        Ok(())
+    pub fn void_market(ctx: Context<VoidMarket>) -> Result<()> {
+        crate::instructions::void_market::handler(ctx)
     }
 }
 
@@ -159,19 +159,84 @@ pub struct PlaceBet<'info> {
 #[derive(Accounts)]
 pub struct Resolve<'info> {
     pub keeper: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [MARKET_SEED, &market.market_id.to_le_bytes()],
+        bump = market.bump
+    )]
+    pub market: Account<'info, state::Market>,
+    /// CHECK: PDA and owner verified in handler
+    pub daily_scores_merkle_roots: UncheckedAccount<'info>,
+    pub txoracle_program: Program<'info, txoracle::program::Txoracle>,
 }
 
 #[derive(Accounts)]
 pub struct Claim<'info> {
+    #[account(mut)]
     pub bettor: Signer<'info>,
+    #[account(
+        seeds = [MARKET_SEED, &market.market_id.to_le_bytes()],
+        bump = market.bump
+    )]
+    pub market: Account<'info, state::Market>,
+    #[account(
+        mut,
+        close = bettor,
+        seeds = [POSITION_SEED, market.key().as_ref(), bettor.key().as_ref(), &[position.bucket]],
+        bump = position.bump,
+        constraint = position.bettor == bettor.key() @ ProxaError::Unauthorized,
+        constraint = position.market_id == market.market_id @ ProxaError::Unauthorized,
+    )]
+    pub position: Account<'info, state::Position>,
+    #[account(
+        mut,
+        seeds = [VAULT_SEED, &market.market_id.to_le_bytes()],
+        bump = market.vault_bump,
+        constraint = vault.key() == market.vault @ ProxaError::Unauthorized,
+    )]
+    pub vault: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut)]
+    pub bettor_token_account: InterfaceAccount<'info, TokenAccount>,
+    #[account(constraint = stake_mint.key() == market.stake_mint @ ProxaError::InvalidStakeMint)]
+    pub stake_mint: InterfaceAccount<'info, Mint>,
+    pub token_program: Interface<'info, TokenInterface>,
 }
 
 #[derive(Accounts)]
 pub struct CollectFee<'info> {
     pub caller: Signer<'info>,
+    #[account(
+        seeds = [CONFIG_SEED],
+        bump = config.bump
+    )]
+    pub config: Account<'info, state::Config>,
+    #[account(
+        mut,
+        seeds = [MARKET_SEED, &market.market_id.to_le_bytes()],
+        bump = market.bump
+    )]
+    pub market: Account<'info, state::Market>,
+    #[account(
+        mut,
+        seeds = [VAULT_SEED, &market.market_id.to_le_bytes()],
+        bump = market.vault_bump,
+        constraint = vault.key() == market.vault @ ProxaError::Unauthorized,
+    )]
+    pub vault: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut)]
+    pub treasury: InterfaceAccount<'info, TokenAccount>,
+    #[account(constraint = stake_mint.key() == market.stake_mint @ ProxaError::InvalidStakeMint)]
+    pub stake_mint: InterfaceAccount<'info, Mint>,
+    pub token_program: Interface<'info, TokenInterface>,
 }
 
 #[derive(Accounts)]
 pub struct VoidMarket<'info> {
     pub caller: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [MARKET_SEED, &market.market_id.to_le_bytes()],
+        bump = market.bump
+    )]
+    pub market: Account<'info, state::Market>,
 }
