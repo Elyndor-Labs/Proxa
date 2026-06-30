@@ -5,8 +5,13 @@ dist/
 target/
 .anchor/
 test-ledger/
+packages/programs/idls/
+packages/programs/.test-build/
 *.so
 *.keypair
 .env
 .env.local
+.env.*
+packages/programs/.env*
+packages/programs/scripts/bootstrap-txline-spike.ts
 .DS_Store

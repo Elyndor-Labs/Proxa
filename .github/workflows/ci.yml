@@ -1,47 +1,39 @@
 name: CI
-
 on:
   push:
     branches: [main, dev]
   pull_request:
     branches: [main, dev]
-
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 9
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
-
   build-sdk:
-    name: Build SDK
+    name: Build SDK + Typecheck
     runs-on: ubuntu-latest
     needs: lint
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 9
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @proxa/sdk build
-
+      - run: pnpm exec tsc -p packages/programs/tsconfig.json --noEmit
   build-programs:
     name: Build Anchor Programs
     runs-on: ubuntu-latest
-    needs: lint
     steps:
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
@@ -51,34 +43,64 @@ jobs:
             ~/.cargo/git
             packages/programs/target
           key: ${{ runner.os }}-anchor-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install Rust
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libudev-dev
+      - name: Install Rust 1.85
         uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.85.0"
       - name: Install Solana CLI
         run: |
-          sh -c "$(curl -sSfL https://release.solana.com/v1.18.18/install)"
+          curl -sSfL https://release.anza.xyz/v2.1.21/install -o solana-install.sh
+          sh solana-install.sh
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
       - name: Install Anchor CLI
-        run: cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked
+        run: cargo install anchor-cli --version 0.32.1 --locked
+      - name: Verify toolchain
+        run: |
+          rustc --version
+          cargo --version
+          solana --version
+          anchor --version
       - name: Build
-        run: cd packages/programs && anchor build
-
+        working-directory: packages/programs
+        run: anchor build
   test-programs:
     name: Test Anchor Programs
     runs-on: ubuntu-latest
     needs: build-programs
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 9
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: pnpm
-      - name: Install Rust + Solana + Anchor
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            packages/programs/target
+          key: ${{ runner.os }}-anchor-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Linux dependencies
         run: |
-          sh -c "$(curl -sSfL https://release.solana.com/v1.18.18/install)"
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libudev-dev
+      - name: Install Rust 1.85
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.85.0"
+      - name: Install Solana CLI
+        run: |
+          curl -sSfL https://release.anza.xyz/v2.1.21/install -o solana-install.sh
+          sh solana-install.sh
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
-          cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked
+      - name: Install Anchor CLI
+        run: cargo install anchor-cli --version 0.32.1 --locked
       - run: pnpm install --frozen-lockfile
-      - run: cd packages/programs && anchor test
+      - name: Test
+        working-directory: packages/programs
+        run: anchor test
