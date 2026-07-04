@@ -5,7 +5,6 @@ dist/
 target/
 .anchor/
 test-ledger/
-packages/programs/idls/
 packages/programs/.test-build/
 *.so
 *.keypair
