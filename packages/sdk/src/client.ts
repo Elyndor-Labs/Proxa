@@ -1,4 +1,4 @@
-import { AnchorProvider, BN, Program } from "@coral-xyz/anchor";
+import { AnchorProvider, BN, Idl, Program } from "@coral-xyz/anchor";
 import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
   ComputeBudgetProgram,
@@ -10,10 +10,20 @@ import {
 } from "@solana/web3.js";
 import { ConfigAccount, MarketAccount, PositionAccount } from "./accounts";
 import { DEVNET, NetworkConfig, RESOLVE_COMPUTE_UNITS } from "./constants";
+import { ProxaEvent, parseEvents } from "./events";
 import proxaIdl from "./idl/proxa.json";
 import type { Proxa } from "./idl/proxa";
 import { configPda, dailyScoresRootsPda, marketPda, positionPda, vaultPda, MarketId } from "./pdas";
 import { buildResolveArgs, resolveTimestamp, StatValidationPayload } from "./resolve";
+
+export interface MarketRecord {
+  address: PublicKey;
+  account: MarketAccount;
+}
+export interface PositionRecord {
+  address: PublicKey;
+  account: PositionAccount;
+}
 
 export interface CreateMarketParams {
   fixtureId: number | BN;
@@ -79,6 +89,48 @@ export class ProxaClient {
   }
   async nextMarketId(): Promise<BN> {
     return (await this.fetchConfig()).marketCount;
+  }
+
+  async fetchAllMarkets(): Promise<MarketRecord[]> {
+    const rows = await this.program.account.market.all();
+    return rows.map((row) => ({ address: row.publicKey, account: row.account as unknown as MarketAccount }));
+  }
+
+  async fetchMarketsByFixture(fixtureId: number | BN): Promise<MarketRecord[]> {
+    const id = new BN(fixtureId.toString());
+    return (await this.fetchAllMarkets()).filter((m) => m.account.fixtureId.eq(id));
+  }
+
+  // Position layout offset of `bettor`: discriminator(8) + market_id(8).
+  async fetchPositions(bettor: PublicKey): Promise<PositionRecord[]> {
+    const rows = await this.program.account.position.all([
+      { memcmp: { offset: 16, bytes: bettor.toBase58() } },
+    ]);
+    return rows.map((row) => ({ address: row.publicKey, account: row.account as unknown as PositionAccount }));
+  }
+
+  async fetchEvents(signature: string): Promise<ProxaEvent[]> {
+    const tx = await this.connection.getTransaction(signature, {
+      commitment: "confirmed",
+      maxSupportedTransactionVersion: 0,
+    });
+    return parseEvents(this.programId, this.program.idl as Idl, tx?.meta?.logMessages ?? []);
+  }
+
+  // Subscribe to a market account; callback fires with the decoded state on change.
+  // Returns a listener id; pass it to removeListener to unsubscribe.
+  onMarketChange(marketId: MarketId, callback: (market: MarketAccount) => void): number {
+    return this.connection.onAccountChange(
+      this.marketPda(marketId),
+      () => {
+        this.fetchMarket(marketId).then(callback).catch(() => undefined);
+      },
+      "confirmed",
+    );
+  }
+
+  async removeListener(listenerId: number): Promise<void> {
+    await this.connection.removeAccountChangeListener(listenerId);
   }
 
   initializeIx(params: {
