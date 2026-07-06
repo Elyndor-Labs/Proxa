@@ -1,0 +1,27 @@
+{
+  "name": "@proxa/sdk",
+  "version": "0.0.1",
+  "description": "TypeScript client for the Proxa prediction market program and the TxLINE feed",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "tsc -p tsconfig.json && node test/offline.test.js",
+    "test:devnet": "node scripts/live-devnet.js",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.32.1",
+    "@solana/spl-token": "^0.4.14",
+    "@solana/web3.js": "^1.98.0",
+    "tweetnacl": "^1.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.4.0"
+  }
+}
