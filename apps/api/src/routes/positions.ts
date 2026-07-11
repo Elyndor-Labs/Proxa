@@ -1,11 +1,11 @@
 import { ProxaClient } from "@proxa/sdk";
 import { PublicKey } from "@solana/web3.js";
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 
-export const positionsRouter = Router();
+export const positionsRouter: Router = Router();
 
 // GET /positions/:wallet — all positions for a wallet
-positionsRouter.get("/:wallet", async (req, res) => {
+positionsRouter.get("/:wallet", async (req: Request, res: Response) => {
   try {
     const proxa: ProxaClient = (req as any).proxa;
     const wallet = new PublicKey(req.params.wallet);
@@ -15,7 +15,6 @@ positionsRouter.get("/:wallet", async (req, res) => {
       marketId: p.account.marketId.toString(),
       bucket: p.account.bucket,
       amount: p.account.amount.toString(),
-      claimed: p.account.claimed,
     }));
     res.json({ data });
   } catch (err: any) {
@@ -28,7 +27,7 @@ positionsRouter.get("/:wallet", async (req, res) => {
 });
 
 // GET /positions/:wallet/:marketId — positions for a wallet in a specific market
-positionsRouter.get("/:wallet/:marketId", async (req, res) => {
+positionsRouter.get("/:wallet/:marketId", async (req: Request, res: Response) => {
   try {
     const proxa: ProxaClient = (req as any).proxa;
     const wallet = new PublicKey(req.params.wallet);
@@ -41,7 +40,6 @@ positionsRouter.get("/:wallet/:marketId", async (req, res) => {
         results.push({
           bucket,
           amount: position.amount.toString(),
-          claimed: position.claimed,
         });
       } catch {
         // no position in this bucket
