@@ -3,12 +3,13 @@ import { Router, Request, Response } from "express";
 
 export const marketsRouter: Router = Router();
 
-// GET /markets — all markets
+// GET /markets?status=open|resolved|voided — all markets with optional filter
 marketsRouter.get("/", async (req: Request, res: Response) => {
   try {
     const proxa: ProxaClient = (req as any).proxa;
+    const statusFilter = req.query.status as string | undefined;
     const markets = await proxa.fetchAllMarkets();
-    const data = markets.map((m) => ({
+    let data = markets.map((m) => ({
       marketId: m.account.marketId.toString(),
       fixtureId: m.account.fixtureId.toString(),
       statKey: m.account.statKey,
@@ -22,6 +23,9 @@ marketsRouter.get("/", async (req: Request, res: Response) => {
       resolveAfterTs: m.account.resolveAfterTs.toString(),
       address: m.address.toBase58(),
     }));
+    if (statusFilter) {
+      data = data.filter((m) => m.status === statusFilter);
+    }
     res.json({ data });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

@@ -80,6 +80,9 @@ importers:
       express-rate-limit:
         specifier: ^8.5.2
         version: 8.5.2(express@4.22.2)
+      ws:
+        specifier: ^8.21.0
+        version: 8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
     devDependencies:
       '@types/cors':
         specifier: ^2.8.17
@@ -93,6 +96,9 @@ importers:
       '@types/node':
         specifier: ^22.10.0
         version: 22.20.0
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
       rimraf:
         specifier: ^5.0.0
         version: 5.0.10

@@ -1,11 +1,13 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+import { createServer } from "node:http";
 import { createClient } from "./client";
 import { cache } from "./middleware/cache";
 import { errorHandler } from "./middleware/errorHandler";
 import { logger } from "./middleware/logger";
 import { rateLimiter } from "./middleware/rateLimiter";
+import { attachWebSocket } from "./middleware/websocket";
 import { configRouter } from "./routes/config";
 import { marketsRouter } from "./routes/markets";
 import { positionsRouter } from "./routes/positions";
@@ -13,6 +15,7 @@ import { positionsRouter } from "./routes/positions";
 dotenv.config();
 
 const app = express();
+const server = createServer(app);
 const PORT = process.env.PORT ?? 3001;
 
 app.use(cors());
@@ -35,6 +38,9 @@ app.use("/positions", cache(5_000), positionsRouter);
 
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+const proxa = createClient();
+attachWebSocket(server, proxa);
+
+server.listen(PORT, () => {
   console.log(`🚀 Proxa API running on http://localhost:${PORT}`);
 });
