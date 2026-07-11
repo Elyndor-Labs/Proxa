@@ -31,6 +31,25 @@ export function getRpcForCluster(cluster: Cluster): string {
 export function persistCluster(cluster: Cluster) {
   if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY, cluster);
+  window.dispatchEvent(new Event(CLUSTER_CHANGE_EVENT));
+}
+
+export const CLUSTER_CHANGE_EVENT = "proxa-cluster-change";
+
+/** Subscribe to cluster changes from this tab or other tabs. */
+export function subscribeCluster(listener: () => void): () => void {
+  const handler = () => listener();
+  window.addEventListener("storage", handler);
+  window.addEventListener(CLUSTER_CHANGE_EVENT, handler);
+  return () => {
+    window.removeEventListener("storage", handler);
+    window.removeEventListener(CLUSTER_CHANGE_EVENT, handler);
+  };
+}
+
+/** Current cluster for client renders. */
+export function getClusterSnapshot(): Cluster {
+  return getStoredCluster() ?? getDefaultCluster();
 }
 
 export { STORAGE_KEY };
