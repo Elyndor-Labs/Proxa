@@ -1,12 +1,13 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useSyncExternalStore } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Cluster } from "@/config/solana";
 import {
+  CLUSTER_CHANGE_EVENT,
+  getActiveCluster,
   getDefaultCluster,
   getRpcForCluster,
-  getStoredCluster,
   persistCluster,
 } from "@/lib/solana/cluster";
 
@@ -18,21 +19,23 @@ interface ClusterContextValue {
 
 const ClusterContext = createContext<ClusterContextValue | null>(null);
 
+function subscribeCluster(onStoreChange: () => void) {
+  window.addEventListener(CLUSTER_CHANGE_EVENT, onStoreChange);
+  window.addEventListener("storage", onStoreChange);
+  return () => {
+    window.removeEventListener(CLUSTER_CHANGE_EVENT, onStoreChange);
+    window.removeEventListener("storage", onStoreChange);
+  };
+}
+
 /** Runtime cluster selection with localStorage persistence. */
 export function ClusterProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
-  // Match SSR on first paint; restore persisted choice after hydration.
-  const [cluster, setClusterState] = useState<Cluster>(() => getDefaultCluster());
-
-  useEffect(() => {
-    const stored = getStoredCluster();
-    if (stored) setClusterState(stored);
-  }, []);
+  const cluster = useSyncExternalStore(subscribeCluster, getActiveCluster, getDefaultCluster);
 
   const setCluster = useCallback(
     (next: Cluster) => {
       persistCluster(next);
-      setClusterState(next);
       queryClient.clear();
     },
     [queryClient],

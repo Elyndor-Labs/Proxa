@@ -3,8 +3,10 @@
 import { BN } from "@coral-xyz/anchor";
 import { bettorTokenAccount, toBaseUnits } from "@proxa/sdk";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAnchorWallet } from "@solana/wallet-adapter-react";
+import { assertCanSubmitOnChainTx } from "@/config/api";
+import { useAnchorWallet } from "@/hooks/use-anchor-wallet";
 import { useProxaClient } from "@/hooks/use-proxa-client";
+import { fetchMarketRecord } from "@/lib/api/markets";
 import { STAKE_DECIMALS } from "@/lib/proxa/market-view";
 import { sendStakeTransaction } from "@/lib/proxa/send-transaction";
 import { queryKeys } from "@/lib/proxa/query-keys";
@@ -25,8 +27,9 @@ export function usePlaceBet() {
   return useMutation({
     mutationFn: async ({ marketId, bucket, amount }: PlaceBetInput) => {
       if (!wallet?.publicKey) throw new Error("Wallet not connected");
+      assertCanSubmitOnChainTx(true);
 
-      const market = await client.fetchMarket(new BN(marketId));
+      const { account: market } = await fetchMarketRecord(marketId, client);
       const tokenProgram = await client.tokenProgramFor(market.stakeMint);
       const ata = bettorTokenAccount(market.stakeMint, wallet.publicKey, tokenProgram);
       const lamports = toBaseUnits(amount, STAKE_DECIMALS);
@@ -55,6 +58,7 @@ export function usePlaceBet() {
       txToast.success(signature, "Bet placed successfully");
       queryClient.invalidateQueries({ queryKey: queryKeys.markets });
       queryClient.invalidateQueries({ queryKey: queryKeys.market(marketId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.leaderboard });
       if (wallet?.publicKey) {
         const owner = wallet.publicKey.toBase58();
         queryClient.invalidateQueries({ queryKey: queryKeys.positions(owner) });

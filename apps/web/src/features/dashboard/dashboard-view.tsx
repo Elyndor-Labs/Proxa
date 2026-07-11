@@ -2,45 +2,33 @@
 
 import Link from "next/link";
 import { BN } from "@coral-xyz/anchor";
-import { quoteClaim } from "@proxa/sdk";
-import { useAnchorWallet } from "@solana/wallet-adapter-react";
+import { useAnchorWallet } from "@/hooks/use-anchor-wallet";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useConfig, useProtocolStats } from "@/hooks/use-protocol-stats";
-import { usePositions } from "@/hooks/use-positions";
-import { useProxaClient } from "@/hooks/use-proxa-client";
-import { fetchMarketAccount } from "@/lib/api/markets";
+import { useEnrichedPositions } from "@/hooks/use-enriched-positions";
 import { formatStake } from "@/lib/format/odds";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 
 /** On-chain protocol overview with wallet performance summary. */
 export function DashboardView() {
   const { data: stats, isLoading } = useProtocolStats();
   const { data: config } = useConfig();
-  const { data: positions } = usePositions();
-  const { client } = useProxaClient();
+  const { data: enriched, isLoading: portfolioLoading } = useEnrichedPositions();
   const wallet = useAnchorWallet();
 
-  const portfolio = useQuery({
-    queryKey: ["dashboard-portfolio", wallet?.publicKey?.toBase58()],
-    queryFn: async () => {
-      if (!positions?.length) return { staked: new BN(0), claimable: new BN(0) };
-
-      let staked = new BN(0);
-      let claimable = new BN(0);
-
-      for (const position of positions) {
-        staked = staked.add(position.account.amount);
-        const market = await fetchMarketAccount(position.account.marketId.toString(), client);
-        claimable = claimable.add(quoteClaim(market, position.account));
-      }
-
-      return { staked, claimable };
-    },
-    enabled: Boolean(positions?.length),
-  });
+  const portfolio = useMemo(() => {
+    if (!enriched?.length) return { staked: new BN(0), claimable: new BN(0) };
+    return enriched.reduce(
+      (acc, { position, claimable }) => ({
+        staked: acc.staked.add(position.account.amount),
+        claimable: acc.claimable.add(claimable),
+      }),
+      { staked: new BN(0), claimable: new BN(0) },
+    );
+  }, [enriched]);
 
   if (isLoading || !stats) {
     return (
@@ -90,15 +78,17 @@ export function DashboardView() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {portfolio.data ? (
+            {portfolioLoading ? (
+              <div className="h-12 animate-pulse rounded-lg bg-muted" />
+            ) : enriched?.length ? (
               <>
                 <div className="flex justify-between font-label text-sm">
                   <span className="text-muted-foreground">Total staked</span>
-                  <span className="font-medium">${formatStake(portfolio.data.staked)}</span>
+                  <span className="font-medium">${formatStake(portfolio.staked)}</span>
                 </div>
                 <div className="flex justify-between font-label text-sm">
                   <span className="text-muted-foreground">Claimable</span>
-                  <span className="font-medium text-brand">${formatStake(portfolio.data.claimable)}</span>
+                  <span className="font-medium text-brand">${formatStake(portfolio.claimable)}</span>
                 </div>
               </>
             ) : (

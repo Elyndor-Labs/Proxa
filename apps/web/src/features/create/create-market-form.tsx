@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent, type ReactNode } from "react";
-import { useAnchorWallet } from "@solana/wallet-adapter-react";
+import { useAnchorWallet } from "@/hooks/use-anchor-wallet";
 import { RequireWallet } from "@/components/auth/require-wallet";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { isApiEnabled, ONCHAIN_TX_DISABLED_MESSAGE } from "@/config/api";
 import { useConfig } from "@/hooks/use-protocol-stats";
 import { useCreateMarket } from "@/hooks/use-create-market";
+import { useProxaClient } from "@/hooks/use-proxa-client";
 import {
   PERIOD_OPTIONS,
   STAT_OPTIONS,
@@ -23,6 +25,7 @@ export function CreateMarketForm() {
   const router = useRouter();
   const wallet = useAnchorWallet();
   const { data: config } = useConfig();
+  const { canTransact } = useProxaClient();
   const createMarket = useCreateMarket();
 
   const [fixtureId, setFixtureId] = useState("");
@@ -60,6 +63,15 @@ export function CreateMarketForm() {
         title="Create Market"
         description="Define a new parametric prop. Only the protocol authority can create markets on-chain."
       />
+
+      {!canTransact && isApiEnabled() && (
+        <Card className="mb-6 border-brand/30">
+          <CardHeader>
+            <CardTitle className="text-base">Test mode</CardTitle>
+            <CardDescription>{ONCHAIN_TX_DISABLED_MESSAGE}</CardDescription>
+          </CardHeader>
+        </Card>
+      )}
 
       {!isAuthority && config && (
         <Card className="mb-6 border-warning/30">
@@ -178,7 +190,7 @@ export function CreateMarketForm() {
             </Field>
 
             <div className="flex gap-3 sm:col-span-2">
-              <Button type="submit" variant="brand" disabled={createMarket.isPending || !fixtureId}>
+              <Button type="submit" variant="brand" disabled={createMarket.isPending || !fixtureId || !canTransact}>
                 {createMarket.isPending ? "Creating…" : "Create Market"}
               </Button>
               <Button type="button" variant="outline" asChild>

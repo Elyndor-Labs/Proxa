@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useAnchorWallet } from "@solana/wallet-adapter-react";
+import { useAnchorWallet } from "@/hooks/use-anchor-wallet";
 import { useProxaClient } from "@/hooks/use-proxa-client";
 import { fetchPositions } from "@/lib/api/positions";
 import { queryKeys } from "@/lib/proxa/query-keys";
@@ -14,7 +14,10 @@ export function usePositions() {
 
   return useQuery({
     queryKey: queryKeys.positions(owner ?? ""),
-    queryFn: () => fetchPositions(wallet!.publicKey, client),
+    queryFn: () => {
+      if (!wallet?.publicKey) throw new Error("Wallet not connected");
+      return fetchPositions(wallet.publicKey, client);
+    },
     enabled: Boolean(owner),
   });
 }

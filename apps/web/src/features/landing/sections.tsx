@@ -5,7 +5,7 @@ const steps = [
   {
     icon: Wallet,
     title: "Connect Wallet",
-    description: "Link Phantom or any Solana wallet. No account signup required.",
+    description: "Sign in with email, Google, or a Solana wallet. An embedded wallet is created automatically if needed.",
   },
   {
     icon: LineChart,

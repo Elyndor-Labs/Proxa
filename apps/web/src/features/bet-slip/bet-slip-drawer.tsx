@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { Trash2, X } from "lucide-react";
+import { toast } from "sonner";
 import { previewBet, toBaseUnits } from "@proxa/sdk";
 import { useState } from "react";
-import { WalletButton } from "@/components/domain/wallet-button";
+import { TxActionFallback } from "@/components/domain/tx-action-fallback";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useBetSlipStore, type BetLeg } from "@/features/bet-slip/store";
@@ -32,15 +33,27 @@ export function BetSlipDrawer() {
   const handlePlaceAll = async () => {
     if (!validLegs.length) return;
     setPlacingAll(true);
+    let succeeded = 0;
+    const failed: string[] = [];
+
     try {
       for (const leg of validLegs) {
-        await placeBet.mutateAsync({
-          marketId: leg.marketId,
-          bucket: leg.bucket,
-          amount: leg.amount,
-        });
+        try {
+          await placeBet.mutateAsync(
+            { marketId: leg.marketId, bucket: leg.bucket, amount: leg.amount },
+            { onError: () => {} },
+          );
+          succeeded += 1;
+        } catch {
+          failed.push(leg.title || `Market #${leg.marketId}`);
+        }
       }
-      clear();
+
+      if (failed.length === 0) {
+        clear();
+      } else if (succeeded > 0) {
+        toast.warning(`Placed ${succeeded} of ${validLegs.length} bets. Failed: ${failed.join(", ")}`);
+      }
     } finally {
       setPlacingAll(false);
     }
@@ -107,9 +120,7 @@ export function BetSlipDrawer() {
                   : "Place Prop Bet"}
             </Button>
           ) : (
-            <div className="flex justify-center">
-              <WalletButton size="lg" />
-            </div>
+            <TxActionFallback size="lg" />
           )}
           <Button variant="ghost" size="sm" className="w-full" onClick={clear} disabled={busy}>
             Clear slip
@@ -131,7 +142,7 @@ function BetSlipLegRow({
   onAmountChange: (amount: string) => void;
   onRemove: () => void;
 }) {
-  const { data } = useMarket(leg.marketId, { subscribe: true });
+  const { data } = useMarket(leg.marketId);
 
   if (!data) {
     return <div className="h-24 animate-pulse rounded-lg bg-muted" />;
