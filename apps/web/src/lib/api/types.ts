@@ -31,6 +31,13 @@ export interface WireMarketRecord {
   account: WireMarketAccount;
 }
 
+export interface WireMarketsListResponse {
+  items: WireMarketRecord[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export interface WirePositionAccount {
   marketId: string | number;
   bettor: string;

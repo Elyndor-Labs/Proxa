@@ -1,13 +1,14 @@
 import { PublicKey } from "@solana/web3.js";
 import type { PositionRecord } from "@proxa/sdk";
 import type { ProxaClient } from "@proxa/sdk";
-import { api, isApiEnabled } from "@/lib/api/client";
+import { isApiEnabled } from "@/config/api";
+import { apiParse } from "@/lib/api/client";
 import { deserializePositionRecord } from "@/lib/api/deserialize";
-import type { WirePositionRecord } from "@/lib/api/types";
+import { wirePositionListSchema } from "@/lib/api/schemas";
 
 /** GET /positions/:wallet */
 export async function fetchPositionsFromApi(wallet: string): Promise<PositionRecord[]> {
-  const data = await api<WirePositionRecord[]>(`/positions/${wallet}`);
+  const data = await apiParse(`/positions/${wallet}`, wirePositionListSchema);
   return data.map(deserializePositionRecord);
 }
 

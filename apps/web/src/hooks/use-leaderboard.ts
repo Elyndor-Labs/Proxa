@@ -2,15 +2,16 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useProxaClient } from "@/hooks/use-proxa-client";
-import { buildLeaderboard } from "@/lib/proxa/leaderboard";
+import { fetchLeaderboard } from "@/lib/api/leaderboard";
+import { queryKeys } from "@/lib/proxa/query-keys";
 
-/** Fetches on-chain leaderboard ranked by total stake volume. */
+/** Fetches leaderboard ranked by total stake volume. */
 export function useLeaderboard() {
   const { client } = useProxaClient();
 
   return useQuery({
-    queryKey: ["leaderboard"],
-    queryFn: () => buildLeaderboard(client),
+    queryKey: queryKeys.leaderboard,
+    queryFn: () => fetchLeaderboard(client),
     staleTime: 60_000,
   });
 }

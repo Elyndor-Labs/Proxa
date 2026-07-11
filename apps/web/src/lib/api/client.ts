@@ -1,8 +1,8 @@
-/** Thin fetch wrapper for the Proxa REST API. */
+import type { z } from "zod";
+import { getApiAuthHeaders } from "@/config/api";
+import { ApiError } from "@/lib/api/errors";
 
-export function isApiEnabled(): boolean {
-  return Boolean(process.env.NEXT_PUBLIC_API_URL);
-}
+/** Thin fetch wrapper for the Proxa REST API with optional Zod validation. */
 
 function getBaseUrl(): string {
   const base = process.env.NEXT_PUBLIC_API_URL;
@@ -10,15 +10,39 @@ function getBaseUrl(): string {
   return base.replace(/\/$/, "");
 }
 
-export async function api<T>(path: string, init?: RequestInit): Promise<T> {
+export async function apiParse<T>(
+  path: string,
+  schema: z.ZodType<T>,
+  init?: RequestInit,
+): Promise<T> {
   const res = await fetch(`${getBaseUrl()}${path}`, {
     ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
+    headers: {
+      "Content-Type": "application/json",
+      ...getApiAuthHeaders(),
+      ...init?.headers,
+    },
   });
 
   if (!res.ok) {
-    throw new Error(`API ${res.status}: ${await res.text()}`);
+    const message = await readErrorMessage(res);
+    throw new ApiError(res.status, message);
   }
 
-  return res.json() as Promise<T>;
+  const json: unknown = await res.json();
+  return schema.parse(json);
+}
+
+async function readErrorMessage(res: Response): Promise<string> {
+  const text = await res.text();
+  if (!text) {
+    return res.statusText || "Request failed";
+  }
+
+  try {
+    const body = JSON.parse(text) as { error?: string; message?: string };
+    return body.error ?? body.message ?? text;
+  } catch {
+    return text;
+  }
 }

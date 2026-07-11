@@ -5,12 +5,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ClusterSwitcher } from "@/components/domain/cluster-switcher";
-import { WalletButton } from "@/components/domain/wallet-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
+import { isMockDemo } from "@/config/api";
 import { primaryNav } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
+import { launchAppLabel } from "@/features/landing/mock-demo-cta";
 import { cn } from "@/lib/utils";
 
 /** Public marketing header — top nav only, no sidebar. */
@@ -23,8 +24,13 @@ export function MarketingHeader() {
     <>
       <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex h-[var(--header-height)] max-w-7xl items-center justify-between gap-4 px-[var(--container-padding)] sm:px-6 lg:px-8">
-          <Link href="/" className="font-display text-lg font-bold tracking-tight sm:text-xl">
+          <Link href="/" className="flex items-center gap-2 font-display text-lg font-bold tracking-tight sm:text-xl">
             {siteConfig.name.toUpperCase()}
+            {isMockDemo() ? (
+              <span className="rounded bg-brand/20 px-1.5 py-0.5 font-label text-[10px] font-semibold uppercase tracking-wider text-brand">
+                Test
+              </span>
+            ) : null}
           </Link>
 
           <nav className="hidden items-center gap-6 md:flex" aria-label="Primary">
@@ -45,11 +51,11 @@ export function MarketingHeader() {
           <div className="flex items-center gap-2">
             <ClusterSwitcher className="hidden sm:inline-flex" />
             <ThemeToggle />
-            <div className="hidden sm:block">
-              <WalletButton />
-            </div>
+            <Button variant="outline" size="sm" className="hidden sm:inline-flex" asChild>
+              <Link href="/markets">Connect Wallet</Link>
+            </Button>
             <Button variant="brand" size="sm" className="hidden sm:inline-flex" asChild>
-              <Link href="/markets">Launch App</Link>
+              <Link href="/markets">{launchAppLabel()}</Link>
             </Button>
             <Button
               type="button"
@@ -115,10 +121,14 @@ export function MarketingHeader() {
             </Link>
           ))}
           <div className="mt-auto space-y-2 border-t border-border pt-4">
-            <WalletButton size="sm" />
+            <Button variant="outline" className="w-full" size="sm" asChild>
+              <Link href="/markets" onClick={() => setMobileOpen(false)}>
+                Connect Wallet
+              </Link>
+            </Button>
             <Button variant="brand" className="w-full" size="sm" asChild>
               <Link href="/markets" onClick={() => setMobileOpen(false)}>
-                Launch App
+                {launchAppLabel()}
               </Link>
             </Button>
           </div>

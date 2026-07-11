@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "pnpm --filter @proxa/sdk build && next dev",
+    "dev:mock": "pnpm --filter @proxa/sdk build && API_AUTH_TOKEN=dev-mock-token NEXT_PUBLIC_API_AUTH_TOKEN=dev-mock-token NEXT_PUBLIC_API_URL=http://localhost:3000/api NEXT_PUBLIC_MOCK_DEMO=true next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -33,6 +34,7 @@
     "react-dom": "19.2.4",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
+    "zod": "^4.4.3",
     "zustand": "^5.0.14"
   },
   "devDependencies": {

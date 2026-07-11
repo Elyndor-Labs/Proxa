@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { launchAppLabel, MockDemoCta } from "@/features/landing/mock-demo-cta";
 import { ProductMockup } from "@/features/landing/product-mockup";
 import { siteConfig } from "@/config/site";
 
@@ -32,16 +33,19 @@ export function Hero() {
             {siteConfig.description} Lock USDC in escrow, bet on custom match conditions, and receive
             automatic payouts verified by Merkle proof.
           </p>
-          <div className="animate-fade-in-up-delay-3 mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-            <Button variant="brand" size="lg" asChild>
-              <Link href="/markets">
-                Launch App
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-            <Button variant="outline" size="lg" asChild>
-              <Link href="/#how-it-works">Learn More</Link>
-            </Button>
+          <div className="animate-fade-in-up-delay-3 mt-8 flex flex-col items-center gap-4 lg:items-start">
+            <MockDemoCta />
+            <div className="flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+              <Button variant="brand" size="lg" asChild>
+                <Link href="/markets">
+                  {launchAppLabel()}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button variant="outline" size="lg" asChild>
+                <Link href="/#how-it-works">Learn More</Link>
+              </Button>
+            </div>
           </div>
         </div>
 

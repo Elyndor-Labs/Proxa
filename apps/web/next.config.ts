@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   transpilePackages: ["@coral-xyz/anchor"],
   turbopack: {
     resolveAlias: {
-      "@proxa/sdk": "../../packages/sdk/src/index.ts",
+      "@proxa/sdk": "../../packages/sdk/dist/index.js",
     },
   },
   webpack: (config) => {
