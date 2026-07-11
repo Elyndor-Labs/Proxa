@@ -5,6 +5,7 @@ import { createClient } from "./client";
 import { errorHandler } from "./middleware/errorHandler";
 import { logger } from "./middleware/logger";
 import { rateLimiter } from "./middleware/rateLimiter";
+import { configRouter } from "./routes/config";
 import { marketsRouter } from "./routes/markets";
 import { positionsRouter } from "./routes/positions";
 
@@ -18,17 +19,16 @@ app.use(express.json());
 app.use(logger);
 app.use(rateLimiter);
 
-// health check
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", ts: Date.now() });
 });
 
-// attach SDK client to every request
 app.use((req, _res, next) => {
   (req as any).proxa = createClient();
   next();
 });
 
+app.use("/config", configRouter);
 app.use("/markets", marketsRouter);
 app.use("/positions", positionsRouter);
 
