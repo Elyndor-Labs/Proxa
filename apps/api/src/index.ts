@@ -2,6 +2,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import { createClient } from "./client";
+import { cache } from "./middleware/cache";
 import { errorHandler } from "./middleware/errorHandler";
 import { logger } from "./middleware/logger";
 import { rateLimiter } from "./middleware/rateLimiter";
@@ -28,9 +29,9 @@ app.use((req, _res, next) => {
   next();
 });
 
-app.use("/config", configRouter);
-app.use("/markets", marketsRouter);
-app.use("/positions", positionsRouter);
+app.use("/config", cache(30_000), configRouter);
+app.use("/markets", cache(10_000), marketsRouter);
+app.use("/positions", cache(5_000), positionsRouter);
 
 app.use(errorHandler);
 
