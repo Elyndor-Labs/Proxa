@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useConfig, useProtocolStats } from "@/hooks/use-protocol-stats";
 import { usePositions } from "@/hooks/use-positions";
 import { useProxaClient } from "@/hooks/use-proxa-client";
+import { fetchMarketAccount } from "@/lib/api/markets";
 import { formatStake } from "@/lib/format/odds";
 import { useQuery } from "@tanstack/react-query";
 
@@ -32,7 +33,7 @@ export function DashboardView() {
 
       for (const position of positions) {
         staked = staked.add(position.account.amount);
-        const market = await client.fetchMarket(position.account.marketId);
+        const market = await fetchMarketAccount(position.account.marketId.toString(), client);
         claimable = claimable.add(quoteClaim(market, position.account));
       }
 

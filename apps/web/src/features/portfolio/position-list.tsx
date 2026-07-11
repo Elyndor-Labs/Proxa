@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { BN } from "@coral-xyz/anchor";
 import { quoteClaim } from "@proxa/sdk";
 import { useQuery } from "@tanstack/react-query";
 import { useAnchorWallet } from "@solana/wallet-adapter-react";
@@ -11,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePositions } from "@/hooks/use-positions";
 import { useProxaClient } from "@/hooks/use-proxa-client";
+import { fetchMarketAccount } from "@/lib/api/markets";
 import { formatStake } from "@/lib/format/odds";
 import { toMarketView } from "@/lib/proxa/market-view";
 import { queryKeys } from "@/lib/proxa/query-keys";
@@ -30,7 +30,7 @@ export function PositionList() {
       return Promise.all(
         positions.map(async (position) => {
           const marketId = position.account.marketId.toString();
-          const market = await client.fetchMarket(new BN(marketId));
+          const market = await fetchMarketAccount(marketId, client);
           const claimable = quoteClaim(market, position.account);
           return {
             position,
