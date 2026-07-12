@@ -25,7 +25,7 @@ export function PortfolioCash({ className }: PortfolioCashProps) {
 
   return (
     <div
-      className={cn("hidden items-center gap-1.5 rounded-md border px-2.5 py-1 font-label text-xs lg:flex", className)}
+      className={cn("flex items-center gap-1.5 rounded-md border px-2.5 py-1 font-label text-xs", className)}
       style={{
         borderColor: "var(--header-border)",
         backgroundColor: "var(--nav-link-hover-bg)",

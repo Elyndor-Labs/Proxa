@@ -11,17 +11,6 @@ import { isApiEnabled } from "@/config/api";
 import { truncateAddress } from "@/lib/format/address";
 import { cn } from "@/lib/utils";
 
-/** Disconnect external Solana wallet after Privy logout. */
-async function disconnectExternalSolanaWallet() {
-  const provider = (window as Window & { solana?: { disconnect?: () => Promise<void> } }).solana;
-  if (!provider?.disconnect) return;
-  try {
-    await provider.disconnect();
-  } catch {
-    // Extension may already be disconnected.
-  }
-}
-
 interface UserMenuProps {
   className?: string;
 }
@@ -58,7 +47,7 @@ export function UserMenu({ className }: UserMenuProps) {
 
   if (!connected || !publicKey) {
     return (
-      <button type="button" className={cn("nav-login", className)} onClick={() => login()}>
+      <button type="button" className={cn("nav-login", className)} onClick={() => void login()}>
         Login
       </button>
     );
@@ -138,7 +127,6 @@ export function UserMenu({ className }: UserMenuProps) {
             onClick={async () => {
               setOpen(false);
               await logout();
-              await disconnectExternalSolanaWallet();
             }}
             className="flex w-full items-center gap-2.5 px-4 py-2.5 font-label text-sm text-destructive transition-colors hover:bg-[var(--nav-link-hover-bg)]"
           >

@@ -29,7 +29,7 @@ export function WalletButton({ size = "default", className }: WalletButtonProps)
       type="button"
       className={cn("nav-login w-full", className)}
       style={size === "lg" ? { padding: "0.9375rem 1.5rem", fontSize: "0.9375rem" } : undefined}
-      onClick={() => login()}
+      onClick={() => void login()}
     >
       Login to trade
     </button>
