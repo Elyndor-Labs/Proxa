@@ -1,21 +1,22 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useMarkets } from "@/hooks/use-markets";
 import { useProxaClient } from "@/hooks/use-proxa-client";
 import { aggregateProtocolStats } from "@/lib/proxa/stats";
 import { queryKeys } from "@/lib/proxa/query-keys";
 
-/** Fetches aggregated protocol statistics from all markets. */
+/** Aggregated protocol stats derived from the markets list (single data source). */
 export function useProtocolStats() {
-  const { client } = useProxaClient();
+  const { data: markets, isLoading, isError, error } = useMarkets();
 
-  return useQuery({
-    queryKey: [...queryKeys.markets, "stats"],
-    queryFn: async () => {
-      const records = await client.fetchAllMarkets();
-      return aggregateProtocolStats(records);
-    },
-  });
+  const stats = useMemo(
+    () => (markets ? aggregateProtocolStats(markets.map((m) => m.record)) : undefined),
+    [markets],
+  );
+
+  return { data: stats, isLoading, isError, error };
 }
 
 /** Fetches on-chain config (authority, fee, market count). */

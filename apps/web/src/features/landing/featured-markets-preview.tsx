@@ -1,46 +1,44 @@
-"use client";
-
 import Link from "next/link";
-import { MarketCard } from "@/components/domain/market-card";
+import { SettlementBadge } from "@/components/domain/settlement-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useMounted } from "@/hooks/use-mounted";
-import { useMarkets } from "@/hooks/use-markets";
 
-function PreviewSkeleton() {
-  return <div className="mt-8 h-48 max-w-lg animate-pulse rounded-xl bg-muted" />;
-}
-
-/** Landing page preview of the first live on-chain market. */
+/** Static landing teaser — avoids API/SDK work during marketing page compile. */
 export function FeaturedMarketsPreview() {
-  const mounted = useMounted();
-  const { data, isLoading } = useMarkets({ enabled: mounted });
-
-  if (!mounted || isLoading) {
-    return <PreviewSkeleton />;
-  }
-
-  const first = data?.[0];
-
-  if (!first) {
-    return (
-      <Card className="mt-8 max-w-lg">
-        <CardHeader>
-          <CardTitle>No live markets</CardTitle>
-          <CardDescription>Markets will appear here once created on devnet.</CardDescription>
+  return (
+    <div className="mt-8 flex flex-col items-center gap-4 lg:items-start">
+      <Card className="max-w-lg border-brand/40">
+        <CardHeader className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <SettlementBadge status="open" />
+            <span className="rounded-md border border-brand/30 bg-brand/10 px-2 py-0.5 font-label text-xs text-brand">
+              Live
+            </span>
+          </div>
+          <CardTitle className="text-base leading-snug">Fixture #17271370 · P1 Goals</CardTitle>
+          <CardDescription>
+            <Link href="/fixture/17271370" className="hover:text-foreground">
+              Fixture #17271370
+            </Link>
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Button variant="brand" asChild>
-            <Link href="/markets">Browse Markets</Link>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <Button variant="brand" className="flex-1" size="sm" asChild>
+              <Link href="/markets/1">Yes</Link>
+            </Button>
+            <Button variant="outline" className="flex-1" size="sm" asChild>
+              <Link href="/markets/1">No</Link>
+            </Button>
+          </div>
+          <Button variant="secondary" className="w-full" size="sm" asChild>
+            <Link href="/markets/1">View Market</Link>
           </Button>
         </CardContent>
       </Card>
-    );
-  }
-
-  return (
-    <div className="mt-8 flex justify-center lg:justify-start">
-      <MarketCard view={first.view} variant="teaser" />
+      <Button variant="outline" asChild>
+        <Link href="/markets">Browse all markets</Link>
+      </Button>
     </div>
   );
 }

@@ -8,6 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { BetPanel } from "@/features/markets/bet-panel";
 import { MarketPositionPanel } from "@/features/markets/market-position-panel";
 import { useMarket } from "@/hooks/use-market";
+import { useTimeRemaining } from "@/hooks/use-time-remaining";
+import { isApiEnabled } from "@/config/api";
+import { getApiErrorMessage, isNotFoundError } from "@/lib/api/errors";
 import { formatOdds } from "@/lib/format/odds";
 
 interface MarketDetailViewProps {
@@ -16,21 +19,31 @@ interface MarketDetailViewProps {
 
 /** Market detail with live pool data and bet placement. */
 export function MarketDetailView({ marketId }: MarketDetailViewProps) {
-  const { data, isLoading, isError, error } = useMarket(marketId, { subscribe: true });
+  const { data, isLoading, isError, error } = useMarket(marketId, { subscribe: !isApiEnabled() });
+  const betsCloseLabel = useTimeRemaining(data?.view.betsCloseTs ?? 0);
 
   if (isLoading) {
     return <div className="h-64 animate-pulse rounded-xl bg-muted" />;
   }
 
   if (isError || !data) {
+    const notFound = isNotFoundError(error);
+
     return (
-      <Card className="border-destructive/40">
-        <CardHeader>
-          <CardTitle>Market not found</CardTitle>
-          <CardDescription>{error instanceof Error ? error.message : "Unable to load market"}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="outline" asChild>
+      <Card>
+        <CardContent className="flex flex-col items-center gap-4 py-16 text-center">
+          <p className="font-label text-sm text-muted-foreground">{notFound ? "404" : "Error"}</p>
+          <div className="space-y-2">
+            <CardTitle className="text-2xl">
+              {notFound ? "Market not found" : "Unable to load market"}
+            </CardTitle>
+            <CardDescription className="max-w-md text-base">
+              {notFound
+                ? `Market #${marketId} doesn't exist or may have been removed.`
+                : getApiErrorMessage(error, "We couldn't load this market right now.")}
+            </CardDescription>
+          </div>
+          <Button variant="brand" asChild>
             <Link href="/markets">Back to markets</Link>
           </Button>
         </CardContent>
@@ -53,7 +66,7 @@ export function MarketDetailView({ marketId }: MarketDetailViewProps) {
             </Link>
           </div>
           <h1 className="font-display text-3xl font-bold">{view.title}</h1>
-          <p className="mt-2 text-muted-foreground">Closes in {view.betsCloseLabel}</p>
+          <p className="mt-2 text-muted-foreground">Closes in {betsCloseLabel}</p>
         </div>
 
         <MarketPositionPanel marketId={marketId} account={account} />

@@ -1,6 +1,7 @@
 "use client";
 
 import { AppHeader } from "@/components/layout/app-header";
+import { ApiModeBanner } from "@/components/layout/api-mode-banner";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { BetSlipDrawer } from "@/features/bet-slip/bet-slip-drawer";
 import { useBetSlipCount, useBetSlipStore } from "@/features/bet-slip/store";
@@ -14,7 +15,8 @@ interface AppShellProps {
 /** App layout shell with sidebar, header, and persistent bet slip. */
 export function AppShell({ children }: AppShellProps) {
   const legCount = useBetSlipCount();
-  const { open, setOpen } = useBetSlipStore();
+  const open = useBetSlipStore((s) => s.open);
+  const setOpen = useBetSlipStore((s) => s.setOpen);
   const hasSlip = legCount > 0;
 
   return (
@@ -22,6 +24,7 @@ export function AppShell({ children }: AppShellProps) {
       <AppSidebar className="hidden md:flex" />
       <div className="flex min-w-0 flex-1 flex-col">
         <AppHeader />
+        <ApiModeBanner />
         <main id="main-content" className={cn("flex-1 overflow-auto p-4 sm:p-6 lg:p-8", open && "md:mr-96")}>
           {children}
         </main>

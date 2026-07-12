@@ -37,6 +37,7 @@ export interface MarketView {
   bucketPools: string[];
   bucketLabels: string[];
   betsCloseLabel: string;
+  betsCloseTs: number;
   numBuckets: number;
   isOpen: boolean;
 }
@@ -73,6 +74,7 @@ export function toMarketView(account: MarketAccount): MarketView {
     bucketPools: account.bucketPools.map(formatPool),
     bucketLabels: Array.from({ length: account.numBuckets }, (_, i) => bucketLabel(i, account.numBuckets)),
     betsCloseLabel: formatTimeRemaining(closeTs),
+    betsCloseTs: closeTs,
     numBuckets: account.numBuckets,
     isOpen: status === "open",
   };

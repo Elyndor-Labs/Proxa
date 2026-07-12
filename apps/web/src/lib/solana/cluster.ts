@@ -2,6 +2,8 @@ export type Cluster = "devnet" | "mainnet-beta";
 
 const STORAGE_KEY = "proxa-cluster";
 
+export const CLUSTER_CHANGE_EVENT = "proxa-cluster-change";
+
 const RPC_ENDPOINTS: Record<Cluster, string> = {
   devnet: "https://api.devnet.solana.com",
   "mainnet-beta": "https://api.mainnet-beta.solana.com",
@@ -20,6 +22,16 @@ export function getStoredCluster(): Cluster | null {
   return null;
 }
 
+/** Active cluster on the client, falling back to the build default. */
+export function getActiveCluster(): Cluster {
+  return getStoredCluster() ?? getDefaultCluster();
+}
+
+/** Current cluster for client renders. */
+export function getClusterSnapshot(): Cluster {
+  return getActiveCluster();
+}
+
 /** Resolves RPC URL for a cluster, preferring env override for the default cluster. */
 export function getRpcForCluster(cluster: Cluster): string {
   const envRpc = process.env.NEXT_PUBLIC_SOLANA_RPC;
@@ -34,8 +46,6 @@ export function persistCluster(cluster: Cluster) {
   window.dispatchEvent(new Event(CLUSTER_CHANGE_EVENT));
 }
 
-export const CLUSTER_CHANGE_EVENT = "proxa-cluster-change";
-
 /** Subscribe to cluster changes from this tab or other tabs. */
 export function subscribeCluster(listener: () => void): () => void {
   const handler = () => listener();
@@ -45,11 +55,6 @@ export function subscribeCluster(listener: () => void): () => void {
     window.removeEventListener("storage", handler);
     window.removeEventListener(CLUSTER_CHANGE_EVENT, handler);
   };
-}
-
-/** Current cluster for client renders. */
-export function getClusterSnapshot(): Cluster {
-  return getStoredCluster() ?? getDefaultCluster();
 }
 
 export { STORAGE_KEY };

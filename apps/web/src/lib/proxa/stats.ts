@@ -7,6 +7,7 @@ export interface ProtocolStats {
   totalTvl: string;
   openMarkets: number;
   resolvedMarkets: number;
+  voidedMarkets: number;
   totalMarkets: number;
 }
 
@@ -16,16 +17,19 @@ export function aggregateProtocolStats(records: MarketRecord[]): ProtocolStats {
 
   let openMarkets = 0;
   let resolvedMarkets = 0;
+  let voidedMarkets = 0;
 
   for (const { account } of records) {
     if ("open" in account.status) openMarkets++;
-    if ("resolved" in account.status) resolvedMarkets++;
+    else if ("resolved" in account.status) resolvedMarkets++;
+    else if ("voided" in account.status) voidedMarkets++;
   }
 
   return {
     totalTvl: `$${fromBaseUnits(totalLamports, STAKE_DECIMALS)}`,
     openMarkets,
     resolvedMarkets,
+    voidedMarkets,
     totalMarkets: records.length,
   };
 }
