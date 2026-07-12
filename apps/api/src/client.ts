@@ -5,6 +5,11 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 
 function loadKeypair(): Keypair {
+  // support env var for production (Render)
+  if (process.env.KEEPER_KEYPAIR_JSON) {
+    const secret = JSON.parse(process.env.KEEPER_KEYPAIR_JSON) as number[];
+    return Keypair.fromSecretKey(Uint8Array.from(secret));
+  }
   const p = process.env.KEEPER_KEYPAIR ?? `${homedir()}/.config/solana/id.json`;
   const secret = JSON.parse(readFileSync(p, "utf8")) as number[];
   return Keypair.fromSecretKey(Uint8Array.from(secret));
@@ -26,5 +31,4 @@ export function createClient(): ProxaClient {
   return new ProxaClient(provider, { network });
 }
 
-// Singleton — created once at startup, shared across all requests
 export const proxaClient = createClient();
