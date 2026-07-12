@@ -18,22 +18,24 @@ model Fixture {
 }
 
 model Market {
-  id            Int       @id
+  id            Int            @id
   fixtureId     Int
   statKey       Int
   statLabel     String
-  status        String    @default("open")
+  status        String         @default("open")
   winningBucket Int?
   resolvedAt    DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  fixture       Fixture   @relation(fields: [fixtureId], references: [id])
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  fixture       Fixture        @relation(fields: [fixtureId], references: [id])
+  notifications Notification[]
 }
 
 model Notification {
   id        String   @id @default(cuid())
   wallet    String
   marketId  Int
+  market    Market   @relation(fields: [marketId], references: [id])
   type      String
   message   String
   read      Boolean  @default(false)
