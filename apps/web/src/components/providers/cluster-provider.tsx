@@ -4,11 +4,11 @@ import { createContext, useCallback, useContext, useMemo, useSyncExternalStore }
 import { useQueryClient } from "@tanstack/react-query";
 import type { Cluster } from "@/config/solana";
 import {
-  CLUSTER_CHANGE_EVENT,
-  getActiveCluster,
+  getClusterSnapshot,
   getDefaultCluster,
   getRpcForCluster,
   persistCluster,
+  subscribeCluster,
 } from "@/lib/solana/cluster";
 
 interface ClusterContextValue {
@@ -19,19 +19,14 @@ interface ClusterContextValue {
 
 const ClusterContext = createContext<ClusterContextValue | null>(null);
 
-function subscribeCluster(onStoreChange: () => void) {
-  window.addEventListener(CLUSTER_CHANGE_EVENT, onStoreChange);
-  window.addEventListener("storage", onStoreChange);
-  return () => {
-    window.removeEventListener(CLUSTER_CHANGE_EVENT, onStoreChange);
-    window.removeEventListener("storage", onStoreChange);
-  };
-}
-
 /** Runtime cluster selection with localStorage persistence. */
 export function ClusterProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
-  const cluster = useSyncExternalStore(subscribeCluster, getActiveCluster, getDefaultCluster);
+  const cluster = useSyncExternalStore(
+    subscribeCluster,
+    getClusterSnapshot,
+    getDefaultCluster,
+  );
 
   const setCluster = useCallback(
     (next: Cluster) => {

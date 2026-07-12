@@ -27,6 +27,11 @@ export function getActiveCluster(): Cluster {
   return getStoredCluster() ?? getDefaultCluster();
 }
 
+/** Current cluster for client renders. */
+export function getClusterSnapshot(): Cluster {
+  return getActiveCluster();
+}
+
 /** Resolves RPC URL for a cluster, preferring env override for the default cluster. */
 export function getRpcForCluster(cluster: Cluster): string {
   const envRpc = process.env.NEXT_PUBLIC_SOLANA_RPC;
@@ -39,6 +44,17 @@ export function persistCluster(cluster: Cluster) {
   if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY, cluster);
   window.dispatchEvent(new Event(CLUSTER_CHANGE_EVENT));
+}
+
+/** Subscribe to cluster changes from this tab or other tabs. */
+export function subscribeCluster(listener: () => void): () => void {
+  const handler = () => listener();
+  window.addEventListener("storage", handler);
+  window.addEventListener(CLUSTER_CHANGE_EVENT, handler);
+  return () => {
+    window.removeEventListener("storage", handler);
+    window.removeEventListener(CLUSTER_CHANGE_EVENT, handler);
+  };
 }
 
 export { STORAGE_KEY };
