@@ -34,7 +34,7 @@ export function FilterTabs({ tabs, value, onChange, className, "aria-label": ari
           >
             {tab.label}
             {tab.count !== undefined && (
-              <span className={cn("ml-1.5 tabular-nums", active ? "text-brand" : "text-muted-foreground")}>
+              <span className={cn("ml-1.5 tabular-nums", !active && "text-muted-foreground")}>
                 {tab.count}
               </span>
             )}

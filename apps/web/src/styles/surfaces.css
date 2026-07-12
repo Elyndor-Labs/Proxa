@@ -231,10 +231,6 @@
   box-shadow: 0 0 20px -4px rgba(74, 222, 128, 0.5);
 }
 
-.filter-pill[data-active="true"] .text-brand {
-  color: var(--brand-foreground);
-}
-
 .filter-pill:active {
   transform: scale(0.97);
 }
