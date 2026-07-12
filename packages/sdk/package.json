@@ -21,7 +21,7 @@
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
-    "@types/node": "^22.10.0",
+    "@types/node": "^26.1.1",
     "typescript": "^5.4.0"
   }
 }
