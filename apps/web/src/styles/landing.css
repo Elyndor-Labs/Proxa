@@ -1,15 +1,61 @@
+/* Landing page — clean solid background, centered columns */
+
+.landing-page {
+  background-color: var(--background);
+}
+
+body:has(.landing-page) {
+  background-image: none;
+}
+
 .landing-hero {
-  background: linear-gradient(180deg, rgba(74, 222, 128, 0.03) 0%, var(--background) 45%);
+  background-color: var(--background);
+}
+
+/* Narrow column for hero copy */
+.landing-shell {
+  width: min(78vw, 52rem);
+  margin-inline: auto;
+}
+
+/* Wider column for scroll showcase */
+.landing-showcase-shell {
+  width: min(94vw, 72rem);
+  margin-inline: auto;
+}
+
+.landing-hero-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-block: 2.5rem 1rem;
+}
+
+@media (min-width: 1024px) {
+  .landing-shell {
+    width: min(72vw, 56rem);
+  }
+
+  .landing-showcase-shell {
+    width: min(90vw, 76rem);
+  }
+
+  .landing-hero-stage {
+    padding-block: 3rem 1.25rem;
+  }
 }
 
 .landing-cta-card {
   box-shadow:
-    0 0 0 1px rgba(74, 222, 128, 0.08),
     0 24px 64px -24px rgba(0, 0, 0, 0.65),
-    0 0 80px -20px rgba(74, 222, 128, 0.12);
+    0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
-.landing-stat-tile:hover,
+.landing-feature-card,
+.landing-step-card {
+  min-height: 11rem;
+}
+
 .landing-feature-card:hover,
 .landing-step-card:hover {
   transform: translateY(-2px);
@@ -81,7 +127,6 @@
   .animate-fade-in-up-delay-3,
   .animate-pulse-glow,
   .animate-marquee,
-  .landing-stat-tile:hover,
   .landing-feature-card:hover,
   .landing-step-card:hover {
     animation: none;

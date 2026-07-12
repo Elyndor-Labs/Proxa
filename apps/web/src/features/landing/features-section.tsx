@@ -59,7 +59,7 @@ function FeatureCard({
       initial={{ opacity: 0, y: 28 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{ delay: index * 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] as const }}
-      className="landing-feature-card group relative overflow-hidden rounded-2xl border border-border/60 bg-card/60 p-6 backdrop-blur-sm transition-all duration-300 hover:border-brand/30 hover:shadow-[0_12px_40px_-12px_rgba(74,222,128,0.2)]"
+      className="landing-feature-card group relative overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-8 backdrop-blur-sm transition-all duration-300 hover:border-border hover:bg-card"
     >
       <div
         className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${feature.accent} opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
@@ -83,8 +83,8 @@ export function FeaturesSection() {
 
   return (
     <>
-      <section className="border-y border-border/50 bg-muted/20 px-[var(--container-padding)] py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-[var(--content-max-width)]">
+      <section className="px-[var(--container-padding)] pb-20 pt-10 sm:px-6 sm:pt-12 lg:px-8">
+        <div className="landing-shell">
           <div className="mx-auto max-w-2xl text-center">
             <p className="font-label text-xs font-bold uppercase tracking-[0.2em] text-brand">
               Why Proxa
@@ -108,9 +108,9 @@ export function FeaturesSection() {
 
       <section
         id="how-it-works"
-        className="px-[var(--container-padding)] py-20 sm:px-6 lg:px-8"
+        className="px-[var(--container-padding)] pb-20 pt-8 sm:px-6 lg:px-8"
       >
-        <div className="mx-auto max-w-[var(--content-max-width)]">
+        <div className="landing-shell">
           <div className="mb-12 max-w-xl">
             <p className="font-label text-xs font-bold uppercase tracking-[0.2em] text-brand">
               How it works
@@ -127,7 +127,7 @@ export function FeaturesSection() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={stepsInView ? { opacity: 1, y: 0 } : {}}
                 transition={{ delay: i * 0.08, duration: 0.45 }}
-                className="landing-step-card group rounded-2xl border border-border/60 bg-card/40 p-6 transition-all duration-300 hover:border-brand/25 hover:bg-card/70"
+                className="landing-step-card group min-h-[11rem] rounded-2xl border border-border/60 bg-card/80 p-8 transition-all duration-300 hover:border-border hover:bg-card"
               >
                 <span className="font-display text-3xl font-bold text-brand/40 transition-colors group-hover:text-brand/70">
                   {step.n}

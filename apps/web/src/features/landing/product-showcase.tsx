@@ -13,7 +13,6 @@ const MOCK_WORDS = [
 function MarketsMockup() {
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border/50 bg-card">
-      {/* Mock header */}
       <div className="flex items-center gap-2 border-b border-border/50 px-4 py-3">
         <div className="flex gap-1.5">
           <span className="h-2.5 w-2.5 rounded-full bg-destructive/60" />
@@ -24,7 +23,6 @@ function MarketsMockup() {
       </div>
 
       <div className="flex flex-1 flex-col gap-4 p-4 md:flex-row md:p-6">
-        {/* Chart area */}
         <div className="flex flex-1 flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="success">OPEN</Badge>
@@ -34,8 +32,7 @@ function MarketsMockup() {
             What will be said during France vs Spain?
           </h3>
 
-          {/* Mini chart */}
-          <div className="relative flex-1 min-h-[120px] rounded-xl border border-border/50 bg-muted/30 p-4">
+          <div className="relative min-h-[140px] flex-1 rounded-xl border border-border/50 bg-muted/30 p-4">
             <svg viewBox="0 0 300 80" className="h-full w-full" preserveAspectRatio="none">
               <polyline
                 fill="none"
@@ -56,7 +53,6 @@ function MarketsMockup() {
             </div>
           </div>
 
-          {/* Words table */}
           <div className="overflow-hidden rounded-xl border border-border/50">
             <table className="w-full font-label text-xs">
               <thead>
@@ -88,8 +84,7 @@ function MarketsMockup() {
           </div>
         </div>
 
-        {/* Trade panel */}
-        <div className="w-full shrink-0 rounded-xl border border-border/60 bg-background p-4 md:w-44">
+        <div className="w-full shrink-0 rounded-xl border border-border/60 bg-background p-4 md:w-48">
           <p className="font-display text-sm font-bold">Barcelona</p>
           <div className="mt-3 flex gap-2">
             <button
@@ -121,31 +116,26 @@ function MarketsMockup() {
 
 export function ProductShowcase() {
   return (
-    <section className="relative overflow-hidden">
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse 60% 40% at 50% 100%, rgba(74,222,128,0.08), transparent 70%)",
-        }}
-      />
-      <ContainerScroll
-        titleComponent={
-          <div className="px-4">
-            <p className="font-label text-xs font-bold uppercase tracking-[0.2em] text-brand">
-              The platform
-            </p>
-            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-              Markets that move with the moment.
-            </h2>
-            <p className="mx-auto mt-4 max-w-xl text-base font-medium text-muted-foreground">
-              Scroll to explore the live trading interface — prices, words, and your slip in one view.
-            </p>
-          </div>
-        }
-      >
-        <MarketsMockup />
-      </ContainerScroll>
+    <section className="relative overflow-hidden pt-2 pb-0">
+      <div className="landing-showcase-shell px-[var(--container-padding)]">
+        <ContainerScroll
+          titleComponent={
+            <div className="px-4">
+              <p className="font-label text-xs font-bold uppercase tracking-[0.2em] text-brand">
+                The platform
+              </p>
+              <h2 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
+                Markets that move with the moment.
+              </h2>
+              <p className="mx-auto mt-4 max-w-xl text-base font-medium text-muted-foreground">
+                Scroll to explore the live trading interface — prices, words, and your slip in one view.
+              </p>
+            </div>
+          }
+        >
+          <MarketsMockup />
+        </ContainerScroll>
+      </div>
     </section>
   );
 }

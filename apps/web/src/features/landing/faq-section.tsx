@@ -38,11 +38,8 @@ export function FaqSection() {
   const inView = useInView(ref, { once: true, margin: "-60px" });
 
   return (
-    <section className="border-t border-border/50 bg-muted/10 px-[var(--container-padding)] py-20 sm:px-6 lg:px-8">
-      <div
-        ref={ref}
-        className="mx-auto grid max-w-[var(--content-max-width)] gap-12 lg:grid-cols-[1fr_1.4fr] lg:gap-20"
-      >
+    <section className="px-[var(--container-padding)] py-24 sm:px-6 lg:px-8">
+      <div ref={ref} className="landing-shell grid gap-12 lg:grid-cols-[1fr_1.4fr] lg:gap-20">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={inView ? { opacity: 1, x: 0 } : {}}

@@ -71,6 +71,11 @@ export function SiteHeader() {
             expandedWidth={260}
             expandedOffset={48}
             className="justify-end"
+            classNames={{
+              trigger:
+                "focus-visible:ring-0 focus-visible:ring-offset-0 ring-1 ring-white/10",
+              input: "focus-visible:outline-none",
+            }}
           />
         </div>
 

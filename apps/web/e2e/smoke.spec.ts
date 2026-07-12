@@ -4,7 +4,7 @@ test.describe("Proxa smoke tests", () => {
   test("landing page loads", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Trade on what gets said");
-    await expect(page.locator("#main-content").getByRole("link", { name: /launch/i })).toBeVisible();
+    await expect(page.locator("#main-content").getByRole("link", { name: /explore markets/i })).toBeVisible();
   });
 
   test("markets page loads", async ({ page }) => {
