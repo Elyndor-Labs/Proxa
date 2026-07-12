@@ -23,7 +23,7 @@ export function RequireWallet({ children, fallback }: RequireWalletProps) {
 
 function ConnectPrompt() {
   return (
-    <Card className="mx-auto max-w-md">
+    <Card className="hover-lift mx-auto max-w-md border-border/60 bg-card/80">
       <CardHeader className="text-center">
         <CardTitle>Connect your wallet</CardTitle>
         <CardDescription>

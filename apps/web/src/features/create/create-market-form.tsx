@@ -60,8 +60,8 @@ export function CreateMarketForm() {
   return (
     <RequireWallet>
       <PageHeader
-        title="Create Market"
-        description="Define a new parametric prop. Only the protocol authority can create markets on-chain."
+        title="Make Markets"
+        description="Create and launch new prediction markets on-chain."
       />
 
       {!canTransact && isApiEnabled() && (

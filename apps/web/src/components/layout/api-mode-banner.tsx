@@ -9,9 +9,9 @@ export function ApiModeBanner() {
   return (
     <div
       role="status"
-      className="border-b border-brand/30 bg-brand/10 px-4 py-2 text-center font-label text-xs text-foreground sm:text-sm"
+      className="animate-slide-down border-b border-brand/20 bg-brand/5 px-4 py-1.5 text-center font-label text-xs text-muted-foreground"
     >
-      API mode: market data is served from the REST API. Bets and claims are disabled — mock markets are not on-chain.
+      API mode: mock market data · bets and claims disabled
     </div>
   );
 }

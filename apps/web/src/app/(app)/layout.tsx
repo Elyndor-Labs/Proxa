@@ -1,11 +1,6 @@
 import { AppShell } from "@/components/layout/app-shell";
-import { AppWalletProviders } from "@/components/providers/app-wallet-providers";
 
-/** App layout — wallet providers, sidebar, header, and bet slip. */
+/** App layout — top nav shell with bet slip. */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <AppWalletProviders>
-      <AppShell>{children}</AppShell>
-    </AppWalletProviders>
-  );
+  return <AppShell>{children}</AppShell>;
 }

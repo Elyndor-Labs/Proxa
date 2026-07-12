@@ -39,12 +39,27 @@
   animation: pulse-glow 4s ease-in-out infinite;
 }
 
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 40s linear infinite;
+  width: max-content;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in-up,
   .animate-fade-in-up-delay-1,
   .animate-fade-in-up-delay-2,
   .animate-fade-in-up-delay-3,
-  .animate-pulse-glow {
+  .animate-pulse-glow,
+  .animate-marquee {
     animation: none;
     opacity: 1;
     transform: none;

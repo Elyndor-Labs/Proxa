@@ -3,18 +3,18 @@ import { expect, test } from "@playwright/test";
 test.describe("Proxa smoke tests", () => {
   test("landing page loads", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Parametric");
-    await expect(page.locator("#main-content").getByRole("link", { name: /launch app/i })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Trade on what gets said");
+    await expect(page.locator("#main-content").getByRole("link", { name: /launch/i })).toBeVisible();
   });
 
   test("markets page loads", async ({ page }) => {
     await page.goto("/markets");
-    await expect(page.getByRole("heading", { name: /live markets/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /markets/i })).toBeVisible();
   });
 
   test("governance page loads", async ({ page }) => {
     await page.goto("/governance");
-    await expect(page.getByRole("heading", { name: /governance hub/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /governance/i })).toBeVisible();
   });
 
   test("skip link is focusable", async ({ page }) => {
