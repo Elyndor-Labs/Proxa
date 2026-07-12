@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.32.1",
+    "@neondatabase/serverless": "^1.1.0",
+    "@prisma/adapter-neon": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "@proxa/sdk": "workspace:*",
     "@solana/web3.js": "^1.98.0",

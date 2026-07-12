@@ -9,7 +9,9 @@ import { logger } from "./middleware/logger";
 import { rateLimiter } from "./middleware/rateLimiter";
 import { attachWebSocket } from "./middleware/websocket";
 import { configRouter } from "./routes/config";
+import { fixturesRouter } from "./routes/fixtures";
 import { marketsRouter } from "./routes/markets";
+import { notificationsRouter } from "./routes/notifications";
 import { positionsRouter } from "./routes/positions";
 
 dotenv.config();
@@ -33,8 +35,10 @@ app.use((req, _res, next) => {
 });
 
 app.use("/config", cache(30_000), configRouter);
+app.use("/fixtures", cache(60_000), fixturesRouter);
 app.use("/markets", cache(10_000), marketsRouter);
 app.use("/positions", cache(5_000), positionsRouter);
+app.use("/notifications", notificationsRouter);
 
 app.use(errorHandler);
 
