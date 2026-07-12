@@ -25,3 +25,6 @@ export function createClient(): ProxaClient {
   );
   return new ProxaClient(provider, { network });
 }
+
+// Singleton — created once at startup, shared across all requests
+export const proxaClient = createClient();
