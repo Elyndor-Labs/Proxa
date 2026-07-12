@@ -26,10 +26,7 @@ export function Hero() {
       <div className="landing-shell landing-hero-stage relative z-10 px-[var(--container-padding)]">
         <div className="w-full text-center">
           <motion.div custom={0} initial="hidden" animate="visible" variants={fadeUp}>
-            <Badge
-              variant="outline"
-              className="mb-6 border-border/60 bg-card/40 px-3 py-1 font-label text-xs font-bold uppercase tracking-widest text-muted-foreground"
-            >
+            <Badge variant="brand" className="mb-6 px-4 py-1.5 font-label text-xs font-bold uppercase tracking-widest">
               Prediction markets · Live media
             </Badge>
           </motion.div>

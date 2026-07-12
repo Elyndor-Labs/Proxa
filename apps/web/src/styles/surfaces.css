@@ -204,10 +204,10 @@
   position: relative;
   border-radius: 9999px;
   border: 1px solid transparent;
-  padding: 0.4375rem 1rem;
+  padding: 0.5625rem 1.25rem;
   font-family: var(--font-geist), system-ui, sans-serif;
-  font-size: 0.8125rem;
-  font-weight: 500;
+  font-size: 0.875rem;
+  font-weight: 600;
   color: var(--muted-foreground);
   transition:
     color 0.15s ease,
@@ -219,15 +219,20 @@
 
 .filter-pill:hover {
   color: var(--foreground);
-  background-color: rgba(255, 255, 255, 0.04);
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--surface-border);
 }
 
 .filter-pill[data-active="true"] {
-  color: var(--foreground);
-  font-weight: 600;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.04));
-  border-color: var(--surface-border-hover);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  color: var(--brand-foreground);
+  font-weight: 700;
+  background: var(--brand);
+  border-color: rgba(74, 222, 128, 0.4);
+  box-shadow: 0 0 20px -4px rgba(74, 222, 128, 0.5);
+}
+
+.filter-pill[data-active="true"] .text-brand {
+  color: var(--brand-foreground);
 }
 
 .filter-pill:active {
@@ -711,11 +716,11 @@
 
 .word-btn-yes,
 .word-btn-no {
-  padding: 0.5rem 0.875rem;
-  border-radius: 0.5rem;
+  padding: 0.625rem 1rem;
+  border-radius: 0.625rem;
   border: 1px solid;
   font-family: var(--font-geist), system-ui, sans-serif;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   transition:
@@ -725,14 +730,16 @@
 }
 
 .word-btn-yes {
-  border-color: rgba(74, 222, 128, 0.35);
-  background: rgba(74, 222, 128, 0.08);
-  color: var(--success);
+  border-color: rgba(74, 222, 128, 0.45);
+  background: rgba(74, 222, 128, 0.14);
+  color: var(--brand);
 }
 
 .word-btn-yes:hover {
-  background: rgba(74, 222, 128, 0.15);
-  border-color: rgba(74, 222, 128, 0.5);
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--brand-foreground);
+  box-shadow: 0 0 16px -4px rgba(74, 222, 128, 0.5);
   transform: translateY(-1px);
 }
 

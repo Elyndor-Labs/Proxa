@@ -74,7 +74,7 @@ export function MarketCard({ view, odds, variant = "full", featured, hot }: Mark
         <div className="flex items-center justify-between gap-2">
           <SettlementBadge status={view.status} />
           {isHot && view.isOpen && (
-            <span className="flex items-center gap-1.5 rounded-md border border-destructive/25 bg-destructive/10 px-2 py-0.5 font-label text-[10px] font-bold uppercase tracking-wide text-destructive">
+            <span className="flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/15 px-3 py-1 font-label text-[11px] font-bold uppercase tracking-wide text-destructive">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-destructive" />
               Live
             </span>
@@ -107,7 +107,7 @@ export function MarketCard({ view, odds, variant = "full", featured, hot }: Mark
       </div>
 
       <div className="border-t border-[var(--surface-border)] p-4">
-        <Button variant="outline" className="w-full font-semibold" size="sm" asChild>
+        <Button variant="secondary" className="w-full" asChild>
           <Link href={`/markets/${view.id}`}>View Market</Link>
         </Button>
       </div>
