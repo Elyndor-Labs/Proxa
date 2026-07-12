@@ -1,9 +1,9 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { SettlementBadge } from "@/components/domain/settlement-badge";
 import { LiveCloseLabel } from "@/components/domain/live-close-label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { MarketView } from "@/lib/proxa/market-view";
 import { cn } from "@/lib/utils";
 
@@ -15,98 +15,114 @@ interface MarketCardProps {
   hot?: boolean;
 }
 
-/** Reusable market card — mentioned.market style. */
+/** Market card with gradient surfaces and interactive outcomes. */
 export function MarketCard({ view, odds, variant = "full", featured, hot }: MarketCardProps) {
   const isHot = hot ?? view.isOpen;
   const isFree = Number(view.id) % 2 === 1;
 
   if (featured) {
     return (
-      <Card className="hover-lift overflow-hidden border-border/60">
-        <div className="relative bg-gradient-to-br from-secondary/60 via-card to-brand/5 p-6">
+      <article className="surface surface-interactive overflow-hidden">
+        <div className="market-hero-bg relative p-6 sm:p-8">
           <div className="flex flex-wrap items-center gap-2">
             <SettlementBadge status={view.status} />
-            <Badge variant="muted">Featured</Badge>
-            <Badge variant={isFree ? "brand" : "secondary"}>{isFree ? "FREE" : "PAID"}</Badge>
-          </div>
-          <CardTitle className="mt-4 text-xl leading-snug sm:text-2xl">{view.title}</CardTitle>
-          <CardDescription className="mt-2 flex flex-wrap items-center gap-3 text-sm">
-            <span>19 traders</span>
-            <span>·</span>
-            <span>{view.numBuckets} words</span>
-            <span>·</span>
-            <LiveCloseLabel targetMs={view.betsCloseTs} />
-          </CardDescription>
-        </div>
-        <CardContent className="grid gap-2 p-4 sm:grid-cols-2">
-          {view.bucketLabels.map((label, index) => (
-            <div
-              key={label}
-              className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3"
+            <Badge variant="muted" className="border border-[var(--surface-border)] bg-black/30">
+              Featured
+            </Badge>
+            <Badge
+              variant={isFree ? "brand" : "secondary"}
+              className={cn(!isFree && "border border-[var(--surface-border)]")}
             >
-              <span className="font-label text-sm font-medium">{label}</span>
-              <div className="flex gap-2 font-label text-sm">
+              {isFree ? "FREE" : "PAID"}
+            </Badge>
+          </div>
+          <h2 className="mt-5 font-display text-xl font-bold leading-snug tracking-tight sm:text-2xl">
+            {view.title}
+          </h2>
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 font-label text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground">19 traders</span>
+            <span aria-hidden>·</span>
+            <span>{view.numBuckets} words</span>
+            <span aria-hidden>·</span>
+            <LiveCloseLabel targetMs={view.betsCloseTs} />
+          </div>
+        </div>
+        <div className="grid gap-2 p-4 sm:grid-cols-2 sm:p-5">
+          {view.bucketLabels.map((label, index) => (
+            <div key={label} className="outcome-row">
+              <span className="font-label text-sm font-semibold">{label}</span>
+              <div className="flex items-center gap-2 font-label text-sm font-bold tabular-nums">
                 <span className="text-success">{odds?.[index]?.split(" ")[0] ?? "50¢"}</span>
-                <span className="text-muted-foreground">/</span>
-                <span className="text-destructive">{odds?.[index]?.split(" ")[1] ?? "50¢"}</span>
+                <span className="text-muted-foreground/50">/</span>
+                <span className="text-destructive/90">{odds?.[index]?.split(" ")[1] ?? "50¢"}</span>
               </div>
             </div>
           ))}
-          <Button variant="brand" className="mt-2 sm:col-span-2" asChild>
-            <Link href={`/markets/${view.id}`}>Trade this market</Link>
+          <Button variant="brand" size="lg" className="mt-1 w-full font-semibold sm:col-span-2" asChild>
+            <Link href={`/markets/${view.id}`}>
+              Trade this market
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </article>
     );
   }
 
   return (
-    <Card className={cn("hover-lift border-border/60", isHot && "border-brand/25", variant === "teaser" && "max-w-lg")}>
-      <CardHeader className="space-y-2">
+    <article
+      className={cn(
+        "surface surface-interactive flex flex-col",
+        isHot && "border-[var(--surface-border-hover)]",
+        variant === "teaser" && "max-w-lg",
+      )}
+    >
+      <div className="flex flex-1 flex-col p-5">
         <div className="flex items-center justify-between gap-2">
           <div className="flex flex-wrap gap-1.5">
             <SettlementBadge status={view.status} />
-            <Badge variant={isFree ? "brand" : "secondary"} className="text-[10px]">
-              {isFree ? "FREE" : "PAID"}
+            <Badge variant={isFree ? "brand" : "secondary"} className="text-[10px] font-bold uppercase">
+              {isFree ? "Free" : "Paid"}
             </Badge>
           </div>
           {isHot && view.isOpen && (
-            <span className="rounded-md bg-destructive/15 px-2 py-0.5 font-label text-[10px] font-semibold uppercase text-destructive">
+            <span className="flex items-center gap-1.5 rounded-md border border-destructive/25 bg-destructive/10 px-2 py-0.5 font-label text-[10px] font-bold uppercase tracking-wide text-destructive">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-destructive" />
               Live
             </span>
           )}
         </div>
-        <CardTitle className="text-base leading-snug">{view.title}</CardTitle>
-        <CardDescription>
-          <Link href={`/fixture/${view.fixtureId}`} className="hover:text-foreground">
-            Fixture #{view.fixtureId}
-          </Link>
-        </CardDescription>
-      </CardHeader>
 
-      <CardContent className="space-y-3">
+        <h3 className="mt-3 font-display text-base font-bold leading-snug">{view.title}</h3>
+        <Link
+          href={`/fixture/${view.fixtureId}`}
+          className="mt-1 font-label text-xs text-muted-foreground transition-colors hover:text-brand"
+        >
+          Fixture #{view.fixtureId}
+        </Link>
+
         {variant === "full" && (
-          <div className="space-y-1.5">
+          <div className="mt-4 space-y-1.5">
             {view.bucketLabels.slice(0, 4).map((label, index) => (
               <div key={label} className="flex items-center justify-between font-label text-xs">
-                <span>{label}</span>
-                <div className="flex gap-1.5">
-                  <span className="text-success">{odds?.[index] ?? "50¢"}</span>
-                </div>
+                <span className="font-medium text-muted-foreground">{label}</span>
+                <span className="font-bold tabular-nums text-success">{odds?.[index] ?? "50¢"}</span>
               </div>
             ))}
           </div>
         )}
 
-        <div className="flex items-center justify-between font-label text-xs text-muted-foreground">
+        <div className="mt-auto flex items-center justify-between pt-4 font-label text-[11px] text-muted-foreground">
           <span>12 traders · {view.numBuckets} words</span>
           <LiveCloseLabel targetMs={view.betsCloseTs} />
         </div>
+      </div>
 
-        <Button variant="outline" className="w-full" size="sm" asChild>
+      <div className="border-t border-[var(--surface-border)] p-4">
+        <Button variant="outline" className="w-full font-semibold" size="sm" asChild>
           <Link href={`/markets/${view.id}`}>View Market</Link>
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </article>
   );
 }

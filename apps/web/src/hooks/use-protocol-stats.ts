@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useMarkets } from "@/hooks/use-markets";
 import { useProxaClient } from "@/hooks/use-proxa-client";
+import { fetchConfig } from "@/lib/api/config";
 import { aggregateProtocolStats } from "@/lib/proxa/stats";
 import { queryKeys } from "@/lib/proxa/query-keys";
 
@@ -19,12 +20,12 @@ export function useProtocolStats() {
   return { data: stats, isLoading, isError, error };
 }
 
-/** Fetches on-chain config (authority, fee, market count). */
+/** Fetches protocol config (authority, fee, market count). */
 export function useConfig() {
   const { client } = useProxaClient();
 
   return useQuery({
     queryKey: queryKeys.config,
-    queryFn: () => client.fetchConfig(),
+    queryFn: () => fetchConfig(client),
   });
 }

@@ -6,7 +6,6 @@ import { MarketCard } from "@/components/domain/market-card";
 import { FilterTabs } from "@/components/layout/filter-tabs";
 import { MarketSidebar } from "@/components/layout/market-sidebar";
 import { PageHeader } from "@/components/layout/page-header";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMarkets } from "@/hooks/use-markets";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatOdds } from "@/lib/format/odds";
@@ -73,14 +72,12 @@ function MarketFilters({ initialQuery, data }: MarketFiltersProps) {
         )}
 
         {!filtered.length ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>No markets found</CardTitle>
-              <CardDescription>
-                {data.length ? "Try adjusting your filters." : "No markets available yet."}
-              </CardDescription>
-            </CardHeader>
-          </Card>
+          <div className="surface p-8 text-center">
+            <p className="font-display text-lg font-bold">No markets found</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {data.length ? "Try adjusting your filters." : "No markets available yet."}
+            </p>
+          </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {rest.map(({ record, view }, i) => (
@@ -112,7 +109,7 @@ export function MarketList() {
         <PageHeader title="Markets" description="Browse prediction markets across all active events." />
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-56 animate-pulse rounded-xl bg-muted" />
+            <div key={i} className="surface h-56 animate-pulse rounded-2xl" />
           ))}
         </div>
       </>
@@ -123,12 +120,10 @@ export function MarketList() {
     return (
       <>
         <PageHeader title="Markets" description="Browse prediction markets across all active events." />
-        <Card className="border-destructive/40">
-          <CardHeader>
-            <CardTitle>Failed to load markets</CardTitle>
-            <CardDescription>{getApiErrorMessage(error)}</CardDescription>
-          </CardHeader>
-        </Card>
+        <div className="surface border-destructive/30 p-6">
+          <p className="font-display font-semibold text-destructive">Failed to load markets</p>
+          <p className="mt-1 text-sm text-muted-foreground">{getApiErrorMessage(error)}</p>
+        </div>
       </>
     );
   }

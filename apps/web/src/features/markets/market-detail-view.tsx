@@ -9,7 +9,6 @@ import { BetPanel } from "@/features/markets/bet-panel";
 import { MarketPositionPanel } from "@/features/markets/market-position-panel";
 import { useMarket } from "@/hooks/use-market";
 import { useTimeRemaining } from "@/hooks/use-time-remaining";
-import { isApiEnabled } from "@/config/api";
 import { getApiErrorMessage, isNotFoundError } from "@/lib/api/errors";
 import { formatOdds } from "@/lib/format/odds";
 
@@ -19,7 +18,7 @@ interface MarketDetailViewProps {
 
 /** Market detail with live pool data and bet placement. */
 export function MarketDetailView({ marketId }: MarketDetailViewProps) {
-  const { data, isLoading, isError, error } = useMarket(marketId, { subscribe: !isApiEnabled() });
+  const { data, isLoading, isError, error } = useMarket(marketId, { subscribe: true });
   const betsCloseLabel = useTimeRemaining(data?.view.betsCloseTs ?? 0);
 
   if (isLoading) {

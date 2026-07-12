@@ -43,10 +43,9 @@
   --glow-strong: rgba(74, 222, 128, 0.15);
 
   --radius: 0.75rem;
-  --header-height: 3.75rem;
   --sidebar-width: 16rem;
   --container-padding: 1rem;
-  --content-max-width: 80rem;
+  --content-max-width: 88rem;
 }
 
 .light {

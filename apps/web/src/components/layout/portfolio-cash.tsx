@@ -23,16 +23,26 @@ export function PortfolioCash({ className }: PortfolioCashProps) {
     0,
   ) ?? 0;
 
+  const items = [
+    { label: "Portfolio", value: `$${portfolioValue.toFixed(2)}` },
+    { label: "Cash", value: "$0.00" },
+  ];
+
   return (
-    <div className={cn("hidden items-center gap-4 font-label text-sm lg:flex", className)}>
-      <div className="flex items-center gap-1.5">
-        <span className="text-muted-foreground">Portfolio</span>
-        <span className="font-medium text-success">${portfolioValue.toFixed(2)}</span>
-      </div>
-      <div className="flex items-center gap-1.5">
-        <span className="text-muted-foreground">Cash</span>
-        <span className="font-medium text-success">$0.00</span>
-      </div>
+    <div className={cn("hidden items-center gap-2 lg:flex", className)}>
+      {items.map((item) => (
+        <div
+          key={item.label}
+          className="flex items-center gap-1.5 rounded-md border px-2.5 py-1 font-label text-xs"
+          style={{
+            borderColor: "var(--header-border)",
+            backgroundColor: "var(--nav-link-hover-bg)",
+          }}
+        >
+          <span className="text-muted-foreground">{item.label}</span>
+          <span className="font-semibold tabular-nums text-success">{item.value}</span>
+        </div>
+      ))}
     </div>
   );
 }

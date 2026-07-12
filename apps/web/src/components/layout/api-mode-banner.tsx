@@ -2,7 +2,7 @@
 
 import { isApiEnabled } from "@/config/api";
 
-/** Warns when market/position reads use the mock API but transactions still hit chain. */
+/** Warns when market/position reads use the REST API instead of direct RPC. */
 export function ApiModeBanner() {
   if (!isApiEnabled()) return null;
 
@@ -11,7 +11,7 @@ export function ApiModeBanner() {
       role="status"
       className="animate-slide-down border-b border-brand/20 bg-brand/5 px-4 py-1.5 text-center font-label text-xs text-muted-foreground"
     >
-      API mode: mock market data · bets and claims disabled
+      API mode: live market data from backend · on-chain bets and claims disabled
     </div>
   );
 }

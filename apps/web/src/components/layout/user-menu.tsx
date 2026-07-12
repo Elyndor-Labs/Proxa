@@ -3,7 +3,6 @@
 import { Bell, ChevronDown, User } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { useMounted } from "@/hooks/use-mounted";
 import { useWalletAuth } from "@/hooks/use-wallet-auth";
 import { truncateAddress } from "@/lib/format/address";
@@ -44,60 +43,69 @@ export function UserMenu({ className }: UserMenuProps) {
 
   if (!mounted || !ready) {
     return (
-      <Button type="button" variant="outline" size="sm" disabled aria-hidden tabIndex={-1}>
+      <button type="button" className="nav-login opacity-50" disabled aria-hidden tabIndex={-1}>
         Login
-      </Button>
+      </button>
     );
   }
 
   if (!connected || !publicKey) {
     return (
-      <Button type="button" variant="outline" size="sm" onClick={() => login()} className={cn("border-border/60", className)}>
+      <button type="button" className={cn("nav-login", className)} onClick={() => login()}>
         Login
-      </Button>
+      </button>
     );
   }
 
   const displayName = truncateAddress(publicKey.toBase58(), 4);
 
   return (
-    <div ref={menuRef} className={cn("relative flex items-center gap-2", className)}>
+    <div ref={menuRef} className={cn("relative flex items-center gap-1.5", className)}>
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex items-center gap-2 rounded-lg px-2 py-1.5 font-label text-sm transition-colors hover:bg-muted"
+        className="nav-link gap-2 !py-1.5"
         aria-expanded={open}
         aria-haspopup="menu"
       >
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand/20 text-xs font-medium text-brand">
+        <span
+          className="flex h-7 w-7 items-center justify-center rounded-md border text-xs font-semibold"
+          style={{
+            borderColor: "rgba(74, 222, 128, 0.25)",
+            background: "linear-gradient(145deg, rgba(74, 222, 128, 0.14), rgba(74, 222, 128, 0.04))",
+            color: "var(--brand)",
+          }}
+        >
           {displayName.slice(1, 2).toUpperCase()}
         </span>
         <span className="hidden sm:inline">{displayName}</span>
-        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
       </button>
 
-      <button
-        type="button"
-        className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        aria-label="Notifications"
-      >
+      <button type="button" className="nav-icon-btn" aria-label="Notifications">
         <Bell className="h-4 w-4" />
       </button>
 
       {open && (
         <div
           role="menu"
-          className="absolute top-full right-0 z-50 mt-2 w-48 overflow-hidden rounded-xl border border-border bg-popover py-1 shadow-lg"
+          className="absolute top-[calc(100%+0.5rem)] right-0 z-50 w-52 overflow-hidden rounded-xl py-1"
+          style={{
+            border: "1px solid var(--header-border-hover)",
+            backgroundColor: "var(--popover)",
+            boxShadow: "0 12px 40px -8px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255,255,255,0.04)",
+          }}
         >
           <Link
             href="/portfolio"
             role="menuitem"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-4 py-2.5 font-label text-sm text-foreground transition-colors hover:bg-muted"
+            className="flex items-center gap-2.5 px-4 py-2.5 font-label text-sm text-foreground transition-colors hover:bg-[var(--nav-link-hover-bg)]"
           >
             <User className="h-4 w-4 text-muted-foreground" />
             My Profile
           </Link>
+          <div className="mx-3 my-1 h-px bg-[var(--header-border)]" />
           <button
             type="button"
             role="menuitem"
@@ -106,7 +114,7 @@ export function UserMenu({ className }: UserMenuProps) {
               await logout();
               await disconnectExternalSolanaWallet();
             }}
-            className="flex w-full items-center gap-2 px-4 py-2.5 font-label text-sm text-destructive transition-colors hover:bg-muted"
+            className="flex w-full items-center gap-2.5 px-4 py-2.5 font-label text-sm text-destructive transition-colors hover:bg-[var(--nav-link-hover-bg)]"
           >
             Disconnect
           </button>

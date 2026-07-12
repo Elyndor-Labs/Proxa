@@ -2,21 +2,24 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { ClaimButton } from "@/components/domain/claim-button";
 import { SettlementBadge } from "@/components/domain/settlement-badge";
 import { FilterTabs } from "@/components/layout/filter-tabs";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEnrichedPositions } from "@/hooks/use-enriched-positions";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatStake } from "@/lib/format/odds";
+import { cn } from "@/lib/utils";
 
 const VIEW_TABS = [
   { label: "Open Positions", value: "open" },
   { label: "History", value: "history" },
 ];
 
-/** Lists wallet positions with stats grid — mentioned.market style. */
+const STAGGER = ["", "animate-slide-up-delay-1", "animate-slide-up-delay-2", "animate-slide-up-delay-3", "animate-slide-up-delay-4"] as const;
+
+/** Portfolio positions with stat tiles and position list. */
 export function PositionList() {
   const [view, setView] = useState("open");
   const { data: enriched, isLoading, isError, error } = useEnrichedPositions();
@@ -33,93 +36,90 @@ export function PositionList() {
   };
 
   if (isLoading) {
-    return <div className="h-64 animate-pulse rounded-xl bg-muted" />;
+    return <div className="surface h-64 animate-pulse rounded-2xl" />;
   }
 
   if (isError) {
     return (
-      <Card className="border-destructive/40">
-        <CardHeader>
-          <CardTitle>Failed to load positions</CardTitle>
-          <CardDescription>{getApiErrorMessage(error)}</CardDescription>
-        </CardHeader>
-      </Card>
+      <div className="surface border-destructive/30 p-6">
+        <p className="font-display font-semibold text-destructive">Failed to load positions</p>
+        <p className="mt-1 text-sm text-muted-foreground">{getApiErrorMessage(error)}</p>
+      </div>
     );
   }
 
+  const statItems = [
+    { label: "Markets", value: stats.markets, highlight: false },
+    { label: "Tokens Spent", value: stats.tokensSpent, highlight: false },
+    { label: "Points Earned", value: `+${stats.pointsEarned}`, highlight: true },
+    { label: "Trades", value: stats.trades, highlight: false },
+  ];
+
   return (
-    <div className="space-y-8">
+    <div className="animate-fade-in space-y-8">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { label: "Markets", value: stats.markets },
-          { label: "Tokens Spent", value: stats.tokensSpent },
-          { label: "Points Earned", value: `+${stats.pointsEarned}`, highlight: true },
-          { label: "Trades", value: stats.trades },
-        ].map((stat) => (
-          <Card key={stat.label}>
-            <CardContent className="p-5">
-              <p className="font-label text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                {stat.label}
-              </p>
-              <p className={`mt-2 font-display text-2xl font-bold ${stat.highlight ? "text-success" : ""}`}>
-                {stat.value}
-              </p>
-            </CardContent>
-          </Card>
+        {statItems.map((stat, i) => (
+          <div key={stat.label} className={cn("stat-tile", STAGGER[Math.min(i, 4)])}>
+            <p className="section-label">{stat.label}</p>
+            <p className={cn("stat-tile__value mt-3", stat.highlight && "stat-tile__value--highlight")}>
+              {stat.value}
+            </p>
+          </div>
         ))}
       </div>
 
       <div>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-          <p className="font-label text-xs font-medium uppercase tracking-widest text-muted-foreground">
-            {view === "open" ? "Open Positions" : "Trade History"}
-          </p>
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+          <p className="section-label">{view === "open" ? "Open Positions" : "Trade History"}</p>
           <FilterTabs tabs={VIEW_TABS} value={view} onChange={setView} aria-label="Position view" />
         </div>
 
         {!displayed.length ? (
-          <Card>
-            <CardHeader className="text-center">
-              <CardTitle>
-                {view === "open" ? "No open positions" : "No trade history"}
-              </CardTitle>
-              <CardDescription>
-                {view === "open"
-                  ? "Place a bet on a live market to see your portfolio here."
-                  : "Resolved trades will appear here."}
-              </CardDescription>
-            </CardHeader>
+          <div className="surface p-10 text-center">
+            <p className="font-display text-lg font-bold">
+              {view === "open" ? "No open positions" : "No trade history"}
+            </p>
+            <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+              {view === "open"
+                ? "Place a bet on a live market to see your portfolio here."
+                : "Resolved trades will appear here."}
+            </p>
             {view === "open" && (
-              <CardContent className="text-center">
-                <Button variant="brand" asChild>
-                  <Link href="/markets">Browse markets</Link>
-                </Button>
-              </CardContent>
+              <Button variant="brand" size="lg" className="mt-6" asChild>
+                <Link href="/markets">
+                  Browse markets
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
             )}
-          </Card>
+          </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {displayed.map(({ position, marketId, claimable, view: marketView }) => (
-              <Card key={position.address.toBase58()}>
-                <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
-                  <div className="space-y-1">
+              <div key={position.address.toBase58()} className="surface surface-interactive p-5">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="space-y-1.5">
                     <div className="flex flex-wrap items-center gap-2">
-                      <CardTitle className="text-base">{marketView.title}</CardTitle>
+                      <h3 className="font-display text-base font-bold">{marketView.title}</h3>
                       <SettlementBadge status={marketView.status} />
                     </div>
-                    <CardDescription>
-                      {marketView.bucketLabels[position.account.bucket] ?? `Bucket ${position.account.bucket + 1}`} ·
-                      Stake ${formatStake(position.account.amount)}
-                    </CardDescription>
+                    <p className="font-label text-sm text-muted-foreground">
+                      {marketView.bucketLabels[position.account.bucket] ?? `Bucket ${position.account.bucket + 1}`}
+                      <span aria-hidden> · </span>
+                      Stake{" "}
+                      <span className="font-semibold text-foreground">
+                        ${formatStake(position.account.amount)}
+                      </span>
+                    </p>
                   </div>
                   <ClaimButton marketId={marketId} bucket={position.account.bucket} claimable={claimable} />
-                </CardHeader>
-                <CardContent>
+                </div>
+                <div className="mt-4 border-t border-[var(--surface-border)] pt-4">
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/markets/${marketId}`}>View Market</Link>
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
         )}

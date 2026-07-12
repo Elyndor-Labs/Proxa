@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { FilterTabs } from "@/components/layout/filter-tabs";
 import { PageHeader } from "@/components/layout/page-header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLeaderboard } from "@/hooks/use-leaderboard";
 import { cn } from "@/lib/utils";
 
@@ -14,13 +12,21 @@ const TIME_TABS = [
   { label: "All Time", value: "all" },
 ];
 
-const RANK_STYLES = [
-  "text-brand",
-  "text-muted-foreground",
-  "text-warning",
-] as const;
+function rankBadgeClass(index: number): string {
+  if (index === 0) return "rank-badge--1";
+  if (index === 1) return "rank-badge--2";
+  if (index === 2) return "rank-badge--3";
+  return "rank-badge--default";
+}
 
-/** Leaderboard ranked by on-chain stake volume — mentioned.market style. */
+function progressFillClass(index: number): string {
+  if (index === 0) return "progress-fill--gold";
+  if (index === 1) return "progress-fill--silver";
+  if (index === 2) return "progress-fill--bronze";
+  return "progress-fill--default";
+}
+
+/** Leaderboard ranked by on-chain stake volume. */
 export function LeaderboardView() {
   const [timeFilter, setTimeFilter] = useState("week");
   const { data, isLoading, isError } = useLeaderboard();
@@ -28,8 +34,8 @@ export function LeaderboardView() {
   if (isLoading) {
     return (
       <>
-        <PageHeader title="Leaderboard" description="Points leaderboard" />
-        <div className="h-96 animate-pulse rounded-xl bg-muted" />
+        <PageHeader title="Leaderboard" description="Top traders ranked by points earned this period." />
+        <div className="surface h-96 animate-pulse rounded-2xl" />
       </>
     );
   }
@@ -37,125 +43,126 @@ export function LeaderboardView() {
   if (isError || !data?.length) {
     return (
       <>
-        <PageHeader title="Leaderboard" description="Points leaderboard" />
-        <Card>
-          <CardHeader>
-            <CardTitle>No rankings yet</CardTitle>
-            <CardDescription>Leaderboard populates once bettors place positions on-chain.</CardDescription>
-          </CardHeader>
-        </Card>
+        <PageHeader title="Leaderboard" description="Top traders ranked by points earned this period." />
+        <div className="surface p-8 text-center">
+          <p className="font-display text-lg font-semibold">No rankings yet</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Leaderboard populates once bettors place positions on-chain.
+          </p>
+        </div>
       </>
     );
   }
 
   const maxStaked = Math.max(...data.map((d) => Number(d.totalStaked)));
+  const podium = data.slice(0, 3);
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
-      <div>
-        <PageHeader
-          title="Leaderboard"
-          description="Points leaderboard"
-          actions={
-            <FilterTabs
-              tabs={TIME_TABS}
-              value={timeFilter}
-              onChange={setTimeFilter}
-              aria-label="Time period"
-            />
-          }
-        />
+    <div className="animate-fade-in space-y-8">
+      <PageHeader
+        title="Leaderboard"
+        description="Top traders ranked by points earned this period."
+        actions={
+          <FilterTabs tabs={TIME_TABS} value={timeFilter} onChange={setTimeFilter} aria-label="Time period" />
+        }
+      />
 
-        <Card>
-          <CardHeader className="pb-2">
-            <p className="font-label text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Rankings
-            </p>
-          </CardHeader>
-          <CardContent className="overflow-x-auto p-0">
-            <table className="w-full min-w-[480px] font-label text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                  <th className="px-6 pb-3 font-medium">#</th>
-                  <th className="px-6 pb-3 font-medium">Player</th>
-                  <th className="px-6 pb-3 text-right font-medium">Points</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((leader, index) => {
-                  const pts = Math.round(Number(leader.totalStaked) * 1000);
-                  const barWidth = maxStaked > 0 ? (Number(leader.totalStaked) / maxStaked) * 100 : 0;
+      {/* Podium */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        {[1, 0, 2].map((podiumIndex) => {
+          const leader = podium[podiumIndex];
+          if (!leader) return <div key={podiumIndex} />;
+          const pts = Math.round(Number(leader.totalStaked) * 1000);
+          const isFirst = podiumIndex === 0;
 
-                  return (
-                    <tr
-                      key={leader.address}
-                      className={cn(
-                        "border-b border-border/50 transition-colors",
-                        index < 3 && "bg-muted/20",
-                      )}
-                    >
-                      <td className={cn("px-6 py-4 font-medium", RANK_STYLES[index] ?? "text-muted-foreground")}>
-                        {index + 1}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium">
-                            {leader.displayAddress.slice(0, 2)}
-                          </span>
-                          <div>
-                            <p className={cn("font-medium", index < 3 && RANK_STYLES[index])}>
-                              {leader.displayAddress}
-                            </p>
-                            <div className="mt-1 h-1 w-32 max-w-full overflow-hidden rounded-full bg-muted">
-                              <div
-                                className={cn(
-                                  "h-full rounded-full",
-                                  index === 0 ? "bg-brand" : index === 1 ? "bg-muted-foreground/50" : index === 2 ? "bg-warning/60" : "bg-border",
-                                )}
-                                style={{ width: `${barWidth}%` }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-right font-medium text-brand">
-                        {pts.toLocaleString()}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
+          return (
+            <div
+              key={leader.address}
+              className={cn(
+                "surface surface-interactive p-5 text-center",
+                isFirst && "sm:-mt-2 sm:pb-7",
+                podiumIndex === 1 && "animate-slide-up-delay-1",
+                podiumIndex === 0 && "animate-slide-up-delay-2",
+                podiumIndex === 2 && "animate-slide-up-delay-3",
+              )}
+            >
+              <span className={cn("rank-badge mx-auto mb-3", rankBadgeClass(podiumIndex))}>
+                {podiumIndex + 1}
+              </span>
+              <p className="font-display text-base font-bold">{leader.displayAddress}</p>
+              <p className="mt-1 font-label text-xs text-muted-foreground">
+                {leader.positionCount} trades
+              </p>
+              <p className="stat-tile__value stat-tile__value--highlight mt-3 text-2xl">
+                {pts.toLocaleString()}
+              </p>
+              <p className="mt-0.5 font-label text-[10px] uppercase tracking-widest text-muted-foreground">pts</p>
+            </div>
+          );
+        })}
       </div>
 
-      <aside className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-display text-base">How to Earn</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 font-label text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">🎯 Win a trade</span>
-              <span className="text-brand">+50</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">💬 Chat message</span>
-              <span className="text-brand">+2</span>
-            </div>
-            <div className="rounded-lg border border-border bg-muted/30 p-3">
-              <p className="font-medium">🏅 Achievements</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Unlock weekly achievements to earn bonus points.
-              </p>
-            </div>
-            <Link href="/#how-it-works" className="block text-center text-sm text-brand hover:underline">
-              Learn more
-            </Link>
-          </CardContent>
-        </Card>
-      </aside>
+      {/* Full table */}
+      <div className="surface overflow-hidden">
+        <div className="border-b border-[var(--surface-border)] px-6 py-4">
+          <p className="section-label">Rankings</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[480px]">
+            <thead>
+              <tr className="border-b border-[var(--surface-border)] text-left">
+                <th className="px-6 py-3 font-label text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  #
+                </th>
+                <th className="px-6 py-3 font-label text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  Player
+                </th>
+                <th className="px-6 py-3 text-right font-label text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  Points
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((leader, index) => {
+                const pts = Math.round(Number(leader.totalStaked) * 1000);
+                const barWidth = maxStaked > 0 ? (Number(leader.totalStaked) / maxStaked) * 100 : 0;
+
+                return (
+                  <tr
+                    key={leader.address}
+                    className={cn("lb-row", index < 3 && "lb-row--top")}
+                  >
+                    <td className="px-6 py-4">
+                      <span className={cn("rank-badge", rankBadgeClass(index))}>{index + 1}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <span className="avatar-ring">{leader.displayAddress.slice(0, 2)}</span>
+                        <div className="min-w-0 flex-1">
+                          <p className={cn("truncate font-label text-sm font-semibold", index < 3 && "text-foreground")}>
+                            {leader.displayAddress}
+                          </p>
+                          <div className="progress-track mt-2 max-w-[10rem]">
+                            <div
+                              className={cn("progress-fill", progressFillClass(index))}
+                              style={{ width: `${barWidth}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <span className="font-label text-sm font-bold tabular-nums text-brand">
+                        {pts.toLocaleString()}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

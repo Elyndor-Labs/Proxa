@@ -16,14 +16,10 @@ interface FilterTabsProps {
   "aria-label"?: string;
 }
 
-/** Pill-style tab filter used across markets, leaderboard, and portfolio. */
+/** Pill-style tab filter with gradient active state. */
 export function FilterTabs({ tabs, value, onChange, className, "aria-label": ariaLabel }: FilterTabsProps) {
   return (
-    <div
-      className={cn("inline-flex flex-wrap gap-1 rounded-full border border-border/60 bg-muted/30 p-1", className)}
-      role="tablist"
-      aria-label={ariaLabel}
-    >
+    <div className={cn("filter-group", className)} role="tablist" aria-label={ariaLabel}>
       {tabs.map((tab) => {
         const active = tab.value === value;
         return (
@@ -32,17 +28,15 @@ export function FilterTabs({ tabs, value, onChange, className, "aria-label": ari
             type="button"
             role="tab"
             aria-selected={active}
+            data-active={active}
             onClick={() => onChange(tab.value)}
-            className={cn(
-              "rounded-full px-4 py-1.5 font-label text-sm transition-colors",
-              active
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
+            className="filter-pill"
           >
             {tab.label}
             {tab.count !== undefined && (
-              <span className="ml-1.5 text-xs text-muted-foreground">{tab.count}</span>
+              <span className={cn("ml-1.5 tabular-nums", active ? "text-brand" : "text-muted-foreground")}>
+                {tab.count}
+              </span>
             )}
           </button>
         );

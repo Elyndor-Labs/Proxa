@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { WalletButton } from "@/components/domain/wallet-button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useWalletAuth } from "@/hooks/use-wallet-auth";
 
 interface RequireWalletProps {
@@ -23,16 +22,14 @@ export function RequireWallet({ children, fallback }: RequireWalletProps) {
 
 function ConnectPrompt() {
   return (
-    <Card className="hover-lift mx-auto max-w-md border-border/60 bg-card/80">
-      <CardHeader className="text-center">
-        <CardTitle>Connect your wallet</CardTitle>
-        <CardDescription>
-          Sign in with email, social, or a Solana wallet to view your portfolio and place bets.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex justify-center">
+    <div className="surface mx-auto max-w-md p-10 text-center">
+      <p className="font-display text-xl font-bold">Connect your wallet</p>
+      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+        Sign in with email, social, or a Solana wallet to view your portfolio and place bets.
+      </p>
+      <div className="mt-6 flex justify-center">
         <WalletButton size="lg" />
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

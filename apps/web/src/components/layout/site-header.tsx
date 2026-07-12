@@ -6,14 +6,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { PortfolioCash } from "@/components/layout/portfolio-cash";
 import { UserMenu } from "@/components/layout/user-menu";
-import { Button } from "@/components/ui/button";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { isMockDemo } from "@/config/api";
 import { primaryNav } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 
-/** Unified top navigation with project name, inline search, and dark styling. */
+/** Unified top navigation — mentioned.market-inspired polish. */
 export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
@@ -32,69 +31,87 @@ export function SiteHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-[var(--header-height)] max-w-[var(--content-max-width)] items-center gap-3 px-[var(--container-padding)] sm:gap-4 sm:px-6 lg:px-8">
-          <Link
-            href="/"
-            className="shrink-0 font-display text-lg font-bold tracking-tight text-foreground transition-opacity hover:opacity-80"
-          >
-            {siteConfig.name}
+      <header
+        className="sticky top-0 z-50 backdrop-blur-xl"
+        style={{
+          backgroundColor: "var(--header-surface)",
+          boxShadow: "var(--header-shadow)",
+          borderBottom: "1px solid var(--header-border)",
+        }}
+      >
+        <div className="mx-auto flex h-[var(--header-height)] max-w-[var(--content-max-width)] items-center gap-4 px-[var(--container-padding)] sm:gap-5 sm:px-6 lg:px-8">
+          {/* Brand */}
+          <Link href="/" className="nav-brand shrink-0">
+            <span className="nav-brand-mark" aria-hidden>
+              {siteConfig.name.charAt(0)}
+            </span>
+            <span>{siteConfig.name}</span>
           </Link>
 
-          <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
+          <span className="nav-divider hidden lg:block" aria-hidden />
+
+          {/* Desktop nav */}
+          <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Primary">
             {primaryNav.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={cn(
-                  "rounded-lg px-3 py-1.5 font-label text-sm transition-colors",
-                  isActive(item.href)
-                    ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
-                )}
+                data-active={isActive(item.href)}
+                className="nav-link"
               >
                 {item.label}
               </Link>
             ))}
           </nav>
 
-          <form onSubmit={handleSearch} className="relative ml-auto hidden w-36 md:block lg:w-44 xl:w-52">
-            <Search className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          {/* Search — grows between nav and actions */}
+          <form
+            onSubmit={handleSearch}
+            className="relative ml-auto hidden min-w-0 flex-1 md:block md:max-w-xs lg:max-w-sm xl:max-w-md"
+          >
+            <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="search"
               placeholder="Search markets…"
               aria-label="Search markets"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-8 w-full rounded-lg border border-border/60 bg-muted/50 pr-3 pl-8 font-label text-xs text-foreground placeholder:text-muted-foreground transition-colors focus:border-brand/40 focus:bg-muted focus:outline-none focus:ring-1 focus:ring-brand/30"
+              className="nav-search"
             />
           </form>
 
-          <div className="flex items-center gap-2">
+          {/* Right actions */}
+          <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
             <PortfolioCash />
 
             <UserMenu />
 
             {isMockDemo() && (
-              <span className="hidden rounded-full border border-brand/25 bg-brand/10 px-2 py-0.5 font-label text-[10px] font-medium uppercase tracking-wider text-brand sm:inline">
+              <span
+                className="hidden rounded-md border px-2 py-1 font-label text-[10px] font-semibold uppercase tracking-wider sm:inline"
+                style={{
+                  borderColor: "rgba(74, 222, 128, 0.25)",
+                  backgroundColor: "rgba(74, 222, 128, 0.08)",
+                  color: "var(--brand)",
+                }}
+              >
                 Test
               </span>
             )}
 
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 lg:hidden"
+              className="nav-icon-btn lg:hidden"
               onClick={() => setMobileOpen(true)}
               aria-label="Open navigation menu"
             >
               <Menu className="h-4 w-4" />
-            </Button>
+            </button>
           </div>
         </div>
       </header>
 
+      {/* Mobile drawer */}
       <div
         className={cn(
           "fixed inset-0 z-50 lg:hidden",
@@ -105,7 +122,7 @@ export function SiteHeader() {
         <button
           type="button"
           className={cn(
-            "absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity",
+            "absolute inset-0 bg-black/75 backdrop-blur-sm transition-opacity duration-200",
             mobileOpen ? "opacity-100" : "opacity-0",
           )}
           onClick={() => setMobileOpen(false)}
@@ -114,53 +131,57 @@ export function SiteHeader() {
         <nav
           ref={trapRef}
           className={cn(
-            "absolute top-0 right-0 flex h-full w-72 flex-col gap-1 border-l border-border bg-popover p-4 shadow-2xl transition-transform duration-300 ease-out",
+            "absolute top-0 right-0 flex h-full w-80 flex-col border-l p-5 shadow-2xl transition-transform duration-300 ease-out",
             mobileOpen ? "translate-x-0" : "translate-x-full",
           )}
+          style={{
+            borderColor: "var(--header-border)",
+            backgroundColor: "var(--popover)",
+          }}
           aria-label="Mobile"
         >
-          <div className="mb-4 flex items-center justify-between">
-            <Link href="/" onClick={() => setMobileOpen(false)} className="font-display font-bold">
-              {siteConfig.name}
+          <div className="mb-5 flex items-center justify-between">
+            <Link href="/" onClick={() => setMobileOpen(false)} className="nav-brand">
+              <span className="nav-brand-mark" aria-hidden>
+                {siteConfig.name.charAt(0)}
+              </span>
+              <span>{siteConfig.name}</span>
             </Link>
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              size="icon"
+              className="nav-icon-btn"
               onClick={() => setMobileOpen(false)}
               aria-label="Close navigation menu"
             >
-              <X className="h-5 w-5" />
-            </Button>
+              <X className="h-4 w-4" />
+            </button>
           </div>
 
-          <form onSubmit={handleSearch} className="relative mb-4">
-            <Search className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <form onSubmit={handleSearch} className="relative mb-5">
+            <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="search"
               placeholder="Search markets…"
               aria-label="Search markets"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-9 w-full rounded-lg border border-border bg-muted/50 pr-3 pl-8 font-label text-sm placeholder:text-muted-foreground focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
+              className="nav-search"
             />
           </form>
 
-          {primaryNav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setMobileOpen(false)}
-              className={cn(
-                "rounded-lg px-3 py-2.5 font-label text-sm transition-colors",
-                isActive(item.href)
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
-            >
-              {item.label}
-            </Link>
-          ))}
+          <div className="flex flex-col gap-0.5">
+            {primaryNav.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
+                data-active={isActive(item.href)}
+                className="nav-link"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
         </nav>
       </div>
     </>
