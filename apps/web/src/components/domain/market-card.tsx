@@ -18,7 +18,6 @@ interface MarketCardProps {
 /** Market card with gradient surfaces and interactive outcomes. */
 export function MarketCard({ view, odds, variant = "full", featured, hot }: MarketCardProps) {
   const isHot = hot ?? view.isOpen;
-  const isFree = Number(view.id) % 2 === 1;
 
   if (featured) {
     return (
@@ -29,20 +28,14 @@ export function MarketCard({ view, odds, variant = "full", featured, hot }: Mark
             <Badge variant="muted" className="border border-[var(--surface-border)] bg-black/30">
               Featured
             </Badge>
-            <Badge
-              variant={isFree ? "brand" : "secondary"}
-              className={cn(!isFree && "border border-[var(--surface-border)]")}
-            >
-              {isFree ? "FREE" : "PAID"}
-            </Badge>
           </div>
           <h2 className="mt-5 font-display text-xl font-bold leading-snug tracking-tight sm:text-2xl">
             {view.title}
           </h2>
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 font-label text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">19 traders</span>
+            <span>{view.numBuckets} buckets</span>
             <span aria-hidden>·</span>
-            <span>{view.numBuckets} words</span>
+            <span>{view.totalPool} pool</span>
             <span aria-hidden>·</span>
             <LiveCloseLabel targetMs={view.betsCloseTs} />
           </div>
@@ -79,12 +72,7 @@ export function MarketCard({ view, odds, variant = "full", featured, hot }: Mark
     >
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex flex-wrap gap-1.5">
-            <SettlementBadge status={view.status} />
-            <Badge variant={isFree ? "brand" : "secondary"} className="text-[10px] font-bold uppercase">
-              {isFree ? "Free" : "Paid"}
-            </Badge>
-          </div>
+          <SettlementBadge status={view.status} />
           {isHot && view.isOpen && (
             <span className="flex items-center gap-1.5 rounded-md border border-destructive/25 bg-destructive/10 px-2 py-0.5 font-label text-[10px] font-bold uppercase tracking-wide text-destructive">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-destructive" />
@@ -113,7 +101,7 @@ export function MarketCard({ view, odds, variant = "full", featured, hot }: Mark
         )}
 
         <div className="mt-auto flex items-center justify-between pt-4 font-label text-[11px] text-muted-foreground">
-          <span>12 traders · {view.numBuckets} words</span>
+          <span>{view.numBuckets} buckets · {view.totalPool}</span>
           <LiveCloseLabel targetMs={view.betsCloseTs} />
         </div>
       </div>

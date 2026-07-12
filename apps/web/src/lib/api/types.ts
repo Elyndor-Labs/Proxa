@@ -91,3 +91,13 @@ export interface ApiConfig {
 export interface ApiDataResponse<T> {
   data: T;
 }
+
+export interface Notification {
+  id: string;
+  wallet: string;
+  marketId: number;
+  type: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}

@@ -3,7 +3,6 @@ import {
   assertCanSubmitOnChainTx,
   canSubmitOnChainTx,
   isApiEnabled,
-  ONCHAIN_TX_DISABLED_MESSAGE,
 } from "@/config/api";
 
 describe("api config", () => {
@@ -21,13 +20,13 @@ describe("api config", () => {
     delete process.env.NEXT_PUBLIC_API_URL;
     expect(isApiEnabled()).toBe(false);
 
-    process.env.NEXT_PUBLIC_API_URL = "http://localhost:3000/api";
+    process.env.NEXT_PUBLIC_API_URL = "https://proxa-gzk8.onrender.com";
     expect(isApiEnabled()).toBe(true);
   });
 
-  it("blocks on-chain txs when API mode is enabled", () => {
-    process.env.NEXT_PUBLIC_API_URL = "http://localhost:3000/api";
-    expect(canSubmitOnChainTx(true)).toBe(false);
+  it("allows on-chain txs when wallet is connected", () => {
+    process.env.NEXT_PUBLIC_API_URL = "https://proxa-gzk8.onrender.com";
+    expect(canSubmitOnChainTx(true)).toBe(true);
     expect(canSubmitOnChainTx(false)).toBe(false);
 
     delete process.env.NEXT_PUBLIC_API_URL;
@@ -35,9 +34,8 @@ describe("api config", () => {
     expect(canSubmitOnChainTx(false)).toBe(false);
   });
 
-  it("throws a clear error when submitting txs in API mode", () => {
-    process.env.NEXT_PUBLIC_API_URL = "http://localhost:3000/api";
-    expect(() => assertCanSubmitOnChainTx(true)).toThrow(ONCHAIN_TX_DISABLED_MESSAGE);
+  it("throws when wallet is not connected", () => {
     expect(() => assertCanSubmitOnChainTx(false)).toThrow("Wallet not connected");
+    expect(() => assertCanSubmitOnChainTx(true)).not.toThrow();
   });
 });

@@ -6,10 +6,8 @@ export interface NavItem {
 /** Primary top navigation — shared across marketing and app shells. */
 export const primaryNav: NavItem[] = [
   { label: "Markets", href: "/markets" },
-  { label: "Leaderboard", href: "/leaderboard" },
   { label: "Portfolio", href: "/portfolio" },
   { label: "Make Markets", href: "/create" },
-  // { label: "Dev Hub", href: "/dev-hub" },
   { label: "Governance", href: "/governance" },
 ];
 

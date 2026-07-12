@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { launchAppLabel, MockDemoCta } from "@/features/landing/mock-demo-cta";
 import { siteConfig } from "@/config/site";
 
 const SCROLLING_MARKETS = [
@@ -57,7 +56,6 @@ export function Hero() {
 
       <div className="relative mx-auto max-w-[var(--content-max-width)] px-[var(--container-padding)] pt-32 pb-20 sm:px-6 sm:pt-40 sm:pb-28 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
-          <MockDemoCta />
           <h1 className="animate-fade-in-up font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
             Trade on what gets said.
           </h1>
@@ -67,12 +65,9 @@ export function Hero() {
           <div className="animate-fade-in-up-delay-2 mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button variant="brand" size="lg" asChild>
               <Link href="/markets">
-                {launchAppLabel()}
+                Launch App
                 <ArrowRight className="h-4 w-4" />
               </Link>
-            </Button>
-            <Button variant="outline" size="lg" asChild>
-              <Link href="/leaderboard">View Leaderboard</Link>
             </Button>
           </div>
           <p className="animate-fade-in-up-delay-3 mt-12 font-label text-xs text-muted-foreground">

@@ -9,6 +9,11 @@ export async function apiParse<T>(
   schema: z.ZodType<T>,
   init?: RequestInit,
 ): Promise<T> {
+  const json = await apiJson(path, init);
+  return schema.parse(json);
+}
+
+export async function apiJson(path: string, init?: RequestInit): Promise<unknown> {
   const res = await fetch(`${getApiBaseUrl()}${path}`, {
     ...init,
     headers: {
@@ -23,8 +28,8 @@ export async function apiParse<T>(
     throw new ApiError(res.status, message);
   }
 
-  const json: unknown = await res.json();
-  return schema.parse(json);
+  if (res.status === 204) return null;
+  return res.json();
 }
 
 async function readErrorMessage(res: Response): Promise<string> {

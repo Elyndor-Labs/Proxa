@@ -54,11 +54,11 @@ export function useClaim() {
       txToast.success(signature, "Winnings claimed");
       queryClient.invalidateQueries({ queryKey: queryKeys.markets });
       queryClient.invalidateQueries({ queryKey: queryKeys.market(marketId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.leaderboard });
       if (wallet?.publicKey) {
         const owner = wallet.publicKey.toBase58();
         queryClient.invalidateQueries({ queryKey: queryKeys.positions(owner) });
         queryClient.invalidateQueries({ queryKey: queryKeys.positionsEnriched(owner) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.notifications(owner) });
       }
     },
     onError: (error, _vars, context) => {

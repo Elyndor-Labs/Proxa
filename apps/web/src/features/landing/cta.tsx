@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { launchAppLabel } from "@/features/landing/mock-demo-cta";
 
 export function CtaSection() {
   return (
@@ -10,10 +9,7 @@ export function CtaSection() {
         <p className="mt-3 text-lg text-muted-foreground">Now you know how it works. Jump in.</p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Button variant="brand" size="lg" asChild>
-            <Link href="/markets">{launchAppLabel()}</Link>
-          </Button>
-          <Button variant="outline" size="lg" asChild>
-            <Link href="/leaderboard">View Leaderboard</Link>
+            <Link href="/markets">Launch App</Link>
           </Button>
         </div>
       </div>

@@ -8,13 +8,13 @@ import { cn } from "@/lib/utils";
 
 const STEPS = [
   {
-    title: "Pick a Free Market",
+    title: "Pick a Market",
     description:
-      "Every market is tied to a live event — a stream, podcast, or tournament. Each has words you can trade on.",
+      "Every market is tied to a live event — a stream, podcast, or tournament. Each has outcomes you can trade on.",
     markets: [
-      { icon: "🎙️", title: "Joe Rogan #2210: Elon Musk", tag: "Free", words: ["Mars 72¢", "simulation 58¢"], traders: 847 },
-      { icon: "🗣️", title: "Presidential Debate Night", tag: "Free", words: ["tariffs 69¢", "border 85¢"], traders: 4521 },
-      { icon: "💻", title: "Apple WWDC Keynote", tag: "Paid", words: ["AI 96¢", "Vision 71¢"], traders: 1402 },
+      { icon: "🎙️", title: "Joe Rogan #2210: Elon Musk", words: ["Mars 72¢", "simulation 58¢"] },
+      { icon: "🗣️", title: "Presidential Debate Night", words: ["tariffs 69¢", "border 85¢"] },
+      { icon: "💻", title: "Apple WWDC Keynote", words: ["AI 96¢", "Vision 71¢"] },
     ],
   },
   {
@@ -63,9 +63,6 @@ function StepContent({ step }: { step: number }) {
                 <div>
                   <p className="font-label text-sm font-medium">{market.title}</p>
                   <div className="mt-1 flex flex-wrap gap-1">
-                    <span className="rounded bg-brand/15 px-1.5 py-0.5 font-label text-[10px] text-brand">
-                      {market.tag}
-                    </span>
                     {market.words.map((w) => (
                       <span key={w} className="font-label text-[10px] text-muted-foreground">
                         {w}
@@ -74,9 +71,6 @@ function StepContent({ step }: { step: number }) {
                   </div>
                 </div>
               </div>
-              <span className="shrink-0 font-label text-[10px] text-muted-foreground">
-                {market.traders.toLocaleString()} traders
-              </span>
             </div>
           </div>
         ))}

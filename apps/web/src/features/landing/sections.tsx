@@ -162,7 +162,7 @@ function StepPreview({ type }: { type: (typeof TRADE_FLOW_STEPS)[number]["previe
           <span>+$66.20 (+132%)</span>
         </div>
       </div>
-      <p className="mt-4 text-center font-label text-sm text-brand">+$66.20 earned! · 33 points added</p>
+      <p className="mt-4 text-center font-label text-sm text-brand">+$66.20 earned!</p>
     </div>
   );
 }
@@ -183,106 +183,6 @@ export function HowItWorks() {
             </div>
           </div>
         ))}
-      </div>
-    </section>
-  );
-}
-
-export function CompeteSection() {
-  return (
-    <section className="px-[var(--container-padding)] py-20 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-[var(--content-max-width)]">
-        <p className="font-label text-xs uppercase tracking-widest text-muted-foreground">More than trading</p>
-        <h2 className="mt-2 font-display text-3xl font-bold">Compete. Climb. Flex.</h2>
-        <p className="mt-3 max-w-xl text-muted-foreground">
-          Every trade earns you points. Rack up achievements, climb the weekly leaderboard, and talk trash in market chat.
-        </p>
-
-        <div className="mt-10 grid gap-6 lg:grid-cols-3">
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="font-display font-semibold">How Points Work</h3>
-            <ul className="mt-4 space-y-2 font-label text-sm">
-              {[
-                { label: "Trade placed", pts: "+10" },
-                { label: "First trade bonus", pts: "+100" },
-                { label: "Won a market", pts: "+50" },
-                { label: "Chat messages", pts: "+2" },
-              ].map((item) => (
-                <li key={item.label} className="flex justify-between text-muted-foreground">
-                  <span>{item.label}</span>
-                  <span className="text-brand">{item.pts}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-4 border-t border-border pt-4 font-display text-xl font-bold">7,120 pts</p>
-          </div>
-
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="font-display font-semibold">Weekly Leaderboard</h3>
-            <ul className="mt-4 space-y-3 font-label text-sm">
-              {[
-                { rank: "🏆", name: "degen_dave", pts: "14,280" },
-                { rank: "🥈", name: "alpha_andy", pts: "11,450" },
-                { rank: "🥉", name: "clutch_queen", pts: "9,870" },
-                { rank: "👀", name: "you", pts: "7,120" },
-              ].map((entry) => (
-                <li key={entry.name} className="flex items-center justify-between">
-                  <span>
-                    {entry.rank} {entry.name}
-                  </span>
-                  <span className="text-muted-foreground">{entry.pts}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="font-display font-semibold">Achievements</h3>
-            <p className="mt-1 font-label text-xs text-muted-foreground">4/6 unlocked</p>
-            <ul className="mt-4 space-y-2 font-label text-sm">
-              {[
-                { icon: "🎯", name: "First Shot", pts: "+150" },
-                { icon: "🔥", name: "On Fire", pts: "+250" },
-                { icon: "🎰", name: "Hat Trick", pts: "+150" },
-              ].map((a) => (
-                <li key={a.name} className="flex items-center justify-between text-muted-foreground">
-                  <span>
-                    {a.icon} {a.name}
-                  </span>
-                  <span className="text-brand">{a.pts}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export function TwoWaysSection() {
-  return (
-    <section className="border-y border-border bg-card/50 px-[var(--container-padding)] py-20 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-[var(--content-max-width)]">
-        <p className="font-label text-xs uppercase tracking-widest text-muted-foreground">Two ways to play</p>
-        <h2 className="mt-2 font-display text-3xl font-bold">Pick your style.</h2>
-
-        <div className="mt-10 grid gap-6 sm:grid-cols-2">
-          <div className="rounded-xl border border-border bg-card p-8">
-            <span className="text-2xl">⛓️</span>
-            <h3 className="mt-4 font-display text-xl font-semibold">On-chain markets</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Real USDC. Trade on parametric props powered by Solana. Connect your wallet and trade with real stakes.
-            </p>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-8">
-            <span className="text-2xl">🎮</span>
-            <h3 className="mt-4 font-display text-xl font-semibold">Free markets</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Play tokens, no money needed. Same trading mechanics. Profit converts to platform points and leaderboard rank.
-            </p>
-          </div>
-        </div>
       </div>
     </section>
   );

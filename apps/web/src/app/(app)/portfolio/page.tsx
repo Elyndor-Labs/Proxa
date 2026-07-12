@@ -6,13 +6,13 @@ import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata: Metadata = createPageMetadata(
   "Portfolio",
-  "Your free market positions and trade history.",
+  "Your positions and trade history.",
 );
 
 export default function PortfolioPage() {
   return (
     <>
-      <PageHeader title="Portfolio" description="Your free market positions and trade history." />
+      <PageHeader title="Portfolio" description="Your positions and trade history." />
       <RequireWallet>
         <PositionList />
       </RequireWallet>

@@ -129,12 +129,16 @@ export const positionsListResponseSchema = z.union([
   wirePositionListSchema,
 ]);
 
-export const leaderboardEntrySchema = z.object({
-  address: z.string(),
-  displayAddress: z.string(),
-  totalStaked: z.string(),
-  totalWinnings: z.string(),
-  positionCount: z.number(),
+export const notificationSchema = z.object({
+  id: z.string(),
+  wallet: z.string(),
+  marketId: z.number(),
+  type: z.string(),
+  message: z.string(),
+  read: z.boolean(),
+  createdAt: z.string(),
 });
 
-export const leaderboardListSchema = z.array(leaderboardEntrySchema);
+export const notificationListSchema = z.object({
+  data: z.array(notificationSchema),
+});

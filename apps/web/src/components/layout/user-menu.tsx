@@ -3,8 +3,11 @@
 import { Bell, ChevronDown, User } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { NotificationsPanel } from "@/components/layout/notifications-panel";
 import { useMounted } from "@/hooks/use-mounted";
+import { useNotifications } from "@/hooks/use-notifications";
 import { useWalletAuth } from "@/hooks/use-wallet-auth";
+import { isApiEnabled } from "@/config/api";
 import { truncateAddress } from "@/lib/format/address";
 import { cn } from "@/lib/utils";
 
@@ -27,8 +30,12 @@ interface UserMenuProps {
 export function UserMenu({ className }: UserMenuProps) {
   const mounted = useMounted();
   const { ready, connected, publicKey, login, logout } = useWalletAuth();
+  const { data: notifications } = useNotifications();
   const [open, setOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const unreadCount = notifications?.filter((n) => !n.read).length ?? 0;
+  const showNotifications = isApiEnabled();
 
   useEffect(() => {
     if (!open) return;
@@ -82,9 +89,28 @@ export function UserMenu({ className }: UserMenuProps) {
         <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
       </button>
 
-      <button type="button" className="nav-icon-btn" aria-label="Notifications">
-        <Bell className="h-4 w-4" />
-      </button>
+      {showNotifications && (
+        <div className="relative">
+          <button
+            type="button"
+            className="nav-icon-btn relative"
+            aria-label="Notifications"
+            aria-expanded={notificationsOpen}
+            onClick={() => setNotificationsOpen((prev) => !prev)}
+          >
+            <Bell className="h-4 w-4" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 font-label text-[9px] font-bold text-brand-foreground">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </button>
+          <NotificationsPanel
+            open={notificationsOpen}
+            onClose={() => setNotificationsOpen(false)}
+          />
+        </div>
+      )}
 
       {open && (
         <div

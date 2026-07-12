@@ -1,6 +1,5 @@
 "use client";
 
-import { ApiModeBanner } from "@/components/layout/api-mode-banner";
 import { HowItWorksFab } from "@/components/layout/how-it-works-fab";
 import { MarketingFooter } from "@/components/layout/marketing-footer";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -23,7 +22,6 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className="flex min-h-dvh flex-col">
       <SiteHeader />
-      <ApiModeBanner />
       <main
         id="main-content"
         className={cn(

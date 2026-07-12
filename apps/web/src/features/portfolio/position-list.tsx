@@ -31,7 +31,6 @@ export function PositionList() {
   const stats = {
     markets: new Set(enriched?.map((p) => p.marketId) ?? []).size,
     tokensSpent: enriched?.reduce((sum, p) => sum + Number(formatStake(p.position.account.amount)), 0) ?? 0,
-    pointsEarned: Math.round((enriched?.length ?? 0) * 50),
     trades: enriched?.length ?? 0,
   };
 
@@ -51,13 +50,12 @@ export function PositionList() {
   const statItems = [
     { label: "Markets", value: stats.markets, highlight: false },
     { label: "Tokens Spent", value: stats.tokensSpent, highlight: false },
-    { label: "Points Earned", value: `+${stats.pointsEarned}`, highlight: true },
     { label: "Trades", value: stats.trades, highlight: false },
   ];
 
   return (
     <div className="animate-fade-in space-y-8">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-3">
         {statItems.map((stat, i) => (
           <div key={stat.label} className={cn("stat-tile", STAGGER[Math.min(i, 4)])}>
             <p className="section-label">{stat.label}</p>

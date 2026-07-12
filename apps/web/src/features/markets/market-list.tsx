@@ -4,7 +4,6 @@ import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { MarketCard } from "@/components/domain/market-card";
 import { FilterTabs } from "@/components/layout/filter-tabs";
-import { MarketSidebar } from "@/components/layout/market-sidebar";
 import { PageHeader } from "@/components/layout/page-header";
 import { useMarkets } from "@/hooks/use-markets";
 import { getApiErrorMessage } from "@/lib/api/errors";
@@ -14,12 +13,11 @@ import { cn } from "@/lib/utils";
 
 const STAGGER = ["animate-slide-up-delay-1", "animate-slide-up-delay-2", "animate-slide-up-delay-3", "animate-slide-up-delay-4"] as const;
 
-type MarketTypeFilter = "all" | "free" | "paid";
-
-const TYPE_TABS = [
-  { label: "All Markets", value: "all" },
-  { label: "Free", value: "free", count: 2 },
-  { label: "Paid", value: "paid", count: 1 },
+const STATUS_TABS = [
+  { label: "Open", value: "open" },
+  { label: "Resolved", value: "resolved" },
+  { label: "Voided", value: "voided" },
+  { label: "All", value: "all" },
 ];
 
 interface MarketFiltersProps {
@@ -28,76 +26,63 @@ interface MarketFiltersProps {
 }
 
 function MarketFilters({ initialQuery, data }: MarketFiltersProps) {
-  const [typeFilter, setTypeFilter] = useState<MarketTypeFilter>("all");
   const [status, setStatus] = useState<MarketStatusFilter>("open");
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get("q") ?? initialQuery;
 
   const filtered = useMemo(() => {
-    let results = filterMarkets(data, { query: urlQuery, status: status === "open" ? "open" : status });
-
-    if (typeFilter === "free") {
-      results = results.filter((_, i) => i % 2 === 0);
-    } else if (typeFilter === "paid") {
-      results = results.filter((_, i) => i % 2 === 1);
-    }
-
-    return results;
-  }, [data, urlQuery, status, typeFilter]);
+    return filterMarkets(data, { query: urlQuery, status });
+  }, [data, urlQuery, status]);
 
   const featured = filtered[0];
   const rest = filtered.slice(1);
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
-      <div>
-        <FilterTabs
-          tabs={TYPE_TABS}
-          value={typeFilter}
-          onChange={(v) => setTypeFilter(v as MarketTypeFilter)}
-          aria-label="Market type"
-          className="mb-6"
-        />
+    <div>
+      <FilterTabs
+        tabs={STATUS_TABS}
+        value={status}
+        onChange={(v) => setStatus(v as MarketStatusFilter)}
+        aria-label="Market status"
+        className="mb-6"
+      />
 
-        {featured && (
-          <div className="mb-6">
-            <MarketCard
-              view={featured.view}
-              odds={Array.from({ length: featured.view.numBuckets }, (_, i) =>
-                formatOdds(featured.record.account, i),
-              )}
-              featured
-            />
-          </div>
-        )}
+      {featured && (
+        <div className="mb-6">
+          <MarketCard
+            view={featured.view}
+            odds={Array.from({ length: featured.view.numBuckets }, (_, i) =>
+              formatOdds(featured.record.account, i),
+            )}
+            featured
+          />
+        </div>
+      )}
 
-        {!filtered.length ? (
-          <div className="surface p-8 text-center">
-            <p className="font-display text-lg font-bold">No markets found</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {data.length ? "Try adjusting your filters." : "No markets available yet."}
-            </p>
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {rest.map(({ record, view }, i) => (
-              <div key={view.id} className={cn(STAGGER[i % STAGGER.length])}>
-                <MarketCard
-                  view={view}
-                  odds={Array.from({ length: view.numBuckets }, (_, j) => formatOdds(record.account, j))}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <MarketSidebar />
+      {!filtered.length ? (
+        <div className="surface p-8 text-center">
+          <p className="font-display text-lg font-bold">No markets found</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {data.length ? "Try adjusting your filters." : "No markets available yet."}
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {rest.map(({ record, view }, i) => (
+            <div key={view.id} className={cn(STAGGER[i % STAGGER.length])}>
+              <MarketCard
+                view={view}
+                odds={Array.from({ length: view.numBuckets }, (_, j) => formatOdds(record.account, j))}
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-/** Market grid with type filters and sidebar. */
+/** Market grid with status filters. */
 export function MarketList() {
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get("q") ?? "";

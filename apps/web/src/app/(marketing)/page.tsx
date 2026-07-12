@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { CtaSection } from "@/features/landing/cta";
 import { Hero } from "@/features/landing/hero";
-import { CompeteSection, HowItWorks, TwoWaysSection } from "@/features/landing/sections";
+import { HowItWorks } from "@/features/landing/sections";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata: Metadata = createPageMetadata(
@@ -14,8 +14,6 @@ export default function LandingPage() {
     <>
       <Hero />
       <HowItWorks />
-      <CompeteSection />
-      <TwoWaysSection />
       <CtaSection />
     </>
   );

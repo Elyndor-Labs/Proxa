@@ -7,7 +7,6 @@ import { useState } from "react";
 import { PortfolioCash } from "@/components/layout/portfolio-cash";
 import { UserMenu } from "@/components/layout/user-menu";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
-import { isMockDemo } from "@/config/api";
 import { primaryNav } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
@@ -85,19 +84,6 @@ export function SiteHeader() {
             <PortfolioCash />
 
             <UserMenu />
-
-            {isMockDemo() && (
-              <span
-                className="hidden rounded-md border px-2 py-1 font-label text-[10px] font-semibold uppercase tracking-wider sm:inline"
-                style={{
-                  borderColor: "rgba(74, 222, 128, 0.25)",
-                  backgroundColor: "rgba(74, 222, 128, 0.08)",
-                  color: "var(--brand)",
-                }}
-              >
-                Test
-              </span>
-            )}
 
             <button
               type="button"
