@@ -1,18 +1,18 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletButton } from "@/components/domain/wallet-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useWalletAuth } from "@/hooks/use-wallet-auth";
 
 interface RequireWalletProps {
   children: ReactNode;
   fallback?: ReactNode;
 }
 
-/** Renders children only when a wallet is connected. */
+/** Renders children only when a wallet is connected via Privy. */
 export function RequireWallet({ children, fallback }: RequireWalletProps) {
-  const { connected } = useWallet();
+  const { connected } = useWalletAuth();
 
   if (!connected) {
     return fallback ?? <ConnectPrompt />;
@@ -26,7 +26,9 @@ function ConnectPrompt() {
     <Card className="mx-auto max-w-md">
       <CardHeader className="text-center">
         <CardTitle>Connect your wallet</CardTitle>
-        <CardDescription>A Solana wallet is required to view your portfolio and place bets.</CardDescription>
+        <CardDescription>
+          Sign in with email, social, or a Solana wallet to view your portfolio and place bets.
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex justify-center">
         <WalletButton size="lg" />

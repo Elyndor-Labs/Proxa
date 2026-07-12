@@ -1,9 +1,11 @@
 "use client";
 
-import { BN } from "@coral-xyz/anchor";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { BN } from "@coral-xyz/anchor";
 import { useProxaClient } from "@/hooks/use-proxa-client";
+import { isApiEnabled } from "@/config/api";
+import { fetchMarketRecord } from "@/lib/api/markets";
 import { toMarketView } from "@/lib/proxa/market-view";
 import { queryKeys } from "@/lib/proxa/query-keys";
 
@@ -21,14 +23,14 @@ export function useMarket(marketId: string, options: UseMarketOptions = {}) {
   const query = useQuery({
     queryKey: queryKeys.market(marketId),
     queryFn: async () => {
-      const account = await client.fetchMarket(new BN(marketId));
-      return { account, view: toMarketView(account) };
+      const record = await fetchMarketRecord(marketId, client);
+      return { account: record.account, view: toMarketView(record.account) };
     },
     enabled: Boolean(marketId),
   });
 
   useEffect(() => {
-    if (!subscribe || !marketId) return;
+    if (!subscribe || !marketId || isApiEnabled()) return;
 
     const listener = client.onMarketChange(new BN(marketId), () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.market(marketId) });

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useMarkets } from "@/hooks/use-markets";
+import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatOdds } from "@/lib/format/odds";
 import { filterMarkets, type MarketStatusFilter } from "@/lib/proxa/filters";
 import { uniqueFixtures } from "@/lib/proxa/stat-options";
@@ -20,57 +21,25 @@ const STATUS_FILTERS: { label: string; value: MarketStatusFilter }[] = [
   { label: "Voided", value: "voided" },
 ];
 
-/** On-chain market grid with search and status filters. */
-export function MarketList() {
-  const searchParams = useSearchParams();
-  const initialQuery = searchParams.get("q") ?? "";
+interface MarketFiltersProps {
+  initialQuery: string;
+  data: NonNullable<ReturnType<typeof useMarkets>["data"]>;
+}
 
+/** Search and filter controls — remounts when the URL query changes. */
+function MarketFilters({ initialQuery, data }: MarketFiltersProps) {
   const [query, setQuery] = useState(initialQuery);
   const [status, setStatus] = useState<MarketStatusFilter>("all");
 
-  const { data, isLoading, isError, error } = useMarkets();
-
   const filtered = useMemo(
-    () => (data ? filterMarkets(data, { query, status }) : []),
+    () => filterMarkets(data, { query, status }),
     [data, query, status],
   );
 
-  const fixtures = useMemo(
-    () => (data ? uniqueFixtures(data.map((m) => m.view.fixtureId)) : []),
-    [data],
-  );
-
-  if (isLoading) {
-    return (
-      <>
-        <PageHeader title="Live Markets" description="Browse parametric props across all active feeds." />
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-48 animate-pulse rounded-xl bg-muted" />
-          ))}
-        </div>
-      </>
-    );
-  }
-
-  if (isError) {
-    return (
-      <>
-        <PageHeader title="Live Markets" description="Browse parametric props across all active feeds." />
-        <Card className="border-destructive/40">
-          <CardHeader>
-            <CardTitle>Failed to load markets</CardTitle>
-            <CardDescription>{error instanceof Error ? error.message : "Unknown error"}</CardDescription>
-          </CardHeader>
-        </Card>
-      </>
-    );
-  }
+  const fixtures = useMemo(() => uniqueFixtures(data.map((m) => m.view.fixtureId)), [data]);
 
   return (
     <>
-      <PageHeader title="Live Markets" description="Browse parametric props across all active feeds." />
-
       <div className="mb-6 space-y-4">
         <Input
           placeholder="Search by market ID, fixture, or stat…"
@@ -113,7 +82,7 @@ export function MarketList() {
           <CardHeader>
             <CardTitle>No markets found</CardTitle>
             <CardDescription>
-              {data?.length ? "Try adjusting your search or filters." : "No markets on-chain yet."}
+              {data.length ? "Try adjusting your search or filters." : "No markets available yet."}
             </CardDescription>
           </CardHeader>
         </Card>
@@ -128,6 +97,47 @@ export function MarketList() {
           ))}
         </div>
       )}
+    </>
+  );
+}
+
+/** Market grid with search and status filters. */
+export function MarketList() {
+  const searchParams = useSearchParams();
+  const urlQuery = searchParams.get("q") ?? "";
+  const { data, isLoading, isError, error } = useMarkets();
+
+  if (isLoading) {
+    return (
+      <>
+        <PageHeader title="Live Markets" description="Browse parametric props across all active feeds." />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-48 animate-pulse rounded-xl bg-muted" />
+          ))}
+        </div>
+      </>
+    );
+  }
+
+  if (isError) {
+    return (
+      <>
+        <PageHeader title="Live Markets" description="Browse parametric props across all active feeds." />
+        <Card className="border-destructive/40">
+          <CardHeader>
+            <CardTitle>Failed to load markets</CardTitle>
+            <CardDescription>{getApiErrorMessage(error)}</CardDescription>
+          </CardHeader>
+        </Card>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <PageHeader title="Live Markets" description="Browse parametric props across all active feeds." />
+      {data ? <MarketFilters key={urlQuery} initialQuery={urlQuery} data={data} /> : null}
     </>
   );
 }

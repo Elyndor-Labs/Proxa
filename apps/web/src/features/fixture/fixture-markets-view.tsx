@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFixtureMarkets } from "@/hooks/use-fixture-markets";
+import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatOdds } from "@/lib/format/odds";
 
 interface FixtureMarketsViewProps {
@@ -14,13 +15,29 @@ interface FixtureMarketsViewProps {
 
 /** All markets for a single fixture. */
 export function FixtureMarketsView({ fixtureId }: FixtureMarketsViewProps) {
-  const { data, isLoading, isError } = useFixtureMarkets(fixtureId);
+  const { data, isLoading, isError, error } = useFixtureMarkets(fixtureId);
 
   if (isLoading) {
     return <div className="h-48 animate-pulse rounded-xl bg-muted" />;
   }
 
-  if (isError || !data) {
+  if (isError) {
+    return (
+      <Card className="border-destructive/40">
+        <CardHeader>
+          <CardTitle>Unable to load fixture</CardTitle>
+          <CardDescription>{getApiErrorMessage(error)}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="outline" asChild>
+            <Link href="/markets">Back to markets</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!data?.length) {
     return (
       <Card className="border-destructive/40">
         <CardHeader>

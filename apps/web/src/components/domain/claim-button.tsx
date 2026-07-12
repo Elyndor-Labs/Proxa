@@ -2,6 +2,7 @@
 
 import type { BN } from "@coral-xyz/anchor";
 import { useClaim } from "@/hooks/use-claim";
+import { useProxaClient } from "@/hooks/use-proxa-client";
 import { Button } from "@/components/ui/button";
 import { formatStake } from "@/lib/format/odds";
 
@@ -15,8 +16,9 @@ interface ClaimButtonProps {
 /** One-click claim for settled winning positions. */
 export function ClaimButton({ marketId, bucket, claimable, size = "sm" }: ClaimButtonProps) {
   const claim = useClaim();
+  const { canTransact } = useProxaClient();
 
-  if (claimable.isZero()) return null;
+  if (claimable.isZero() || !canTransact) return null;
 
   return (
     <Button

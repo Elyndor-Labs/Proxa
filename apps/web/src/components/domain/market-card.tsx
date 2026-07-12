@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SettlementBadge } from "@/components/domain/settlement-badge";
+import { LiveCloseLabel } from "@/components/domain/live-close-label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { MarketView } from "@/lib/proxa/market-view";
@@ -48,7 +49,9 @@ export function MarketCard({ view, odds, variant = "full", hot }: MarketCardProp
             </div>
             <div>
               <dt className="text-muted-foreground">Closes</dt>
-              <dd className="font-medium">{view.betsCloseLabel}</dd>
+              <dd className="font-medium">
+                <LiveCloseLabel targetMs={view.betsCloseTs} />
+              </dd>
             </div>
           </dl>
         )}

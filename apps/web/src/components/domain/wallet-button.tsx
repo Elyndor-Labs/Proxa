@@ -1,23 +1,32 @@
 "use client";
 
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMounted } from "@/hooks/use-mounted";
+import { useWalletAuth } from "@/hooks/use-wallet-auth";
 import { truncateAddress } from "@/lib/format/address";
 
 interface WalletButtonProps {
   size?: "default" | "sm" | "lg";
 }
 
-/** Connect / disconnect wallet control styled for the Velocity Grid design system. */
+/** Disconnect Phantom/Solflare after Privy logout to avoid stale SIWS state. */
+async function disconnectExternalSolanaWallet() {
+  const provider = (window as Window & { solana?: { disconnect?: () => Promise<void> } }).solana;
+  if (!provider?.disconnect) return;
+  try {
+    await provider.disconnect();
+  } catch {
+    // Ignore — extension may already be disconnected.
+  }
+}
+
+/** Connect / disconnect control backed by Privy auth. */
 export function WalletButton({ size = "default" }: WalletButtonProps) {
   const mounted = useMounted();
-  const { connected, publicKey, disconnect } = useWallet();
-  const { setVisible } = useWalletModal();
+  const { ready, connected, publicKey, login, logout } = useWalletAuth();
 
-  if (!mounted) {
+  if (!mounted || !ready) {
     return (
       <Button type="button" variant="brand" size={size} disabled aria-hidden tabIndex={-1}>
         Connect Wallet
@@ -31,7 +40,10 @@ export function WalletButton({ size = "default" }: WalletButtonProps) {
         type="button"
         variant="outline"
         size={size}
-        onClick={() => disconnect()}
+        onClick={async () => {
+          await logout();
+          await disconnectExternalSolanaWallet();
+        }}
         className="gap-2 font-mono"
         aria-label="Disconnect wallet"
       >
@@ -42,7 +54,7 @@ export function WalletButton({ size = "default" }: WalletButtonProps) {
   }
 
   return (
-    <Button type="button" variant="brand" size={size} onClick={() => setVisible(true)}>
+    <Button type="button" variant="brand" size={size} onClick={() => login()}>
       Connect Wallet
     </Button>
   );

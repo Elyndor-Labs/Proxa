@@ -14,7 +14,9 @@ function mockMarket(overrides: Partial<MarketView> = {}): { view: MarketView } {
       totalPool: "$100",
       numBuckets: 2,
       bucketLabels: ["0-1", "2+"],
+      bucketPools: ["$50", "$50"],
       betsCloseLabel: "Soon",
+      betsCloseTs: Date.now() + 3_600_000,
       ...overrides,
     },
   };

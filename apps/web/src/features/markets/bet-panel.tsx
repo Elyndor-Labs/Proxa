@@ -2,7 +2,7 @@
 
 import { previewBet, toBaseUnits, type MarketAccount } from "@proxa/sdk";
 import { useState } from "react";
-import { WalletButton } from "@/components/domain/wallet-button";
+import { TxActionFallback } from "@/components/domain/tx-action-fallback";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -125,9 +125,7 @@ export function BetPanel({ marketId, view, account }: BetPanelProps) {
               </Button>
             </>
           ) : (
-            <div className="flex justify-center">
-              <WalletButton size="lg" />
-            </div>
+            <TxActionFallback size="lg" />
           )}
         </div>
       </CardContent>

@@ -5,8 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMarkets } from "@/hooks/use-markets";
 import { SettlementBadge } from "@/components/domain/settlement-badge";
+import { isApiEnabled } from "@/config/api";
 
-/** Live on-chain market status feed — settlement state per market. */
+/** Market status feed — settlement state per market. */
 export function OracleFeedTable() {
   const { data, isLoading } = useMarkets();
 
@@ -17,12 +18,15 @@ export function OracleFeedTable() {
   if (!data?.length) return null;
 
   const rows = data.slice(0, 10);
+  const source = isApiEnabled() ? "API" : "on-chain";
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Market Settlement Feed</CardTitle>
-        <CardDescription>On-chain market status — resolved markets have verified TxLINE proofs.</CardDescription>
+        <CardDescription>
+          {source} market status — resolved markets have verified TxLINE proofs.
+        </CardDescription>
       </CardHeader>
       <CardContent className="overflow-x-auto">
         <table className="w-full min-w-[640px] font-label text-sm">

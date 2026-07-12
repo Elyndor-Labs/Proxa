@@ -9,10 +9,14 @@ const nextConfig: NextConfig = {
   transpilePackages: ["@coral-xyz/anchor"],
   turbopack: {
     resolveAlias: {
-      "@proxa/sdk": "../../packages/sdk/src/index.ts",
+      "@proxa/sdk": "../../packages/sdk/dist/index.js",
     },
   },
   webpack: (config) => {
+    config.externals["@solana/kit"] = "commonjs @solana/kit";
+    config.externals["@solana-program/memo"] = "commonjs @solana-program/memo";
+    config.externals["@solana-program/system"] = "commonjs @solana-program/system";
+    config.externals["@solana-program/token"] = "commonjs @solana-program/token";
     config.resolve.alias = {
       ...config.resolve.alias,
       "@proxa/sdk": path.resolve(root, "../../packages/sdk/dist"),

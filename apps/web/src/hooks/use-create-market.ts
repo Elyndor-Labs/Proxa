@@ -1,6 +1,7 @@
 "use client";
 
-import { useAnchorWallet } from "@solana/wallet-adapter-react";
+import { assertCanSubmitOnChainTx } from "@/config/api";
+import { useAnchorWallet } from "@/hooks/use-anchor-wallet";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Transaction } from "@solana/web3.js";
 import { useProxaClient } from "@/hooks/use-proxa-client";
@@ -27,6 +28,7 @@ export function useCreateMarket() {
   return useMutation({
     mutationFn: async (input: CreateMarketInput) => {
       if (!wallet?.publicKey) throw new Error("Wallet not connected");
+      assertCanSubmitOnChainTx(true);
 
       const config = await client.fetchConfig();
       if (!config.authority.equals(wallet.publicKey)) {
