@@ -116,7 +116,7 @@ function MarketsMockup() {
 
 export function ProductShowcase() {
   return (
-    <section className="relative overflow-hidden pt-2 pb-0">
+    <section className="relative pt-2 pb-0">
       <div className="landing-showcase-shell px-[var(--container-padding)]">
         <ContainerScroll
           titleComponent={
