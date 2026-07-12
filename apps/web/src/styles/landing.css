@@ -1,3 +1,24 @@
+.landing-hero {
+  background: linear-gradient(180deg, rgba(74, 222, 128, 0.03) 0%, var(--background) 45%);
+}
+
+.landing-cta-card {
+  box-shadow:
+    0 0 0 1px rgba(74, 222, 128, 0.08),
+    0 24px 64px -24px rgba(0, 0, 0, 0.65),
+    0 0 80px -20px rgba(74, 222, 128, 0.12);
+}
+
+.landing-stat-tile:hover,
+.landing-feature-card:hover,
+.landing-step-card:hover {
+  transform: translateY(-2px);
+}
+
+.landing-market-card {
+  will-change: transform;
+}
+
 @keyframes fade-in-up {
   from {
     opacity: 0;
@@ -59,7 +80,10 @@
   .animate-fade-in-up-delay-2,
   .animate-fade-in-up-delay-3,
   .animate-pulse-glow,
-  .animate-marquee {
+  .animate-marquee,
+  .landing-stat-tile:hover,
+  .landing-feature-card:hover,
+  .landing-step-card:hover {
     animation: none;
     opacity: 1;
     transform: none;

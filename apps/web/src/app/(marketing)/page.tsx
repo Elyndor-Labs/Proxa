@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { CtaSection } from "@/features/landing/cta";
+import { FaqSection } from "@/features/landing/faq-section";
+import { FeaturesSection } from "@/features/landing/features-section";
 import { Hero } from "@/features/landing/hero";
-import { HowItWorks } from "@/features/landing/sections";
+import { ProductShowcase } from "@/features/landing/product-showcase";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata: Metadata = createPageMetadata(
@@ -13,7 +15,9 @@ export default function LandingPage() {
   return (
     <>
       <Hero />
-      <HowItWorks />
+      <ProductShowcase />
+      <FeaturesSection />
+      <FaqSection />
       <CtaSection />
     </>
   );

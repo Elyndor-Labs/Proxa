@@ -1,9 +1,9 @@
 "use client";
 
-import { Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { GooeyInput } from "@/components/ui/gooey-input";
 import { PortfolioCash } from "@/components/layout/portfolio-cash";
 import { UserMenu } from "@/components/layout/user-menu";
 import { useMounted } from "@/hooks/use-mounted";
@@ -19,8 +19,7 @@ export function SiteHeader() {
   const { ready, connected } = useWalletAuth();
   const [search, setSearch] = useState("");
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitSearch = () => {
     const q = search.trim();
     router.push(q ? `/markets?q=${encodeURIComponent(q)}` : "/markets");
   };
@@ -61,21 +60,19 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        {/* Search — grows between nav and actions */}
-        <form
-          onSubmit={handleSearch}
-          className="relative ml-auto hidden min-w-0 flex-1 md:block md:max-w-xs lg:max-w-sm xl:max-w-md"
-        >
-          <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="search"
-            placeholder="Search markets…"
-            aria-label="Search markets"
+        {/* Gooey search */}
+        <div className="relative ml-auto hidden min-w-0 md:block">
+          <GooeyInput
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="nav-search"
+            onValueChange={setSearch}
+            onSubmit={submitSearch}
+            placeholder="Search markets…"
+            collapsedWidth={130}
+            expandedWidth={260}
+            expandedOffset={48}
+            className="justify-end"
           />
-        </form>
+        </div>
 
         {/* Right actions */}
         <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">

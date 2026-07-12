@@ -1,12 +1,13 @@
-/**
- * Radial glow that fades from a blue bloom at the top into white.
- */
-export default function GradientGlowFade() {
-    return (
-      <div
-        aria-hidden
-        className="absolute z-30 inset-0 [background:radial-gradient(125%_125%_at_50%_0%,transparent_40%,var(--color-blue-600),var(--color-white)_100%)]"
-      />
-    );
-  }
-  
+/** Radial glow — brand green bloom fading into the page background. */
+export default function GradientGlowFade({ className }: { className?: string }) {
+  return (
+    <div
+      aria-hidden
+      className={className}
+      style={{
+        background:
+          "radial-gradient(125% 125% at 50% 0%, transparent 35%, rgba(74, 222, 128, 0.12) 55%, var(--background) 100%)",
+      }}
+    />
+  );
+}

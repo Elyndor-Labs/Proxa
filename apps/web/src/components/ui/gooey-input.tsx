@@ -93,6 +93,7 @@ export interface GooeyInputProps {
   defaultValue?: string;
   onValueChange?: (value: string) => void;
   onOpenChange?: (open: boolean) => void;
+  onSubmit?: () => void;
   disabled?: boolean;
 }
 
@@ -108,6 +109,7 @@ export function GooeyInput({
   defaultValue = "",
   onValueChange,
   onOpenChange,
+  onSubmit,
   disabled = false,
 }: GooeyInputProps) {
   const reactId = useId();
@@ -174,6 +176,16 @@ export function GooeyInput({
     if (!searchText) setExpanded(false);
   }, [searchText, setExpanded]);
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        onSubmit?.();
+      }
+    },
+    [onSubmit],
+  );
+
   const surfaceClass =
     "bg-foreground text-background shadow-sm ring-1 ring-border/60";
 
@@ -223,6 +235,7 @@ export function GooeyInput({
               value={searchText}
               onChange={handleChange}
               onBlur={handleBlur}
+              onKeyDown={handleKeyDown}
               disabled={disabled || !isExpanded}
               placeholder={placeholder}
               className={cn(
