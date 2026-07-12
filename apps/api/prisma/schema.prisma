@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Fixture {
+  id        Int      @id
+  homeTeam  String
+  awayTeam  String
+  league    String
+  startsAt  DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  markets   Market[]
+}
+
+model Market {
+  id            Int            @id
+  fixtureId     Int
+  statKey       Int
+  statLabel     String
+  status        String         @default("open")
+  winningBucket Int?
+  resolvedAt    DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  fixture       Fixture        @relation(fields: [fixtureId], references: [id])
+  notifications Notification[]
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  wallet    String
+  marketId  Int
+  market    Market   @relation(fields: [marketId], references: [id])
+  type      String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([wallet])
+  @@index([marketId])
+}
