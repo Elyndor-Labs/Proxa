@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.32.1",
+    "@prisma/client": "^7.8.0",
     "@proxa/sdk": "workspace:*",
     "@solana/web3.js": "^1.98.0",
     "cors": "^2.8.5",
@@ -25,6 +26,7 @@
     "@types/express-rate-limit": "^6.0.2",
     "@types/node": "^22.10.0",
     "@types/ws": "^8.18.1",
+    "prisma": "^7.8.0",
     "rimraf": "^5.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.0"
