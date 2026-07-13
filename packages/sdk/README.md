@@ -32,7 +32,7 @@ const txline = new TxLineClient(DEVNET);
 const markets = await proxa.fetchAllMarkets();
 const market = (await proxa.fetchMarketsByFixture(17952170))[0].account;
 
-// projected payout if bucket 2 wins, for a 5 USDT stake (6-decimal collateral)
+// projected payout if bucket 2 wins, for a 5 USDC stake (6-decimal collateral)
 const preview = previewBet(market, 2, toBaseUnits("5", 6));
 console.log(preview.projectedPayout.toString(), preview.multiplierBps / 10000, "x");
 ```

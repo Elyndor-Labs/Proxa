@@ -1,119 +1,177 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
+import { CandidateMarketCard } from "@/components/domain/candidate-market-card";
 import { MarketCard } from "@/components/domain/market-card";
+import { FilterTabs } from "@/components/layout/filter-tabs";
 import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useFixtures } from "@/hooks/use-fixtures";
 import { useMarkets } from "@/hooks/use-markets";
 import { getApiErrorMessage } from "@/lib/api/errors";
+import type { FixtureDetail } from "@/lib/api/fixtures";
 import { formatOdds } from "@/lib/format/odds";
 import { filterMarkets, type MarketStatusFilter } from "@/lib/proxa/filters";
-import { uniqueFixtures } from "@/lib/proxa/stat-options";
+import { cn } from "@/lib/utils";
 
-const STATUS_FILTERS: { label: string; value: MarketStatusFilter }[] = [
-  { label: "All", value: "all" },
+const STAGGER = ["animate-slide-up-delay-1", "animate-slide-up-delay-2", "animate-slide-up-delay-3", "animate-slide-up-delay-4"] as const;
+
+const STATUS_TABS = [
   { label: "Open", value: "open" },
-  { label: "Settled", value: "resolved" },
+  { label: "Resolved", value: "resolved" },
   { label: "Voided", value: "voided" },
+  { label: "All", value: "all" },
 ];
+
+interface TxOddsCandidateSectionProps {
+  fixtures: FixtureDetail[];
+  isLoading: boolean;
+  isError: boolean;
+  error: unknown;
+}
 
 interface MarketFiltersProps {
   initialQuery: string;
   data: NonNullable<ReturnType<typeof useMarkets>["data"]>;
 }
 
-/** Search and filter controls — remounts when the URL query changes. */
-function MarketFilters({ initialQuery, data }: MarketFiltersProps) {
-  const [query, setQuery] = useState(initialQuery);
-  const [status, setStatus] = useState<MarketStatusFilter>("all");
+function TxOddsCandidateSection({ fixtures, isLoading, isError, error }: TxOddsCandidateSectionProps) {
+  const candidates = useMemo(() => {
+    return fixtures
+      .flatMap((fixture) =>
+        fixture.candidates.map((candidate) => ({
+          fixture,
+          candidate,
+          odds: fixture.odds.filter((odd) => odd.marketKey === candidate.sourceMarketId),
+        })),
+      )
+      .slice(0, 6);
+  }, [fixtures]);
 
-  const filtered = useMemo(
-    () => filterMarkets(data, { query, status }),
-    [data, query, status],
-  );
+  if (isLoading) {
+    return (
+      <section className="mt-10 space-y-4">
+        <div className="h-7 w-56 animate-pulse rounded-lg bg-muted" />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="surface h-64 animate-pulse rounded-2xl" />
+          ))}
+        </div>
+      </section>
+    );
+  }
 
-  const fixtures = useMemo(() => uniqueFixtures(data.map((m) => m.view.fixtureId)), [data]);
+  if (isError) {
+    return (
+      <section className="mt-10 surface border-destructive/30 p-6">
+        <p className="font-display font-semibold text-destructive">Failed to load TXOdds candidates</p>
+        <p className="mt-1 text-sm text-muted-foreground">{getApiErrorMessage(error)}</p>
+      </section>
+    );
+  }
+
+  if (!candidates.length) return null;
 
   return (
-    <>
-      <div className="mb-6 space-y-4">
-        <Input
-          placeholder="Search by market ID, fixture, or stat…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          aria-label="Search markets"
-        />
-
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by status">
-          {STATUS_FILTERS.map((f) => (
-            <button
-              key={f.value}
-              type="button"
-              onClick={() => setStatus(f.value)}
-              aria-pressed={status === f.value}
-              className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <Badge variant={status === f.value ? "brand" : "outline"} className="cursor-pointer px-3 py-1">
-                {f.label}
-              </Badge>
-            </button>
-          ))}
+    <section className="mt-10 space-y-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="font-display text-lg font-bold">Upcoming from TXOdds</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Synced candidates waiting for review and on-chain launch.
+          </p>
         </div>
-
-        {fixtures.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {fixtures.slice(0, 6).map((fixtureId) => (
-              <Link key={fixtureId} href={`/fixture/${fixtureId}`}>
-                <Badge variant="muted" className="cursor-pointer hover:bg-muted/80">
-                  Fixture #{fixtureId}
-                </Badge>
-              </Link>
-            ))}
-          </div>
-        )}
+        <Button variant="ghost" size="sm" asChild>
+          <a href="#launched-markets">View launched markets</a>
+        </Button>
       </div>
 
-      {!filtered.length ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>No markets found</CardTitle>
-            <CardDescription>
-              {data.length ? "Try adjusting your search or filters." : "No markets available yet."}
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {filtered.map(({ record, view }) => (
-            <MarketCard
-              key={view.id}
-              view={view}
-              odds={Array.from({ length: view.numBuckets }, (_, i) => formatOdds(record.account, i))}
-            />
-          ))}
-        </div>
-      )}
-    </>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {candidates.map(({ fixture, candidate, odds }) => (
+          <CandidateMarketCard
+            key={candidate.id}
+            candidate={candidate}
+            fixture={fixture}
+            odds={odds}
+          />
+        ))}
+      </div>
+    </section>
   );
 }
 
-/** Market grid with search and status filters. */
+function MarketFilters({ initialQuery, data }: MarketFiltersProps) {
+  const [status, setStatus] = useState<MarketStatusFilter>("open");
+  const searchParams = useSearchParams();
+  const urlQuery = searchParams.get("q") ?? initialQuery;
+
+  const filtered = useMemo(() => {
+    return filterMarkets(data, { query: urlQuery, status });
+  }, [data, urlQuery, status]);
+
+  const featured = filtered[0];
+  const rest = filtered.slice(1);
+
+  return (
+    <div id="launched-markets">
+      <FilterTabs
+        tabs={STATUS_TABS}
+        value={status}
+        onChange={(v) => setStatus(v as MarketStatusFilter)}
+        aria-label="Market status"
+        className="mb-6"
+      />
+
+      {featured && (
+        <div className="mb-6">
+          <MarketCard
+            view={featured.view}
+            odds={Array.from({ length: featured.view.numBuckets }, (_, i) =>
+              formatOdds(featured.record.account, i),
+            )}
+            featured
+          />
+        </div>
+      )}
+
+      {!filtered.length ? (
+        <div className="surface p-8 text-center">
+          <p className="font-display text-lg font-bold">No markets found</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {data.length ? "Try adjusting your filters." : "No markets available yet."}
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {rest.map(({ record, view }, i) => (
+            <div key={view.id} className={cn(STAGGER[i % STAGGER.length])}>
+              <MarketCard
+                view={view}
+                odds={Array.from({ length: view.numBuckets }, (_, j) => formatOdds(record.account, j))}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Market grid with status filters. */
 export function MarketList() {
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get("q") ?? "";
   const { data, isLoading, isError, error } = useMarkets();
+  const fixturesQuery = useFixtures();
 
   if (isLoading) {
     return (
       <>
-        <PageHeader title="Live Markets" description="Browse parametric props across all active feeds." />
+        <PageHeader title="Markets" description="Browse prediction markets across all active events." />
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-48 animate-pulse rounded-xl bg-muted" />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="surface h-56 animate-pulse rounded-2xl" />
           ))}
         </div>
       </>
@@ -123,21 +181,25 @@ export function MarketList() {
   if (isError) {
     return (
       <>
-        <PageHeader title="Live Markets" description="Browse parametric props across all active feeds." />
-        <Card className="border-destructive/40">
-          <CardHeader>
-            <CardTitle>Failed to load markets</CardTitle>
-            <CardDescription>{getApiErrorMessage(error)}</CardDescription>
-          </CardHeader>
-        </Card>
+        <PageHeader title="Markets" description="Browse prediction markets across all active events." />
+        <div className="surface border-destructive/30 p-6">
+          <p className="font-display font-semibold text-destructive">Failed to load markets</p>
+          <p className="mt-1 text-sm text-muted-foreground">{getApiErrorMessage(error)}</p>
+        </div>
       </>
     );
   }
 
   return (
     <>
-      <PageHeader title="Live Markets" description="Browse parametric props across all active feeds." />
+      <PageHeader title="Markets" description="Browse prediction markets across all active events." />
       {data ? <MarketFilters key={urlQuery} initialQuery={urlQuery} data={data} /> : null}
+      <TxOddsCandidateSection
+        fixtures={fixturesQuery.data ?? []}
+        isLoading={fixturesQuery.isLoading}
+        isError={fixturesQuery.isError}
+        error={fixturesQuery.error}
+      />
     </>
   );
 }

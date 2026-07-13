@@ -1,3 +1,70 @@
+/* Landing page — clean solid background, centered columns */
+
+.landing-page {
+  background-color: var(--background);
+}
+
+body:has(.landing-page) {
+  background-image: none;
+}
+
+.landing-hero {
+  background-color: var(--background);
+}
+
+/* Narrow column for hero copy */
+.landing-shell {
+  width: min(78vw, 52rem);
+  margin-inline: auto;
+}
+
+/* Wider column for scroll showcase */
+.landing-showcase-shell {
+  width: min(94vw, 72rem);
+  margin-inline: auto;
+}
+
+.landing-hero-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-block: 2.5rem 1rem;
+}
+
+@media (min-width: 1024px) {
+  .landing-shell {
+    width: min(72vw, 56rem);
+  }
+
+  .landing-showcase-shell {
+    width: min(90vw, 76rem);
+  }
+
+  .landing-hero-stage {
+    padding-block: 3rem 1.25rem;
+  }
+}
+
+.landing-cta-card {
+  box-shadow:
+    0 24px 64px -24px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.landing-feature-card,
+.landing-step-card {
+  min-height: 11rem;
+}
+
+.landing-feature-card:hover,
+.landing-step-card:hover {
+  transform: translateY(-2px);
+}
+
+.landing-market-card {
+  will-change: transform;
+}
+
 @keyframes fade-in-up {
   from {
     opacity: 0;
@@ -39,12 +106,29 @@
   animation: pulse-glow 4s ease-in-out infinite;
 }
 
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 40s linear infinite;
+  width: max-content;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in-up,
   .animate-fade-in-up-delay-1,
   .animate-fade-in-up-delay-2,
   .animate-fade-in-up-delay-3,
-  .animate-pulse-glow {
+  .animate-pulse-glow,
+  .animate-marquee,
+  .landing-feature-card:hover,
+  .landing-step-card:hover {
     animation: none;
     opacity: 1;
     transform: none;

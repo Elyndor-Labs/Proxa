@@ -6,11 +6,12 @@ import { BN } from "@coral-xyz/anchor";
 import { useProxaClient } from "@/hooks/use-proxa-client";
 import { isApiEnabled } from "@/config/api";
 import { fetchMarketRecord } from "@/lib/api/markets";
+import { subscribeToMarketUpdates } from "@/lib/api/websocket";
 import { toMarketView } from "@/lib/proxa/market-view";
 import { queryKeys } from "@/lib/proxa/query-keys";
 
 interface UseMarketOptions {
-  /** Subscribe to on-chain account changes for live pool updates. */
+  /** Subscribe to live pool updates (WebSocket in API mode, on-chain in direct mode). */
   subscribe?: boolean;
 }
 
@@ -30,7 +31,13 @@ export function useMarket(marketId: string, options: UseMarketOptions = {}) {
   });
 
   useEffect(() => {
-    if (!subscribe || !marketId || isApiEnabled()) return;
+    if (!subscribe || !marketId) return;
+
+    if (isApiEnabled()) {
+      return subscribeToMarketUpdates(marketId, () => {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.market(marketId) });
+      });
+    }
 
     const listener = client.onMarketChange(new BN(marketId), () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.market(marketId) });

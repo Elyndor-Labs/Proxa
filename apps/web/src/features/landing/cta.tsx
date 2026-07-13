@@ -1,42 +1,41 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { ArrowRight } from "lucide-react";
+import { motion, useInView } from "motion/react";
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 export function CtaSection() {
-  const router = useRouter();
-  const [query, setQuery] = useState("");
-
-  const handleSearch = (e: FormEvent) => {
-    e.preventDefault();
-    const q = query.trim();
-    router.push(q ? `/markets?q=${encodeURIComponent(q)}` : "/markets");
-  };
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
-    <section className="px-[var(--container-padding)] py-16 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-3xl rounded-2xl border border-brand/30 bg-brand/5 p-8 text-center sm:p-12">
-        <h2 className="font-display text-2xl font-bold sm:text-3xl">The arena is open. Build your prop.</h2>
-        <p className="mt-3 text-muted-foreground">Create custom parametric conditions or browse live markets.</p>
-        <form onSubmit={handleSearch} className="mx-auto mt-6 flex max-w-md flex-col gap-3 sm:flex-row">
-          <Input
-            placeholder="Search for a market…"
-            aria-label="Search markets"
-            className="flex-1"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <Button type="submit" variant="brand">
-            Search
-          </Button>
-        </form>
-        <Button variant="outline" size="sm" className="mt-4" asChild>
-          <Link href="/create">Create Market</Link>
-        </Button>
-      </div>
+    <section className="px-[var(--container-padding)] py-28 sm:px-6 lg:px-8">
+      <motion.div
+        ref={ref}
+        initial={{ opacity: 0, y: 32 }}
+        animate={inView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] as const }}
+        className="relative landing-shell"
+      >
+        <div className="landing-cta-card overflow-hidden rounded-3xl border border-border/60 bg-card p-12 text-center sm:p-16">
+          <h2 className="font-display text-3xl font-bold tracking-tight sm:text-5xl">
+            Markets are live.
+          </h2>
+          <p className="mx-auto mt-5 max-w-md text-lg font-medium text-muted-foreground">
+            Pick a match outcome, trade against the pool, and settle through Solana.
+          </p>
+          <div className="mt-12 flex justify-center">
+            <Button variant="brand" size="lg" className="h-12 px-10 text-base font-bold" asChild>
+              <Link href="/markets">
+                Explore Markets
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </motion.div>
     </section>
   );
 }

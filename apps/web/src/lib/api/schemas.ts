@@ -66,12 +66,79 @@ export const wirePositionRecordSchema = z.object({
 
 export const wirePositionListSchema = z.array(wirePositionRecordSchema);
 
-export const leaderboardEntrySchema = z.object({
-  address: z.string(),
-  displayAddress: z.string(),
-  totalStaked: z.string(),
-  totalWinnings: z.string(),
-  positionCount: z.number(),
+/** Production API — flat market object (list, fixture, detail). */
+export const apiMarketSchema = z.object({
+  marketId: numericString,
+  fixtureId: numericString,
+  statKey: z.number(),
+  status: z.enum(["open", "resolved", "voided"]),
+  numBuckets: z.number(),
+  winningBucket: z.number(),
+  winningValue: z.number(),
+  totalPool: numericString,
+  bucketPools: z.array(numericString),
+  betsCloseTs: numericString,
+  resolveAfterTs: numericString,
+  resolveDeadlineTs: numericString.optional(),
+  netPool: numericString.optional(),
+  winningPool: numericString.optional(),
+  feeBps: z.number().optional(),
+  feeCollected: z.boolean().optional(),
+  address: z.string().optional(),
 });
 
-export const leaderboardListSchema = z.array(leaderboardEntrySchema);
+export const apiMarketListSchema = z.object({
+  data: z.array(apiMarketSchema),
+});
+
+export const apiPositionSchema = z.object({
+  address: z.string(),
+  marketId: numericString,
+  bucket: z.number(),
+  amount: numericString,
+});
+
+export const apiPositionListSchema = z.object({
+  data: z.array(apiPositionSchema),
+});
+
+export const apiConfigSchema = z.object({
+  authority: z.string(),
+  stakeMint: z.string(),
+  treasury: z.string(),
+  feeBps: z.number(),
+  marketCount: numericString,
+});
+
+/** Accepts production `{ data: [...] }`, mock paginated list, or bare array. */
+export const marketsListResponseSchema = z.union([
+  apiMarketListSchema,
+  wireMarketsListResponseSchema,
+  wireMarketRecordListSchema,
+]);
+
+/** Accepts production flat market, mock record, or bare account. */
+export const marketResponseSchema = z.union([
+  apiMarketSchema,
+  wireMarketResponseSchema,
+]);
+
+/** Accepts production `{ data: [...] }` or mock position array. */
+export const positionsListResponseSchema = z.union([
+  apiPositionListSchema,
+  wirePositionListSchema,
+]);
+
+export const notificationSchema = z.object({
+  id: z.string(),
+  wallet: z.string(),
+  marketId: z.number(),
+  type: z.string(),
+  message: z.string(),
+  read: z.boolean(),
+  createdAt: z.string(),
+});
+
+export const notificationListSchema = z.object({
+  data: z.array(notificationSchema),
+});

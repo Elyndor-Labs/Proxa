@@ -4,13 +4,15 @@ interface PageHeaderProps {
   actions?: React.ReactNode;
 }
 
-/** Consistent page title block for app routes. */
+/** Page title block with gradient heading and motion. */
 export function PageHeader({ title, description, actions }: PageHeaderProps) {
   return (
-    <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
+    <header className="animate-slide-up mb-8 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="font-display text-3xl font-bold tracking-tight">{title}</h1>
-        {description && <p className="mt-2 max-w-2xl text-muted-foreground">{description}</p>}
+        <h1 className="page-title">{title}</h1>
+        {description && (
+          <p className="mt-2.5 max-w-xl text-sm leading-relaxed text-muted-foreground">{description}</p>
+        )}
       </div>
       {actions}
     </header>

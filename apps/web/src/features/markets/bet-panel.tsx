@@ -2,38 +2,57 @@
 
 import { previewBet, toBaseUnits, type MarketAccount } from "@proxa/sdk";
 import { useState } from "react";
-import { TxActionFallback } from "@/components/domain/tx-action-fallback";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { WalletButton } from "@/components/domain/wallet-button";
 import { useBetSlipStore } from "@/features/bet-slip/store";
 import { usePlaceBet } from "@/hooks/use-place-bet";
 import { useProxaClient } from "@/hooks/use-proxa-client";
+import { useStakeTokenBalance } from "@/hooks/use-token-balance";
+import { useWalletAuth } from "@/hooks/use-wallet-auth";
+import { formatOdds } from "@/lib/format/odds";
+import { formatStake } from "@/lib/format/odds";
 import type { MarketView } from "@/lib/proxa/market-view";
 import { STAKE_DECIMALS } from "@/lib/proxa/market-view";
-import { formatStake } from "@/lib/format/odds";
-import { cn } from "@/lib/utils";
+import { formatStakeTokenLabel } from "@/lib/proxa/stake-token";
+
+const MAX_STAKE = 2;
+const PRESETS = [0.25, 0.5, 0.75, 1] as const;
 
 interface BetPanelProps {
   marketId: string;
   view: MarketView;
   account: MarketAccount;
+  selectedBucket: number;
+  onSelectBucket: (bucket: number) => void;
 }
 
-/** Bucket selection, amount input, and bet placement for a single market. */
-export function BetPanel({ marketId, view, account }: BetPanelProps) {
-  const [bucket, setBucket] = useState(0);
+/** Sticky trading sidebar — mentioned.market style. */
+export function BetPanel({ marketId, view, account, selectedBucket, onSelectBucket }: BetPanelProps) {
   const [amount, setAmount] = useState("");
+  const [side, setSide] = useState<"buy" | "sell">("buy");
   const { canTransact } = useProxaClient();
+  const { connected } = useWalletAuth();
+  const { data: cash } = useStakeTokenBalance();
   const placeBet = usePlaceBet();
   const { addLeg, setOpen } = useBetSlipStore();
+
+  const bucket = selectedBucket;
+  const label = view.bucketLabels[bucket] ?? `Bucket ${bucket + 1}`;
+  const estimatedOdds = formatOdds(account, bucket);
+  const isBinary = view.numBuckets === 2;
+  const disabled = !view.isOpen || placeBet.isPending;
+  const stakeTokenLabel = formatStakeTokenLabel(account.stakeMint.toBase58());
+  const amountNumber = Number(amount);
+  const hasInvalidAmount = !amount || Number.isNaN(amountNumber) || amountNumber <= 0;
+  const insufficientBalance = Boolean(cash && amountNumber > cash.amount);
 
   const preview =
     amount && !Number.isNaN(Number(amount))
       ? previewBet(account, bucket, toBaseUnits(amount, STAKE_DECIMALS))
       : null;
 
-  const disabled = !view.isOpen || placeBet.isPending;
+  const applyPreset = (fraction: number) => {
+    setAmount((MAX_STAKE * fraction).toFixed(2));
+  };
 
   const handlePlaceBet = () => {
     placeBet.mutate({ marketId, bucket, amount }, { onSuccess: () => setAmount("") });
@@ -44,91 +63,153 @@ export function BetPanel({ marketId, view, account }: BetPanelProps) {
       marketId,
       title: view.title,
       bucket,
-      bucketLabel: view.bucketLabels[bucket] ?? `Bucket ${bucket + 1}`,
+      bucketLabel: label,
       amount,
     });
     setOpen(true);
   };
 
   return (
-    <Card className="sticky top-20">
-      <CardHeader>
-        <CardTitle>Prop Slip</CardTitle>
-        <CardDescription>Select a bucket and stake amount in USDC. Add multiple legs to your slip.</CardDescription>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
-        <div className="flex flex-wrap gap-2">
-          {view.bucketLabels.map((label, index) => (
-            <Button
-              key={label}
-              type="button"
-              size="sm"
-              variant={bucket === index ? "brand" : "outline"}
-              onClick={() => setBucket(index)}
-              disabled={disabled}
-              className={cn("flex-1")}
-            >
-              {label}
-            </Button>
-          ))}
+    <aside className="trade-card animate-slide-up-delay-1">
+      <div className="trade-card__header">
+        <span className="trade-card__icon" aria-hidden>
+          {label.charAt(0).toUpperCase()}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-display text-base font-bold">{label}</p>
+          <p className="font-label text-xs text-muted-foreground">Market #{marketId}</p>
         </div>
+      </div>
 
-        <div className="space-y-2">
-          <label htmlFor="stake-amount" className="font-label text-xs text-muted-foreground">
-            Stake (USDC)
+      <div className="trade-info-banner">$2 max per position</div>
+
+      <div className="trade-tabs px-5">
+        <button
+          type="button"
+          className="trade-tab"
+          data-active={side === "buy"}
+          onClick={() => setSide("buy")}
+        >
+          Buy
+        </button>
+        <button type="button" className="trade-tab" disabled title="Coming soon">
+          Sell
+        </button>
+      </div>
+
+      <div className="trade-card__body">
+        {isBinary ? (
+          <div className="trade-binary">
+            <button
+              type="button"
+              className="trade-btn-yes"
+              data-selected={bucket === 0}
+              disabled={disabled}
+              onClick={() => onSelectBucket(0)}
+            >
+              <span className="trade-btn-label">Yes</span>
+              <span className="trade-btn-price">{formatOdds(account, 0)}x</span>
+            </button>
+            <button
+              type="button"
+              className="trade-btn-no"
+              data-selected={bucket === 1}
+              disabled={disabled}
+              onClick={() => onSelectBucket(1)}
+            >
+              <span className="trade-btn-label">No</span>
+              <span className="trade-btn-price">{formatOdds(account, 1)}x</span>
+            </button>
+          </div>
+        ) : (
+          <p className="font-label text-sm text-muted-foreground">
+            Backing <span className="font-semibold text-foreground">{label}</span> at estimated{" "}
+            <span className="font-bold text-brand">{estimatedOdds}x</span>
+          </p>
+        )}
+
+        <div className="trade-amount-block">
+          <label htmlFor="trade-amount" className="trade-amount-label">
+            {stakeTokenLabel} to spend
           </label>
-          <Input
-            id="stake-amount"
+          <input
+            id="trade-amount"
             type="number"
             min="0"
+            max={MAX_STAKE}
             step="0.01"
-            placeholder="0.00"
+            placeholder="0"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             disabled={disabled}
+            className="trade-amount-input"
           />
+          <p className="trade-amount-hint">
+            ${MAX_STAKE.toFixed(2)} max · {cash ? `${cash.label} available · ` : ""}
+            Estimated payout odds: {estimatedOdds}x
+          </p>
+        </div>
+
+        <div className="trade-presets">
+          {PRESETS.map((fraction) => (
+            <button
+              key={fraction}
+              type="button"
+              className="trade-preset"
+              disabled={disabled}
+              onClick={() => applyPreset(fraction)}
+            >
+              {fraction === 1 ? "Max" : `${fraction * 100}%`}
+            </button>
+          ))}
         </div>
 
         {preview && preview.projectedPayout.gtn(0) && (
-          <div className="rounded-lg border border-border bg-muted/50 p-3 font-label text-sm">
-            <p className="text-muted-foreground">Projected payout if {view.bucketLabels[bucket]} wins</p>
-            <p className="mt-1 font-display text-xl font-bold text-brand">
-              ${formatStake(preview.projectedPayout)}
+          <div className="rounded-lg border border-[var(--surface-border)] bg-black/20 px-4 py-3">
+            <p className="font-label text-xs text-muted-foreground">Payout if {label} wins</p>
+            <p className="mt-0.5 font-display text-xl font-bold text-brand">
+              {formatStake(preview.projectedPayout)} {stakeTokenLabel}
             </p>
           </div>
         )}
 
         {!view.isOpen && (
-          <p className="font-label text-xs text-muted-foreground">This market is no longer accepting bets.</p>
+          <p className="text-center font-label text-xs text-muted-foreground">
+            This market is no longer accepting bets.
+          </p>
+        )}
+        {connected && insufficientBalance && (
+          <p className="text-center font-label text-xs text-destructive">
+            Not enough {stakeTokenLabel}. Available: {cash?.label ?? "$0.00"}.
+          </p>
         )}
 
-        <div className="flex flex-col gap-2">
-          {canTransact ? (
-            <>
-              <Button
-                variant="brand"
-                className="w-full"
-                size="lg"
-                disabled={disabled || !amount || Number(amount) <= 0}
-                onClick={handlePlaceBet}
-              >
-                {placeBet.isPending ? "Confirming…" : "Place Prop Bet"}
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full"
-                disabled={!amount || Number(amount) <= 0}
-                onClick={handleAddToSlip}
-              >
-                Add to Slip
-              </Button>
-            </>
-          ) : (
-            <TxActionFallback size="lg" />
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        {!connected || !canTransact ? (
+          <div className="w-full">
+            <WalletButton size="lg" />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              className="trade-cta trade-cta--brand"
+              disabled={disabled || hasInvalidAmount || insufficientBalance}
+              onClick={handlePlaceBet}
+            >
+              {placeBet.isPending ? "Confirming…" : "Place trade"}
+            </button>
+            <button
+              type="button"
+              className="trade-cta"
+              style={{ background: "rgba(255,255,255,0.08)", color: "var(--foreground)", border: "1px solid var(--surface-border)" }}
+              disabled={!amount || Number(amount) <= 0}
+              onClick={handleAddToSlip}
+            >
+              Add to slip
+            </button>
+          </div>
+        )}
+      </div>
+    </aside>
   );
 }

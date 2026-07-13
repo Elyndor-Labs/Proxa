@@ -1,88 +1,76 @@
 /**
- * Velocity Grid design tokens for Proxa.
- * Semantic variables — consume via Tailwind utilities (bg-background, text-brand, etc.).
+ * Proxa design tokens — dark-first, Cesto-inspired green palette.
  */
 
 :root {
-  /* Brand palette (Velocity Grid) */
-  --brand: #b8e600;
-  --brand-foreground: #0f1115;
-  --secondary: #00c8e0;
-  --secondary-foreground: #0f1115;
-  --tertiary: #8e9bae;
-  --tertiary-foreground: #0f1115;
+  --brand: #4ade80;
+  --brand-foreground: #050805;
+  --secondary: #1a2e1a;
+  --secondary-foreground: #e8f0e8;
+  --tertiary: #6b7c6b;
+  --tertiary-foreground: #e8f0e8;
 
-  /* Surfaces */
-  --background: #f8f8f9;
-  --foreground: #0f1115;
-  --card: #ffffff;
-  --card-foreground: #0f1115;
-  --popover: #ffffff;
-  --popover-foreground: #0f1115;
-
-  /* UI chrome */
-  --muted: #f0f0f2;
-  --muted-foreground: #6b7280;
-  --border: #e2e4e8;
-  --input: #e2e4e8;
-  --ring: var(--brand);
-
-  /* Actions */
-  --primary: #ffffff;
-  --primary-foreground: #0f1115;
-  --accent: #f0f0f2;
-  --accent-foreground: #0f1115;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-
-  /* Status */
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --info: var(--secondary);
-
-  /* App shell */
-  --sidebar: #ffffff;
-  --sidebar-foreground: #0f1115;
-  --sidebar-border: #e2e4e8;
-  --sidebar-accent: #f0f0f2;
-
-  /* Shape & layout */
-  --radius: 0.625rem;
-  --header-height: 4rem;
-  --sidebar-width: 16rem;
-  --container-padding: 1rem;
-}
-
-.dark {
-  --brand: #ccff00;
-  --brand-foreground: #0f1115;
-  --secondary: #00eeff;
-  --secondary-foreground: #0f1115;
-  --tertiary: #8e9bae;
-  --tertiary-foreground: #0f1115;
-
-  --background: #0f1115;
+  --background: #050805;
   --foreground: #f5f5f0;
-  --card: #181b22;
+  --card: #0c100c;
   --card-foreground: #f5f5f0;
-  --popover: #181b22;
+  --popover: #0f120f;
   --popover-foreground: #f5f5f0;
 
-  --muted: #1e2229;
-  --muted-foreground: #8e9bae;
-  --border: #2a2f38;
-  --input: #2a2f38;
+  --muted: #141a14;
+  --muted-foreground: #8a9a8a;
+  --border: #1e2e1e;
+  --input: #1a241a;
   --ring: var(--brand);
 
-  --primary: #ffffff;
-  --primary-foreground: #0f1115;
-  --accent: #1e2229;
+  --primary: #f5f5f0;
+  --primary-foreground: #050805;
+  --accent: #1a241a;
   --accent-foreground: #f5f5f0;
   --destructive: #f87171;
-  --destructive-foreground: #0f1115;
+  --destructive-foreground: #050805;
 
-  --sidebar: #0a0c10;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --info: #4ade80;
+
+  --sidebar: #050805;
   --sidebar-foreground: #f5f5f0;
-  --sidebar-border: #2a2f38;
-  --sidebar-accent: #1e2229;
+  --sidebar-border: #1e2e1e;
+  --sidebar-accent: #141a14;
+
+  --glow: rgba(74, 222, 128, 0.08);
+  --glow-strong: rgba(74, 222, 128, 0.15);
+
+  --radius: 0.75rem;
+  --sidebar-width: 16rem;
+  --container-padding: 1rem;
+  --content-max-width: 88rem;
+}
+
+.light {
+  --brand: #3d8b5e;
+  --brand-foreground: #ffffff;
+  --secondary: #e8f0e8;
+  --secondary-foreground: #0a0d0a;
+
+  --background: #f8f9f8;
+  --foreground: #0a0d0a;
+  --card: #ffffff;
+  --card-foreground: #0a0d0a;
+  --popover: #ffffff;
+  --popover-foreground: #0a0d0a;
+
+  --muted: #eef1ee;
+  --muted-foreground: #6b7280;
+  --border: #d8e0d8;
+  --input: #eef1ee;
+
+  --primary: #0a0d0a;
+  --primary-foreground: #ffffff;
+  --accent: #eef1ee;
+  --accent-foreground: #0a0d0a;
+
+  --glow: rgba(61, 139, 94, 0.06);
+  --glow-strong: rgba(61, 139, 94, 0.12);
 }

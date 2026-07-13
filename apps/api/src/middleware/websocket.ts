@@ -56,5 +56,5 @@ export function attachWebSocket(server: Server, proxa: ProxaClient): void {
     });
   });
 
-  console.log("🔌 WebSocket server attached at /ws");
+  console.log("WebSocket server attached at /ws");
 }

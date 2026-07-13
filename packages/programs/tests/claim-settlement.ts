@@ -17,7 +17,7 @@ import assert from "assert";
 import { findEvent, parseTransactionEvents, txlineReady } from "./helpers";
 
 const TXORACLE_PROGRAM_ID = new PublicKey("6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J");
-const DEVNET_USDT_MINT = new PublicKey("ELWTKspHKCnCfCiCiqYw1EDH77k8VCP74dK9qytG2Ujh");
+const DEVNET_USDC_MINT = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
 const DEFAULT_API_BASE = "https://txline-dev.txodds.com";
 const DEFAULT_FIXTURE_ID = "17271370";
 const DEFAULT_SEQ = "401";
@@ -228,7 +228,7 @@ describe("claim, collect_fee, and void_market", function () {
     const winningBucket = expectedWinningBucket(value, numBuckets);
     const losingBucket = winningBucket === 0 ? 1 : 0;
 
-    const mint = DEVNET_USDT_MINT;
+    const mint = DEVNET_USDC_MINT;
     const mintInfo = await provider.connection.getAccountInfo(mint);
     assert.ok(mintInfo);
     const tokenProgram = mintInfo.owner.equals(TOKEN_2022_PROGRAM_ID)
@@ -420,7 +420,7 @@ describe("claim, collect_fee, and void_market", function () {
   });
 
   it("(c) void after deadline refunds full stakes", async function () {
-    const mint = DEVNET_USDT_MINT;
+    const mint = DEVNET_USDC_MINT;
     const mintInfo = await provider.connection.getAccountInfo(mint);
     assert.ok(mintInfo);
     const tokenProgram = mintInfo.owner.equals(TOKEN_2022_PROGRAM_ID)

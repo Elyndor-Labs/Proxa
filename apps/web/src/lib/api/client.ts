@@ -1,21 +1,20 @@
 import type { z } from "zod";
-import { getApiAuthHeaders } from "@/config/api";
+import { getApiAuthHeaders, getApiBaseUrl } from "@/config/api";
 import { ApiError } from "@/lib/api/errors";
 
 /** Thin fetch wrapper for the Proxa REST API with optional Zod validation. */
-
-function getBaseUrl(): string {
-  const base = process.env.NEXT_PUBLIC_API_URL;
-  if (!base) throw new Error("NEXT_PUBLIC_API_URL is not configured");
-  return base.replace(/\/$/, "");
-}
 
 export async function apiParse<T>(
   path: string,
   schema: z.ZodType<T>,
   init?: RequestInit,
 ): Promise<T> {
-  const res = await fetch(`${getBaseUrl()}${path}`, {
+  const json = await apiJson(path, init);
+  return schema.parse(json);
+}
+
+export async function apiJson(path: string, init?: RequestInit): Promise<unknown> {
+  const res = await fetch(`${getApiBaseUrl()}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
@@ -29,8 +28,8 @@ export async function apiParse<T>(
     throw new ApiError(res.status, message);
   }
 
-  const json: unknown = await res.json();
-  return schema.parse(json);
+  if (res.status === 204) return null;
+  return res.json();
 }
 
 async function readErrorMessage(res: Response): Promise<string> {

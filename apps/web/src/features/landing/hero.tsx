@@ -1,56 +1,74 @@
-import Image from "next/image";
+﻿"use client";
+
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { motion } from "motion/react";
+import { CanvasText } from "@/components/ui/canvas-text";
 import { Button } from "@/components/ui/button";
-import { launchAppLabel, MockDemoCta } from "@/features/landing/mock-demo-cta";
-import { ProductMockup } from "@/features/landing/product-mockup";
+import { Badge } from "@/components/ui/badge";
+import { MarketMarquee } from "@/features/landing/market-marquee";
 import { siteConfig } from "@/config/site";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.08, duration: 0.55, ease: [0.16, 1, 0.3, 1] as const },
+  }),
+};
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden px-[var(--container-padding)] py-20 sm:px-6 sm:py-28 lg:px-8">
-      <div className="pointer-events-none absolute inset-0">
-        <Image
-          src="/landing/hero-grid.svg"
-          alt=""
-          aria-hidden
-          fill
-          className="object-cover opacity-40"
-          priority
-        />
-      </div>
-      <div className="pointer-events-none absolute inset-0 animate-pulse-glow bg-[radial-gradient(ellipse_at_top,_var(--brand)_0%,_transparent_55%)]" />
+    <section className="landing-hero relative overflow-hidden">
+      <MarketMarquee />
 
-      <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
-        <div className="text-center lg:text-left">
-          <p className="animate-fade-in-up mb-4 font-label text-sm uppercase tracking-widest text-brand">
-            On Solana
-          </p>
-          <h1 className="animate-fade-in-up-delay-1 font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-            The Future of Parametric <span className="text-brand">Betting is On-Chain.</span>
-          </h1>
-          <p className="animate-fade-in-up-delay-2 mx-auto mt-6 max-w-2xl text-lg text-muted-foreground lg:mx-0">
-            {siteConfig.description} Lock USDC in escrow, bet on custom match conditions, and receive
-            automatic payouts verified by Merkle proof.
-          </p>
-          <div className="animate-fade-in-up-delay-3 mt-8 flex flex-col items-center gap-4 lg:items-start">
-            <MockDemoCta />
-            <div className="flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-              <Button variant="brand" size="lg" asChild>
-                <Link href="/markets">
-                  {launchAppLabel()}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button variant="outline" size="lg" asChild>
-                <Link href="/#how-it-works">Learn More</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
+      <div className="landing-shell landing-hero-stage relative z-10 px-[var(--container-padding)]">
+        <div className="w-full text-center">
+          <motion.div custom={0} initial="hidden" animate="visible" variants={fadeUp}>
+            <Badge variant="brand" className="mb-6 px-4 py-1.5 font-label text-xs font-bold uppercase tracking-widest">
+              Prediction markets - Live sports
+            </Badge>
+          </motion.div>
 
-        <div className="animate-fade-in-up-delay-2">
-          <ProductMockup />
+          <motion.div custom={1} initial="hidden" animate="visible" variants={fadeUp} className="mb-6 flex justify-center">
+            <h1 className="sr-only">Trade on live match outcomes.</h1>
+            <CanvasText
+              text="Trade on live match outcomes."
+              className="font-display text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl"
+              backgroundClassName="bg-background"
+              colors={["#4ade80", "#22c55e", "#86efac", "#bbf7d0", "#16a34a"]}
+              animationDuration={6}
+              lineGap={7}
+              lineWidth={2}
+              curveIntensity={45}
+            />
+          </motion.div>
+
+          <motion.p
+            custom={2}
+            initial="hidden"
+            animate="visible"
+            variants={fadeUp}
+            className="mx-auto max-w-lg text-base font-medium leading-relaxed text-muted-foreground sm:text-lg"
+          >
+            {siteConfig.description}
+          </motion.p>
+
+          <motion.div
+            custom={3}
+            initial="hidden"
+            animate="visible"
+            variants={fadeUp}
+            className="mt-8 flex justify-center"
+          >
+            <Button variant="brand" size="lg" className="h-12 px-10 text-base font-bold" asChild>
+              <Link href="/markets">
+                Explore Markets
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </Button>
+          </motion.div>
         </div>
       </div>
     </section>

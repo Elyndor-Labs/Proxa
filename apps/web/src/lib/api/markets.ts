@@ -2,38 +2,29 @@ import { BN } from "@coral-xyz/anchor";
 import type { MarketRecord } from "@proxa/sdk";
 import type { ProxaClient } from "@proxa/sdk";
 import { isApiEnabled } from "@/config/api";
+import { getApiDefaults } from "@/lib/api/config";
 import { apiParse } from "@/lib/api/client";
-import { deserializeMarketAccount, deserializeMarketRecord } from "@/lib/api/deserialize";
+import { deserializeMarketRecord } from "@/lib/api/deserialize";
 import {
-  wireMarketRecordListSchema,
-  wireMarketResponseSchema,
-  wireMarketsListResponseSchema,
-} from "@/lib/api/schemas";
-import { z } from "zod";
-
-const wireMarketsListOrArraySchema = z.union([
-  wireMarketsListResponseSchema,
-  wireMarketRecordListSchema,
-]);
+  extractMarketsFromListResponse,
+  normalizeMarketResponse,
+} from "@/lib/api/normalize";
+import { marketResponseSchema, marketsListResponseSchema } from "@/lib/api/schemas";
 
 /** GET /markets/:id */
 export async function fetchMarketFromApi(marketId: string, client: ProxaClient): Promise<MarketRecord> {
-  const data = await apiParse(`/markets/${marketId}`, wireMarketResponseSchema);
-
-  if ("account" in data) {
-    return deserializeMarketRecord(data);
-  }
-
-  return {
-    address: client.marketPda(new BN(marketId)),
-    account: deserializeMarketAccount(data),
-  };
+  const defaults = await getApiDefaults();
+  const data = await apiParse(`/markets/${marketId}`, marketResponseSchema);
+  const address = client.marketPda(new BN(marketId)).toBase58();
+  const wire = normalizeMarketResponse(data, address, defaults);
+  return deserializeMarketRecord(wire);
 }
 
 /** GET /markets/fixture/:fixtureId */
 export async function fetchMarketsByFixtureFromApi(fixtureId: string): Promise<MarketRecord[]> {
-  const data = await apiParse(`/markets/fixture/${fixtureId}`, wireMarketRecordListSchema);
-  return data.map(deserializeMarketRecord);
+  const defaults = await getApiDefaults();
+  const data = await apiParse(`/markets/fixture/${fixtureId}`, marketsListResponseSchema);
+  return extractMarketsFromListResponse(data, defaults).map(deserializeMarketRecord);
 }
 
 export interface FetchAllMarketsParams {
@@ -48,6 +39,7 @@ export interface FetchAllMarketsParams {
 export async function fetchAllMarketsFromApi(
   params: FetchAllMarketsParams = {},
 ): Promise<MarketRecord[]> {
+  const defaults = await getApiDefaults();
   const limit = params.limit ?? 50;
   const all: MarketRecord[] = [];
   let page = params.page ?? 1;
@@ -61,11 +53,17 @@ export async function fetchAllMarketsFromApi(
     search.set("limit", String(limit));
 
     const path = `/markets?${search.toString()}`;
-    const data = await apiParse(path, wireMarketsListOrArraySchema);
-    const items = Array.isArray(data) ? data : data.items;
-    all.push(...items.map(deserializeMarketRecord));
+    const data = await apiParse(path, marketsListResponseSchema);
+    const wires = extractMarketsFromListResponse(data, defaults);
+    all.push(...wires.map(deserializeMarketRecord));
 
-    if (Array.isArray(data) || items.length < limit || all.length >= data.total) {
+    const isPaginated =
+      typeof data === "object" &&
+      data !== null &&
+      "items" in data &&
+      "total" in data;
+
+    if (!isPaginated || wires.length < limit || all.length >= (data as { total: number }).total) {
       break;
     }
     page += 1;

@@ -4,9 +4,12 @@ import { assertCanSubmitOnChainTx } from "@/config/api";
 import { useAnchorWallet } from "@/hooks/use-anchor-wallet";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Transaction } from "@solana/web3.js";
+import { bettorTokenAccount, toBaseUnits } from "@proxa/sdk";
 import { useProxaClient } from "@/hooks/use-proxa-client";
 import { buildStatKey, type StatOption, type PeriodOption } from "@/lib/proxa/stat-options";
+import { STAKE_DECIMALS } from "@/lib/proxa/market-view";
 import { queryKeys } from "@/lib/proxa/query-keys";
+import { sendStakeTransaction } from "@/lib/proxa/send-transaction";
 import { txToast } from "@/lib/solana/toast";
 
 export interface CreateMarketInput {
@@ -17,6 +20,7 @@ export interface CreateMarketInput {
   betsCloseHours: number;
   resolveAfterHours: number;
   resolveDeadlineHours: number;
+  seedPerOutcome: string;
 }
 
 /** Mutation hook to create a new market (protocol authority only). */
@@ -56,6 +60,36 @@ export function useCreateMarket() {
 
       const tx = new Transaction().add(ix);
       const signature = await client.provider.sendAndConfirm(tx);
+
+      const seedAmount = Number(input.seedPerOutcome);
+      if (seedAmount > 0) {
+        const seedLamports = toBaseUnits(input.seedPerOutcome, STAKE_DECIMALS);
+        const adminTokenAccount = bettorTokenAccount(config.stakeMint, wallet.publicKey, tokenProgram);
+        const seedTx = new Transaction();
+
+        for (let bucket = 0; bucket < input.numBuckets; bucket += 1) {
+          seedTx.add(
+            await client.placeBetIx({
+              bettor: wallet.publicKey,
+              marketId,
+              bucket,
+              amount: seedLamports,
+              bettorTokenAccount: adminTokenAccount,
+              stakeMint: config.stakeMint,
+              tokenProgram,
+            }),
+          );
+        }
+
+        await sendStakeTransaction({
+          client,
+          payer: wallet.publicKey,
+          stakeMint: config.stakeMint,
+          tokenProgram,
+          instructions: seedTx.instructions,
+        });
+      }
+
       return { signature, marketId: marketId.toString() };
     },
     onMutate: () => ({ toastId: txToast.pending("Creating market…") }),

@@ -15,6 +15,7 @@ import { usePlaceBet } from "@/hooks/use-place-bet";
 import { useProxaClient } from "@/hooks/use-proxa-client";
 import { formatStake } from "@/lib/format/odds";
 import { STAKE_DECIMALS } from "@/lib/proxa/market-view";
+import { formatStakeTokenLabel } from "@/lib/proxa/stake-token";
 import { cn } from "@/lib/utils";
 
 /** Persistent multi-leg bet slip drawer across app routes. */
@@ -149,6 +150,7 @@ function BetSlipLegRow({
   }
 
   const { account, view } = data;
+  const stakeTokenLabel = formatStakeTokenLabel(account.stakeMint.toBase58());
   const preview =
     leg.amount && !Number.isNaN(Number(leg.amount))
       ? previewBet(account, leg.bucket, toBaseUnits(leg.amount, STAKE_DECIMALS))
@@ -180,7 +182,7 @@ function BetSlipLegRow({
 
       <div className="mt-3 space-y-2">
         <label htmlFor={`slip-amount-${leg.id}`} className="font-label text-xs text-muted-foreground">
-          Stake (USDC)
+          Stake ({stakeTokenLabel})
         </label>
         <Input
           id={`slip-amount-${leg.id}`}
@@ -196,7 +198,7 @@ function BetSlipLegRow({
 
       {preview && preview.projectedPayout.gtn(0) && (
         <p className="mt-2 font-label text-xs text-muted-foreground">
-          Payout: <span className="text-brand">${formatStake(preview.projectedPayout)}</span>
+          Payout: <span className="text-brand">{formatStake(preview.projectedPayout)} {stakeTokenLabel}</span>
         </p>
       )}
     </div>

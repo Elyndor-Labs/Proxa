@@ -1,61 +1,37 @@
 "use client";
 
-import { LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useMounted } from "@/hooks/use-mounted";
 import { useWalletAuth } from "@/hooks/use-wallet-auth";
-import { truncateAddress } from "@/lib/format/address";
+import { cn } from "@/lib/utils";
 
 interface WalletButtonProps {
   size?: "default" | "sm" | "lg";
+  className?: string;
 }
 
-/** Disconnect Phantom/Solflare after Privy logout to avoid stale SIWS state. */
-async function disconnectExternalSolanaWallet() {
-  const provider = (window as Window & { solana?: { disconnect?: () => Promise<void> } }).solana;
-  if (!provider?.disconnect) return;
-  try {
-    await provider.disconnect();
-  } catch {
-    // Ignore — extension may already be disconnected.
-  }
-}
-
-/** Connect / disconnect control backed by Privy auth. */
-export function WalletButton({ size = "default" }: WalletButtonProps) {
+/** Connect control backed by Privy auth — matches navbar login style. */
+export function WalletButton({ size = "default", className }: WalletButtonProps) {
   const mounted = useMounted();
-  const { ready, connected, publicKey, login, logout } = useWalletAuth();
+  const { ready, connected, authenticated, login } = useWalletAuth();
 
   if (!mounted || !ready) {
     return (
-      <Button type="button" variant="brand" size={size} disabled aria-hidden tabIndex={-1}>
-        Connect Wallet
-      </Button>
+      <button type="button" className={cn("nav-login w-full opacity-50", className)} disabled aria-hidden tabIndex={-1}>
+        Login to trade
+      </button>
     );
   }
 
-  if (connected && publicKey) {
-    return (
-      <Button
-        type="button"
-        variant="outline"
-        size={size}
-        onClick={async () => {
-          await logout();
-          await disconnectExternalSolanaWallet();
-        }}
-        className="gap-2 font-mono"
-        aria-label="Disconnect wallet"
-      >
-        {truncateAddress(publicKey.toBase58())}
-        <LogOut className="h-3.5 w-3.5" />
-      </Button>
-    );
-  }
+  if (connected) return null;
 
   return (
-    <Button type="button" variant="brand" size={size} onClick={() => login()}>
-      Connect Wallet
-    </Button>
+    <button
+      type="button"
+      className={cn("nav-login w-full", className)}
+      style={size === "lg" ? { padding: "0.9375rem 1.5rem", fontSize: "0.9375rem" } : undefined}
+      onClick={() => void login()}
+    >
+      {authenticated ? "Connect wallet" : "Login to trade"}
+    </button>
   );
 }

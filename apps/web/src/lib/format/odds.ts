@@ -15,3 +15,11 @@ export function formatOdds(market: MarketAccount, bucket: number): string {
 export function formatStake(amount: BN): string {
   return fromBaseUnits(amount, STAKE_DECIMALS);
 }
+
+/** Implied pool share for a bucket (0–100). */
+export function bucketChancePct(market: MarketAccount, bucket: number): number {
+  const total = market.totalPool;
+  if (total.isZero()) return 0;
+  return market.bucketPools[bucket].muln(100).div(total).toNumber();
+}
+
