@@ -7,6 +7,7 @@ import { useBetSlipStore } from "@/features/bet-slip/store";
 import { usePlaceBet } from "@/hooks/use-place-bet";
 import { useProxaClient } from "@/hooks/use-proxa-client";
 import { useStakeTokenBalance } from "@/hooks/use-token-balance";
+import { useHasTimePassed } from "@/hooks/use-time-remaining";
 import { useWalletAuth } from "@/hooks/use-wallet-auth";
 import { formatOdds } from "@/lib/format/odds";
 import { formatStake } from "@/lib/format/odds";
@@ -39,7 +40,8 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
   const label = view.bucketLabels[bucket] ?? `Bucket ${bucket + 1}`;
   const estimatedOdds = formatOdds(account, bucket);
   const isBinary = view.numBuckets === 2;
-  const disabled = !view.isOpen || placeBet.isPending;
+  const bettingClosed = useHasTimePassed(view.betsCloseTs);
+  const disabled = !view.isOpen || bettingClosed || placeBet.isPending;
   const stakeTokenLabel = formatStakeTokenLabel(account.stakeMint.toBase58());
   const amountNumber = Number(amount);
   const hasInvalidAmount = !amount || Number.isNaN(amountNumber) || amountNumber <= 0;
@@ -173,7 +175,7 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
           </div>
         )}
 
-        {!view.isOpen && (
+        {(!view.isOpen || bettingClosed) && (
           <p className="text-center font-label text-xs text-muted-foreground">
             This market is no longer accepting bets.
           </p>

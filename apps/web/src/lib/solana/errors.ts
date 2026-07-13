@@ -6,7 +6,14 @@ export function parseTxError(error: unknown): string {
   if (lower.includes("user rejected") || lower.includes("user denied")) {
     return "Transaction cancelled in wallet.";
   }
-  if (lower.includes("insufficient") || lower.includes("0x1")) {
+  if (
+    lower.includes("attempt to debit an account but found no record of a prior credit") ||
+    lower.includes("insufficient funds for fee") ||
+    lower.includes("insufficient lamports")
+  ) {
+    return "Insufficient devnet SOL for transaction fees or token-account rent.";
+  }
+  if (lower.includes("insufficient token") || lower.includes("insufficient funds")) {
     return "Insufficient stake token balance for this transaction.";
   }
   if (lower.includes("blockhash not found")) {

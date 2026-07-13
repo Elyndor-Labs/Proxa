@@ -10,7 +10,7 @@ import { MarketPositionPanel } from "@/features/markets/market-position-panel";
 import { OutcomeTradeTable } from "@/features/markets/word-trade-table";
 import { useFixture } from "@/hooks/use-fixture";
 import { useMarket } from "@/hooks/use-market";
-import { useTimeRemaining } from "@/hooks/use-time-remaining";
+import { useHasTimePassed, useTimeRemaining } from "@/hooks/use-time-remaining";
 import { getApiErrorMessage, isNotFoundError } from "@/lib/api/errors";
 import type { FixtureCandidate, FixtureDetail, OddsSnapshot } from "@/lib/api/fixtures";
 import { bucketChancePct } from "@/lib/format/odds";
@@ -105,6 +105,7 @@ function buildDisplayView(view: MarketView, fixture: FixtureDetail | undefined, 
 export function MarketDetailView({ marketId }: MarketDetailViewProps) {
   const { data, isLoading, isError, error } = useMarket(marketId, { subscribe: true });
   const betsCloseLabel = useTimeRemaining(data?.view.betsCloseTs ?? 0);
+  const bettingClosed = useHasTimePassed(data?.view.betsCloseTs ?? 0);
   const [selectedBucket, setSelectedBucket] = useState(0);
   const fixtureQuery = useFixture(data?.view.fixtureId ?? "");
 
@@ -143,7 +144,6 @@ export function MarketDetailView({ marketId }: MarketDetailViewProps) {
     ? `${fixtureQuery.data.homeTeam} vs ${fixtureQuery.data.awayTeam}`
     : `Fixture #${displayView.fixtureId}`;
   const tokenLabel = formatStakeTokenLabel(account.stakeMint.toBase58());
-
   return (
     <div className="animate-fade-in">
       {/* Breadcrumb */}
@@ -187,7 +187,7 @@ export function MarketDetailView({ marketId }: MarketDetailViewProps) {
             account={account}
             selectedBucket={selectedBucket}
             onSelectBucket={setSelectedBucket}
-            disabled={!displayView.isOpen}
+            disabled={!displayView.isOpen || bettingClosed}
           />
           <MarketPositionPanel marketId={marketId} account={account} />
         </div>

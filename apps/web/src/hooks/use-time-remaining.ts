@@ -18,3 +18,9 @@ export function useTimeRemaining(targetMs: number): string {
   void minute;
   return formatTimeRemaining(targetMs);
 }
+
+/** Live-updating boolean for whether a timestamp has passed. */
+export function useHasTimePassed(targetMs: number): boolean {
+  const minute = useSyncExternalStore(subscribeMinuteTick, getMinuteTick, () => 0);
+  return targetMs > 0 && Math.floor(targetMs / 60_000) <= minute;
+}
