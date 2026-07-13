@@ -73,6 +73,19 @@ pub struct CreateMarket<'info> {
     pub system_program: Program<'info, System>,
 }
 
+#[derive(Accounts)]
+pub struct UpdateStakeMint<'info> {
+    pub authority: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [CONFIG_SEED],
+        bump = config.bump
+    )]
+    pub config: Account<'info, state::Config>,
+    pub stake_mint: InterfaceAccount<'info, Mint>,
+    pub treasury: InterfaceAccount<'info, TokenAccount>,
+}
+
 declare_id!("6LAR9TGXRnsLVtc4MibivdgNgqWGpiXMsR64p21VCRDZ");
 declare_program!(txoracle);
 
@@ -92,6 +105,10 @@ pub mod proxa {
         args: CreateMarketArgs,
     ) -> Result<()> {
         crate::instructions::create_market::handler(ctx, args)
+    }
+
+    pub fn update_stake_mint(ctx: Context<UpdateStakeMint>) -> Result<()> {
+        crate::instructions::update_stake_mint::handler(ctx)
     }
 
     pub fn place_bet(ctx: Context<PlaceBet>, bucket: u8, amount: u64) -> Result<()> {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, ChevronDown, User } from "lucide-react";
+import { Bell, ChevronDown, User, WalletCards } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { NotificationsPanel } from "@/components/layout/notifications-panel";
@@ -18,7 +18,7 @@ interface UserMenuProps {
 /** User dropdown with profile link and disconnect action. */
 export function UserMenu({ className }: UserMenuProps) {
   const mounted = useMounted();
-  const { ready, connected, publicKey, login, logout } = useWalletAuth();
+  const { ready, connected, authenticated, publicKey, login, logout } = useWalletAuth();
   const { data: notifications } = useNotifications();
   const [open, setOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -48,7 +48,7 @@ export function UserMenu({ className }: UserMenuProps) {
   if (!connected || !publicKey) {
     return (
       <button type="button" className={cn("nav-login", className)} onClick={() => void login()}>
-        Login
+        {authenticated ? "Connect wallet" : "Login"}
       </button>
     );
   }
@@ -112,13 +112,31 @@ export function UserMenu({ className }: UserMenuProps) {
           }}
         >
           <Link
-            href="/portfolio"
+            href="/profile"
             role="menuitem"
             onClick={() => setOpen(false)}
             className="flex items-center gap-2.5 px-4 py-2.5 font-label text-sm text-foreground transition-colors hover:bg-[var(--nav-link-hover-bg)]"
           >
             <User className="h-4 w-4 text-muted-foreground" />
-            My Profile
+            Profile
+          </Link>
+          <Link
+            href="/portfolio"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2.5 px-4 py-2.5 font-label text-sm text-foreground transition-colors hover:bg-[var(--nav-link-hover-bg)]"
+          >
+            <WalletCards className="h-4 w-4 text-muted-foreground" />
+            Portfolio
+          </Link>
+          <Link
+            href="/withdraw"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2.5 px-4 py-2.5 font-label text-sm text-foreground transition-colors hover:bg-[var(--nav-link-hover-bg)]"
+          >
+            <WalletCards className="h-4 w-4 text-muted-foreground" />
+            Withdraw
           </Link>
           <div className="mx-3 my-1 h-px bg-[var(--header-border)]" />
           <button

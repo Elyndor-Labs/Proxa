@@ -7,7 +7,7 @@ export function parseTxError(error: unknown): string {
     return "Transaction cancelled in wallet.";
   }
   if (lower.includes("insufficient") || lower.includes("0x1")) {
-    return "Insufficient USDC balance for this transaction.";
+    return "Insufficient stake token balance for this transaction.";
   }
   if (lower.includes("blockhash not found")) {
     return "Network busy — please try again.";

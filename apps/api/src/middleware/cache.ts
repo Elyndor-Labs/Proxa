@@ -9,6 +9,11 @@ const store = new Map<string, CacheEntry>();
 
 export function cache(ttlMs = 10_000) {
   return (req: Request, res: Response, next: NextFunction): void => {
+    if (req.method !== "GET") {
+      next();
+      return;
+    }
+
     const key = req.originalUrl;
     const entry = store.get(key);
 

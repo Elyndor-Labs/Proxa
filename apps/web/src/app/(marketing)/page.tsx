@@ -4,19 +4,17 @@ import { FaqSection } from "@/features/landing/faq-section";
 import { FeaturesSection } from "@/features/landing/features-section";
 import { Hero } from "@/features/landing/hero";
 import { LandingSectionReveal } from "@/features/landing/landing-section-reveal";
-import { ProductShowcase } from "@/features/landing/product-showcase";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata: Metadata = createPageMetadata(
-  "Trade on What Gets Said",
-  "Proxa — prediction markets for any form of media.",
+  "Live Sports Prediction Markets",
+  "Proxa - TXOdds-powered sports markets settled on Solana.",
 );
 
 export default function LandingPage() {
   return (
     <div className="landing-page">
       <Hero />
-      <ProductShowcase />
       <LandingSectionReveal delay={0.05}>
         <FeaturesSection />
       </LandingSectionReveal>
@@ -29,3 +27,4 @@ export default function LandingPage() {
     </div>
   );
 }
+

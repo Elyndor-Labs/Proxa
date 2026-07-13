@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useEnrichedPositions } from "@/hooks/use-enriched-positions";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatStake } from "@/lib/format/odds";
+import { formatStakeTokenLabel } from "@/lib/proxa/stake-token";
 import { cn } from "@/lib/utils";
 
 const VIEW_TABS = [
@@ -30,7 +31,7 @@ export function PositionList() {
 
   const stats = {
     markets: new Set(enriched?.map((p) => p.marketId) ?? []).size,
-    tokensSpent: enriched?.reduce((sum, p) => sum + Number(formatStake(p.position.account.amount)), 0) ?? 0,
+    tokensStaked: enriched?.reduce((sum, p) => sum + Number(formatStake(p.position.account.amount)), 0) ?? 0,
     trades: enriched?.length ?? 0,
   };
 
@@ -49,7 +50,7 @@ export function PositionList() {
 
   const statItems = [
     { label: "Markets", value: stats.markets, highlight: false },
-    { label: "Tokens Spent", value: stats.tokensSpent, highlight: false },
+    { label: "Tokens Staked", value: stats.tokensStaked.toFixed(2), highlight: false },
     { label: "Trades", value: stats.trades, highlight: false },
   ];
 
@@ -86,39 +87,47 @@ export function PositionList() {
               <Button variant="brand" size="lg" className="mt-6" asChild>
                 <Link href="/markets">
                   Browse markets
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
               </Button>
             )}
           </div>
         ) : (
           <div className="space-y-3">
-            {displayed.map(({ position, marketId, claimable, view: marketView }) => (
-              <div key={position.address.toBase58()} className="surface surface-interactive p-5">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="space-y-1.5">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-display text-base font-bold">{marketView.title}</h3>
-                      <SettlementBadge status={marketView.status} />
+            {displayed.map(({ position, market, marketId, claimable, view: marketView }) => {
+              const tokenLabel = formatStakeTokenLabel(market.stakeMint.toBase58());
+              return (
+                <div key={position.address.toBase58()} className="surface surface-interactive p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="space-y-1.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-display text-base font-bold">{marketView.title}</h3>
+                        <SettlementBadge status={marketView.status} />
+                      </div>
+                      <p className="font-label text-sm text-muted-foreground">
+                        {marketView.bucketLabels[position.account.bucket] ?? `Bucket ${position.account.bucket + 1}`}
+                        <span aria-hidden> · </span>
+                        Stake{" "}
+                        <span className="font-semibold text-foreground">
+                          {formatStake(position.account.amount)} {tokenLabel}
+                        </span>
+                      </p>
                     </div>
-                    <p className="font-label text-sm text-muted-foreground">
-                      {marketView.bucketLabels[position.account.bucket] ?? `Bucket ${position.account.bucket + 1}`}
-                      <span aria-hidden> · </span>
-                      Stake{" "}
-                      <span className="font-semibold text-foreground">
-                        ${formatStake(position.account.amount)}
-                      </span>
-                    </p>
+                    <ClaimButton
+                      marketId={marketId}
+                      bucket={position.account.bucket}
+                      claimable={claimable}
+                      tokenLabel={tokenLabel}
+                    />
                   </div>
-                  <ClaimButton marketId={marketId} bucket={position.account.bucket} claimable={claimable} />
+                  <div className="mt-4 border-t border-[var(--surface-border)] pt-4">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/markets/${marketId}`}>View Market</Link>
+                    </Button>
+                  </div>
                 </div>
-                <div className="mt-4 border-t border-[var(--surface-border)] pt-4">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/markets/${marketId}`}>View Market</Link>
-                  </Button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
