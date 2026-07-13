@@ -2,6 +2,7 @@
 
 import { useEnrichedPositions } from "@/hooks/use-enriched-positions";
 import { useMounted } from "@/hooks/use-mounted";
+import { useStakeTokenBalance } from "@/hooks/use-token-balance";
 import { useWalletAuth } from "@/hooks/use-wallet-auth";
 import { formatStake } from "@/lib/format/odds";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,7 @@ export function PortfolioCash({ className }: PortfolioCashProps) {
   const mounted = useMounted();
   const { connected } = useWalletAuth();
   const { data: positions } = useEnrichedPositions();
+  const { data: cash } = useStakeTokenBalance();
 
   if (!mounted || !connected) return null;
 
@@ -25,14 +27,23 @@ export function PortfolioCash({ className }: PortfolioCashProps) {
 
   return (
     <div
-      className={cn("flex items-center gap-1.5 rounded-md border px-2.5 py-1 font-label text-xs", className)}
+      className={cn("hidden items-center gap-4 rounded-md border px-3 py-1.5 font-label text-xs sm:flex", className)}
       style={{
         borderColor: "var(--header-border)",
         backgroundColor: "var(--nav-link-hover-bg)",
       }}
     >
-      <span className="text-muted-foreground">Portfolio</span>
-      <span className="font-semibold tabular-nums text-success">${portfolioValue.toFixed(2)}</span>
+      <BalanceLabel label="Portfolio" value={`$${portfolioValue.toFixed(2)}`} />
+      <BalanceLabel label="Cash" value={cash?.label ?? "$0.00"} />
+    </div>
+  );
+}
+
+function BalanceLabel({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="leading-none">
+      <p className="text-[11px] text-muted-foreground">{label}</p>
+      <p className="mt-0.5 font-semibold tabular-nums text-success">{value}</p>
     </div>
   );
 }
