@@ -21,7 +21,7 @@ export interface NetworkConfig {
   rpc: string;
   apiBase: string;
   txoracleProgram: PublicKey;
-  usdtMint: PublicKey;
+  usdcMint: PublicKey;
   txlMint: PublicKey;
 }
 
@@ -29,7 +29,7 @@ export const DEVNET: NetworkConfig = {
   rpc: "https://api.devnet.solana.com",
   apiBase: "https://txline-dev.txodds.com",
   txoracleProgram: new PublicKey("6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J"),
-  usdtMint: new PublicKey("ELWTKspHKCnCfCiCiqYw1EDH77k8VCP74dK9qytG2Ujh"),
+  usdcMint: new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"),
   txlMint: new PublicKey("4Zao8ocPhmMgq7PdsYWyxvqySMGx7xb9cMftPMkEokRG"),
 };
 
@@ -37,7 +37,7 @@ export const MAINNET: NetworkConfig = {
   rpc: "https://api.mainnet-beta.solana.com",
   apiBase: "https://txline.txodds.com",
   txoracleProgram: new PublicKey("9ExbZjAapQww1vfcisDmrngPinHTEfpjYRWMunJgcKaA"),
-  usdtMint: new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"),
+  usdcMint: new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"),
   txlMint: new PublicKey("11111111111111111111111111111111"),
 };
 

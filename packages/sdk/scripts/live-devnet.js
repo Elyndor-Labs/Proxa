@@ -1,4 +1,4 @@
-/* Live devnet SDK test (needs a funded keeper wallet + free TxLINE subscription; no USDT).
+/* Live devnet SDK test (needs a funded keeper wallet + free TxLINE subscription; no USDC).
    Runs onboard -> fetchStatValidation -> createMarket -> resolve through the SDK classes.
    Run: pnpm --filter @proxa/sdk test:devnet
    Env: KEEPER_KEYPAIR, RPC_URL, PROXA_NETWORK, TX_FIXTURE_ID, TX_SEQ, TX_STAT_KEY */

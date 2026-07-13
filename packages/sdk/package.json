@@ -12,6 +12,7 @@
     "build": "tsc -p tsconfig.json",
     "test": "tsc -p tsconfig.json && node test/offline.test.js",
     "test:devnet": "node scripts/live-devnet.js",
+    "set-devnet-usdc": "node scripts/set-devnet-usdc.js",
     "clean": "rimraf dist"
   },
   "dependencies": {

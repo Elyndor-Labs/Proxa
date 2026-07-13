@@ -182,6 +182,22 @@ export class ProxaClient {
       .instruction();
   }
 
+  updateStakeMintIx(params: {
+    authority: PublicKey;
+    stakeMint: PublicKey;
+    treasury: PublicKey;
+  }): Promise<TransactionInstruction> {
+    return (this.program.methods as any)
+      .updateStakeMint()
+      .accountsPartial({
+        authority: params.authority,
+        config: this.configPda(),
+        stakeMint: params.stakeMint,
+        treasury: params.treasury,
+      })
+      .instruction();
+  }
+
   placeBetIx(params: {
     bettor: PublicKey;
     marketId: MarketId;

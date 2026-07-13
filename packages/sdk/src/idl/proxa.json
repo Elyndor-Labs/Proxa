@@ -503,6 +503,51 @@
       ]
     },
     {
+      "name": "update_stake_mint",
+      "discriminator": [
+        45,
+        56,
+        230,
+        191,
+        24,
+        80,
+        194,
+        233
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "stake_mint"
+        },
+        {
+          "name": "treasury"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "void_market",
       "discriminator": [
         243,
