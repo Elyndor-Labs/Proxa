@@ -7,6 +7,8 @@ import { GooeyInput } from "@/components/ui/gooey-input";
 import { PortfolioCash } from "@/components/layout/portfolio-cash";
 import { UserMenu } from "@/components/layout/user-menu";
 import { useMounted } from "@/hooks/use-mounted";
+import { useAnchorWallet } from "@/hooks/use-anchor-wallet";
+import { useConfig } from "@/hooks/use-protocol-stats";
 import { useWalletAuth } from "@/hooks/use-wallet-auth";
 import { primaryNav } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
@@ -16,8 +18,13 @@ export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const mounted = useMounted();
+  const wallet = useAnchorWallet();
+  const { data: config } = useConfig();
   const { ready, connected } = useWalletAuth();
   const [search, setSearch] = useState("");
+  const isAuthority =
+    Boolean(wallet?.publicKey && config?.authority && wallet.publicKey.equals(config.authority));
+  const navItems = primaryNav.filter((item) => item.href !== "/create" || isAuthority);
 
   const submitSearch = () => {
     const q = search.trim();
@@ -48,7 +55,7 @@ export function SiteHeader() {
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Primary">
-          {primaryNav.map((item) => (
+          {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -93,7 +100,7 @@ export function SiteHeader() {
           style={{ borderColor: "var(--header-border)" }}
           aria-label="Primary"
         >
-          {primaryNav.map((item) => (
+          {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
