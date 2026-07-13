@@ -23,8 +23,3 @@ export function bucketChancePct(market: MarketAccount, bucket: number): number {
   return market.bucketPools[bucket].muln(100).div(total).toNumber();
 }
 
-/** Implied price in cents from parimutuel pool share. */
-export function bucketPriceCents(market: MarketAccount, bucket: number): number {
-  const pct = bucketChancePct(market, bucket);
-  return Math.max(1, Math.min(99, Math.round(pct)));
-}

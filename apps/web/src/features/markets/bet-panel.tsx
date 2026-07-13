@@ -6,11 +6,13 @@ import { WalletButton } from "@/components/domain/wallet-button";
 import { useBetSlipStore } from "@/features/bet-slip/store";
 import { usePlaceBet } from "@/hooks/use-place-bet";
 import { useProxaClient } from "@/hooks/use-proxa-client";
+import { useStakeTokenBalance } from "@/hooks/use-token-balance";
 import { useWalletAuth } from "@/hooks/use-wallet-auth";
-import { bucketPriceCents } from "@/lib/format/odds";
+import { formatOdds } from "@/lib/format/odds";
 import { formatStake } from "@/lib/format/odds";
 import type { MarketView } from "@/lib/proxa/market-view";
 import { STAKE_DECIMALS } from "@/lib/proxa/market-view";
+import { formatStakeTokenLabel } from "@/lib/proxa/stake-token";
 
 const MAX_STAKE = 2;
 const PRESETS = [0.25, 0.5, 0.75, 1] as const;
@@ -29,15 +31,19 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
   const [side, setSide] = useState<"buy" | "sell">("buy");
   const { canTransact } = useProxaClient();
   const { connected } = useWalletAuth();
+  const { data: cash } = useStakeTokenBalance();
   const placeBet = usePlaceBet();
   const { addLeg, setOpen } = useBetSlipStore();
 
   const bucket = selectedBucket;
   const label = view.bucketLabels[bucket] ?? `Bucket ${bucket + 1}`;
-  const yesCents = bucketPriceCents(account, bucket);
-  const noCents = 100 - yesCents;
+  const estimatedOdds = formatOdds(account, bucket);
   const isBinary = view.numBuckets === 2;
   const disabled = !view.isOpen || placeBet.isPending;
+  const stakeTokenLabel = formatStakeTokenLabel(account.stakeMint.toBase58());
+  const amountNumber = Number(amount);
+  const hasInvalidAmount = !amount || Number.isNaN(amountNumber) || amountNumber <= 0;
+  const insufficientBalance = Boolean(cash && amountNumber > cash.amount);
 
   const preview =
     amount && !Number.isNaN(Number(amount))
@@ -102,7 +108,7 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
               onClick={() => onSelectBucket(0)}
             >
               <span className="trade-btn-label">Yes</span>
-              <span className="trade-btn-price">{bucketPriceCents(account, 0)}¢</span>
+              <span className="trade-btn-price">{formatOdds(account, 0)}x</span>
             </button>
             <button
               type="button"
@@ -112,19 +118,19 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
               onClick={() => onSelectBucket(1)}
             >
               <span className="trade-btn-label">No</span>
-              <span className="trade-btn-price">{bucketPriceCents(account, 1)}¢</span>
+              <span className="trade-btn-price">{formatOdds(account, 1)}x</span>
             </button>
           </div>
         ) : (
           <p className="font-label text-sm text-muted-foreground">
-            Backing <span className="font-semibold text-foreground">{label}</span> at{" "}
-            <span className="font-bold text-brand">{yesCents}¢</span>
+            Backing <span className="font-semibold text-foreground">{label}</span> at estimated{" "}
+            <span className="font-bold text-brand">{estimatedOdds}x</span>
           </p>
         )}
 
         <div className="trade-amount-block">
           <label htmlFor="trade-amount" className="trade-amount-label">
-            USDC to spend
+            {stakeTokenLabel} to spend
           </label>
           <input
             id="trade-amount"
@@ -139,7 +145,8 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
             className="trade-amount-input"
           />
           <p className="trade-amount-hint">
-            ${MAX_STAKE.toFixed(2)} max · {isBinary ? `Yes ${yesCents}¢ / No ${noCents}¢` : `${yesCents}¢ implied`}
+            ${MAX_STAKE.toFixed(2)} max · {cash ? `${cash.label} available · ` : ""}
+            Estimated payout odds: {estimatedOdds}x
           </p>
         </div>
 
@@ -161,7 +168,7 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
           <div className="rounded-lg border border-[var(--surface-border)] bg-black/20 px-4 py-3">
             <p className="font-label text-xs text-muted-foreground">Payout if {label} wins</p>
             <p className="mt-0.5 font-display text-xl font-bold text-brand">
-              ${formatStake(preview.projectedPayout)}
+              {formatStake(preview.projectedPayout)} {stakeTokenLabel}
             </p>
           </div>
         )}
@@ -169,6 +176,11 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
         {!view.isOpen && (
           <p className="text-center font-label text-xs text-muted-foreground">
             This market is no longer accepting bets.
+          </p>
+        )}
+        {connected && insufficientBalance && (
+          <p className="text-center font-label text-xs text-destructive">
+            Not enough {stakeTokenLabel}. Available: {cash?.label ?? "$0.00"}.
           </p>
         )}
 
@@ -181,7 +193,7 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
             <button
               type="button"
               className="trade-cta trade-cta--brand"
-              disabled={disabled || !amount || Number(amount) <= 0}
+              disabled={disabled || hasInvalidAmount || insufficientBalance}
               onClick={handlePlaceBet}
             >
               {placeBet.isPending ? "Confirming…" : "Place trade"}

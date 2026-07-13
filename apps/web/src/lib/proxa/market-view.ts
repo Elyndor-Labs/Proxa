@@ -54,9 +54,20 @@ function formatPool(amount: { toString(): string }): string {
   return `$${fromBaseUnits(amount, STAKE_DECIMALS)}`;
 }
 
-function bucketLabel(index: number, numBuckets: number): string {
+function bucketUnit(statLabel: string): string {
+  const normalized = statLabel.toLowerCase();
+  if (normalized.includes("corner")) return "corners";
+  if (normalized.includes("yellow")) return "yellow cards";
+  if (normalized.includes("red")) return "red cards";
+  if (normalized.includes("goal")) return "goals";
+  return "value";
+}
+
+function bucketLabel(index: number, numBuckets: number, statLabel: string): string {
   if (numBuckets === 2) return index === 0 ? "Yes" : "No";
-  return `Bucket ${index + 1}`;
+  const unit = bucketUnit(statLabel);
+  if (index === numBuckets - 1) return `${index}+ ${unit}`;
+  return `${index} ${unit}`;
 }
 
 export function toMarketView(account: MarketAccount): MarketView {
@@ -72,7 +83,7 @@ export function toMarketView(account: MarketAccount): MarketView {
     status,
     totalPool: formatPool(account.totalPool),
     bucketPools: account.bucketPools.map(formatPool),
-    bucketLabels: Array.from({ length: account.numBuckets }, (_, i) => bucketLabel(i, account.numBuckets)),
+    bucketLabels: Array.from({ length: account.numBuckets }, (_, i) => bucketLabel(i, account.numBuckets, statLabel)),
     betsCloseLabel: formatTimeRemaining(closeTs),
     betsCloseTs: closeTs,
     numBuckets: account.numBuckets,
