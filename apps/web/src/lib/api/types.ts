@@ -50,3 +50,54 @@ export interface WirePositionRecord {
   address: string;
   account: WirePositionAccount;
 }
+
+/** Flat market shape returned by the production API (apps/api). */
+export interface ApiMarket {
+  marketId: string | number;
+  fixtureId: string | number;
+  statKey: number;
+  status: "open" | "resolved" | "voided";
+  numBuckets: number;
+  winningBucket: number;
+  winningValue: number;
+  totalPool: string | number;
+  bucketPools: (string | number)[];
+  betsCloseTs: string | number;
+  resolveAfterTs: string | number;
+  resolveDeadlineTs?: string | number;
+  netPool?: string | number;
+  winningPool?: string | number;
+  feeBps?: number;
+  feeCollected?: boolean;
+  address?: string;
+}
+
+/** Flat position shape returned by the production API. */
+export interface ApiPosition {
+  address: string;
+  marketId: string | number;
+  bucket: number;
+  amount: string | number;
+}
+
+export interface ApiConfig {
+  authority: string;
+  stakeMint: string;
+  treasury: string;
+  feeBps: number;
+  marketCount: string | number;
+}
+
+export interface ApiDataResponse<T> {
+  data: T;
+}
+
+export interface Notification {
+  id: string;
+  wallet: string;
+  marketId: number;
+  type: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}

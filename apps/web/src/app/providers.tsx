@@ -1,6 +1,7 @@
 "use client";
 
 import { ThemeProvider } from "next-themes";
+import { AppWalletProviders } from "@/components/providers/app-wallet-providers";
 import { ClusterProvider } from "@/components/providers/cluster-provider";
 import { ErrorReporter } from "@/components/monitoring/error-reporter";
 import { QueryProvider } from "@/components/providers/query-provider";
@@ -10,15 +11,17 @@ interface ProvidersProps {
   children: React.ReactNode;
 }
 
-/** Root client providers — theme and query cache only; wallet auth loads in the app layout. */
+/** Root client providers — theme, query cache, and wallet auth. */
 export function Providers({ children }: ProvidersProps) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+    <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark" enableSystem={false} disableTransitionOnChange>
       <QueryProvider>
         <ClusterProvider>
-          <ErrorReporter />
-          {children}
-          <ToastProvider />
+          <AppWalletProviders>
+            <ErrorReporter />
+            {children}
+            <ToastProvider />
+          </AppWalletProviders>
         </ClusterProvider>
       </QueryProvider>
     </ThemeProvider>

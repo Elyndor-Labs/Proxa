@@ -41,7 +41,7 @@ export function GovernanceView() {
   return (
     <>
       <PageHeader
-        title="Governance Hub"
+        title="Governance"
         description="Live protocol parameters and upcoming on-chain governance."
         actions={<ClusterSwitcher />}
       />

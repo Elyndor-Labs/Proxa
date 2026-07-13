@@ -9,7 +9,6 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { isApiEnabled, ONCHAIN_TX_DISABLED_MESSAGE } from "@/config/api";
 import { useConfig } from "@/hooks/use-protocol-stats";
 import { useCreateMarket } from "@/hooks/use-create-market";
 import { useProxaClient } from "@/hooks/use-proxa-client";
@@ -60,18 +59,9 @@ export function CreateMarketForm() {
   return (
     <RequireWallet>
       <PageHeader
-        title="Create Market"
-        description="Define a new parametric prop. Only the protocol authority can create markets on-chain."
+        title="Make Markets"
+        description="Create and launch new prediction markets on-chain."
       />
-
-      {!canTransact && isApiEnabled() && (
-        <Card className="mb-6 border-brand/30">
-          <CardHeader>
-            <CardTitle className="text-base">Test mode</CardTitle>
-            <CardDescription>{ONCHAIN_TX_DISABLED_MESSAGE}</CardDescription>
-          </CardHeader>
-        </Card>
-      )}
 
       {!isAuthority && config && (
         <Card className="mb-6 border-warning/30">

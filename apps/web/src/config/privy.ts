@@ -29,7 +29,7 @@ export function getPrivyConfig(): PrivyClientConfig {
     },
     appearance: {
       theme: "dark",
-      accentColor: "#b8e600",
+      accentColor: "#4ade80",
       showWalletLoginFirst: true,
       walletChainType: "solana-only",
       walletList: ["phantom", "solflare", "backpack", "detected_solana_wallets"],
