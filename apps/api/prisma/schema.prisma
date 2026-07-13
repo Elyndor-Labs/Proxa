@@ -7,28 +7,84 @@ datasource db {
 }
 
 model Fixture {
-  id        Int      @id
-  homeTeam  String
-  awayTeam  String
-  league    String
-  startsAt  DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  markets   Market[]
+  id             Int               @id
+  externalSource String            @default("txodds")
+  externalId     String?           @unique
+  sport          String            @default("football")
+  country        String?
+  homeTeam       String
+  awayTeam       String
+  league         String
+  startsAt       DateTime
+  status         String            @default("scheduled")
+  lastSyncedAt   DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  markets        Market[]
+  candidates     MarketCandidate[]
+  odds           OddsSnapshot[]
 }
 
 model Market {
-  id            Int            @id
-  fixtureId     Int
-  statKey       Int
-  statLabel     String
-  status        String         @default("open")
-  winningBucket Int?
-  resolvedAt    DateTime?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  fixture       Fixture        @relation(fields: [fixtureId], references: [id])
-  notifications Notification[]
+  id               Int               @id
+  fixtureId        Int
+  statKey          Int
+  statLabel        String
+  title            String?
+  marketType       String            @default("stat_bucket")
+  externalMarketId String?
+  onChainAddress   String?
+  status           String            @default("open")
+  winningBucket    Int?
+  resolvedAt       DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  fixture          Fixture           @relation(fields: [fixtureId], references: [id])
+  candidates       MarketCandidate[]
+  notifications    Notification[]
+
+  @@index([fixtureId])
+  @@index([status])
+}
+
+model MarketCandidate {
+  id              String    @id @default(cuid())
+  fixtureId       Int
+  source          String    @default("txodds")
+  sourceMarketId  String?
+  statKey         Int?
+  statLabel       String
+  marketType      String    @default("stat_bucket")
+  title           String
+  numBuckets      Int       @default(2)
+  status          String    @default("candidate")
+  startsAt        DateTime?
+  onChainMarketId Int?
+  raw             Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  fixture         Fixture   @relation(fields: [fixtureId], references: [id])
+  onChainMarket   Market?   @relation(fields: [onChainMarketId], references: [id])
+
+  @@index([fixtureId, status])
+  @@index([source, sourceMarketId])
+}
+
+model OddsSnapshot {
+  id                 String   @id @default(cuid())
+  fixtureId          Int
+  provider           String   @default("txodds")
+  marketKey          String
+  marketName         String
+  selection          String
+  priceDecimal       Float?
+  impliedProbability Float?
+  raw                Json?
+  capturedAt         DateTime @default(now())
+  fixture            Fixture  @relation(fields: [fixtureId], references: [id])
+
+  @@index([fixtureId, marketKey])
+  @@index([provider, capturedAt])
 }
 
 model Notification {
