@@ -2,44 +2,44 @@
 
 import { motion, useInView } from "motion/react";
 import { useRef } from "react";
-import { BarChart3, MessageSquareQuote, Shield, Zap } from "lucide-react";
+import { BarChart3, Shield, Trophy, Zap } from "lucide-react";
 
 const FEATURES = [
   {
-    icon: MessageSquareQuote,
-    title: "Word-level markets",
+    icon: Trophy,
+    title: "Fixture markets",
     description:
-      "Every event has a set of words. Trade YES if you think it'll be said, NO if it won't. Prices move in real time.",
+      "TXOdds fixture data becomes reviewable market candidates before anything launches on-chain.",
     accent: "from-brand/20 to-transparent",
   },
   {
     icon: Zap,
     title: "Instant settlement",
     description:
-      "Transcripts are verified on-chain. Winners claim payouts in one click — no waiting, no manual review.",
+      "Oracle proofs verify match stats on-chain. Winners claim payouts from the market pool.",
     accent: "from-success/15 to-transparent",
   },
   {
     icon: BarChart3,
     title: "Live price charts",
     description:
-      "Watch odds shift as the event unfolds. Sell early to lock profit or hold until resolution.",
+      "Watch odds shift as match data and the market pool move. Hold until resolution or manage risk.",
     accent: "from-warning/10 to-transparent",
   },
   {
     icon: Shield,
     title: "On-chain security",
     description:
-      "Merkle proofs and oracle verification. Your positions and payouts are transparent and auditable.",
+      "Oracle proofs and Solana settlement make positions and payouts transparent and auditable.",
     accent: "from-brand/10 to-transparent",
   },
 ] as const;
 
 const STEPS = [
-  { n: "01", title: "Pick a market", desc: "Choose a live event — stream, podcast, or match." },
-  { n: "02", title: "Trade a word", desc: "Buy YES or NO on any word in the market." },
+  { n: "01", title: "Pick a market", desc: "Choose a synced TXOdds fixture or launched market." },
+  { n: "02", title: "Trade an outcome", desc: "Back the outcome bucket you think will resolve as winner." },
   { n: "03", title: "Watch it move", desc: "Prices update live as the crowd reacts." },
-  { n: "04", title: "Claim winnings", desc: "Transcript settles. Winners collect instantly." },
+  { n: "04", title: "Claim winnings", desc: "Oracle settlement resolves the market. Winners collect on-chain." },
 ] as const;
 
 function FeatureCard({
@@ -142,3 +142,4 @@ export function FeaturesSection() {
     </>
   );
 }
+

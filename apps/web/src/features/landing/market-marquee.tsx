@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMarkets } from "@/hooks/use-markets";
-import { bucketPriceCents } from "@/lib/format/odds";
 import type { MarketRecord } from "@proxa/sdk";
+import { useMarkets } from "@/hooks/use-markets";
+import { formatOdds } from "@/lib/format/odds";
 import type { MarketView } from "@/lib/proxa/market-view";
 
 interface MarqueeItem {
@@ -19,10 +19,9 @@ interface MarqueeItem {
 function toMarqueeItem({ record, view }: { record: MarketRecord; view: MarketView }): MarqueeItem {
   const { account } = record;
   const isFree = Number(view.id) % 2 === 1;
-  const words = view.bucketLabels.slice(0, 3).map((label, i) => {
-    const cents = bucketPriceCents(account, i);
-    return `${label} ${cents}¢`;
-  });
+  const words = view.bucketLabels
+    .slice(0, 3)
+    .map((label, index) => `${label} ${formatOdds(account, index)}x`);
 
   return {
     id: view.id,
@@ -96,21 +95,20 @@ function MarketScrollCard({ market }: { market: MarqueeItem }) {
   );
 }
 
-/** Live market ticker — data from the markets API. */
+/** Live market ticker data from the markets API. */
 export function MarketMarquee() {
   const { data, isLoading } = useMarkets();
   const items = (data ?? []).map(toMarqueeItem).slice(0, 12);
   const doubled = items.length > 0 ? [...items, ...items] : [];
 
+  if (!isLoading && doubled.length === 0) return null;
+
   return (
     <div className="relative z-10 w-full border-b border-border/40 bg-background/40 py-3 backdrop-blur-md">
       <div className="animate-marquee flex gap-4 px-4">
-        {isLoading &&
-          Array.from({ length: 6 }).map((_, i) => <MarqueeSkeleton key={`sk-${i}`} />)}
+        {isLoading && Array.from({ length: 6 }).map((_, index) => <MarqueeSkeleton key={`sk-${index}`} />)}
         {!isLoading &&
-          doubled.map((market, i) => (
-            <MarketScrollCard key={`${market.id}-${i}`} market={market} />
-          ))}
+          doubled.map((market, index) => <MarketScrollCard key={`${market.id}-${index}`} market={market} />)}
       </div>
     </div>
   );

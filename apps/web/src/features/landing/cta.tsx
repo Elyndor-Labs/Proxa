@@ -24,7 +24,7 @@ export function CtaSection() {
             Markets are live.
           </h2>
           <p className="mx-auto mt-5 max-w-md text-lg font-medium text-muted-foreground">
-            Pick your words. Trade against the crowd. Win when you&apos;re right.
+            Pick a match outcome, trade against the pool, and settle through Solana.
           </p>
           <div className="mt-12 flex justify-center">
             <Button variant="brand" size="lg" className="h-12 px-10 text-base font-bold" asChild>

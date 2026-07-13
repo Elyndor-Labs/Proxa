@@ -8,15 +8,15 @@ import { cn } from "@/lib/utils";
 const FAQS = [
   {
     q: "What is Proxa?",
-    a: "Proxa is a prediction market platform for live media. Trade on whether specific words will be said during streams, podcasts, debates, sports broadcasts, and more.",
+    a: "Proxa is a sports prediction market platform that turns TXOdds fixture data into Solana-settled markets.",
   },
   {
     q: "How do I place a trade?",
-    a: "Connect your wallet, pick a market, choose a word, and buy YES or NO. Enter your stake in USDC and confirm. You'll see your potential payout before you submit.",
+    a: "Connect your wallet, pick a market outcome, enter your stake token amount, and confirm. You'll see your potential payout before you submit.",
   },
   {
     q: "How are markets settled?",
-    a: "When an event ends, the transcript is checked against the market's word list. If your word was said and you held YES, you win. Settlement is verified on-chain.",
+    a: "When a match resolves, the oracle proof is checked against the market's stat key. Winning positions claim from the on-chain pool.",
   },
   {
     q: "Can I sell before the event ends?",
@@ -24,7 +24,7 @@ const FAQS = [
   },
   {
     q: "What's the difference between free and paid markets?",
-    a: "Free markets let you practice with no real stake. Paid markets use USDC and offer real payouts on correct predictions.",
+    a: "Paid markets use the configured SPL stake mint and offer real payouts on correct predictions.",
   },
   {
     q: "Is this financial advice?",

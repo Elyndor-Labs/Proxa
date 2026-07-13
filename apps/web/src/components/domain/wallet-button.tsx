@@ -12,7 +12,7 @@ interface WalletButtonProps {
 /** Connect control backed by Privy auth — matches navbar login style. */
 export function WalletButton({ size = "default", className }: WalletButtonProps) {
   const mounted = useMounted();
-  const { ready, connected, login } = useWalletAuth();
+  const { ready, connected, authenticated, login } = useWalletAuth();
 
   if (!mounted || !ready) {
     return (
@@ -31,7 +31,7 @@ export function WalletButton({ size = "default", className }: WalletButtonProps)
       style={size === "lg" ? { padding: "0.9375rem 1.5rem", fontSize: "0.9375rem" } : undefined}
       onClick={() => void login()}
     >
-      Login to trade
+      {authenticated ? "Connect wallet" : "Login to trade"}
     </button>
   );
 }
