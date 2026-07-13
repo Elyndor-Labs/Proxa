@@ -1,7 +1,7 @@
 "use client";
 
 import { Info, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { cn } from "@/lib/utils";
@@ -162,14 +162,16 @@ function StepContent({ step }: { step: number }) {
 
 /** Multi-step onboarding modal for app pages. */
 export function HowItWorksModal({ open, onClose }: HowItWorksModalProps) {
-  const [step, setStep] = useState(0);
-  const trapRef = useFocusTrap<HTMLDivElement>(open);
+  if (!open) return null;
 
-  const reset = useCallback(() => setStep(0), []);
+  return <HowItWorksDialog onClose={onClose} />;
+}
+
+function HowItWorksDialog({ onClose }: { onClose: () => void }) {
+  const [step, setStep] = useState(0);
+  const trapRef = useFocusTrap<HTMLDivElement>(true);
 
   useEffect(() => {
-    if (!open) return;
-    reset();
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
@@ -179,9 +181,7 @@ export function HowItWorksModal({ open, onClose }: HowItWorksModalProps) {
       document.removeEventListener("keydown", handleKey);
       document.body.style.overflow = "";
     };
-  }, [open, onClose, reset]);
-
-  if (!open) return null;
+  }, [onClose]);
 
   const current = STEPS[step]!;
   const isLast = step === STEPS.length - 1;

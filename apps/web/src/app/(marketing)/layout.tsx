@@ -1,4 +1,3 @@
-import { HowItWorksFab } from "@/components/layout/how-it-works-fab";
 import { MarketingFooter } from "@/components/layout/marketing-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 
