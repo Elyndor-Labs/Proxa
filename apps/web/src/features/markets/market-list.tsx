@@ -2,11 +2,15 @@
 
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
+import { CandidateMarketCard } from "@/components/domain/candidate-market-card";
 import { MarketCard } from "@/components/domain/market-card";
 import { FilterTabs } from "@/components/layout/filter-tabs";
 import { PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
+import { useFixtures } from "@/hooks/use-fixtures";
 import { useMarkets } from "@/hooks/use-markets";
 import { getApiErrorMessage } from "@/lib/api/errors";
+import type { FixtureDetail } from "@/lib/api/fixtures";
 import { formatOdds } from "@/lib/format/odds";
 import { filterMarkets, type MarketStatusFilter } from "@/lib/proxa/filters";
 import { cn } from "@/lib/utils";
@@ -20,9 +24,81 @@ const STATUS_TABS = [
   { label: "All", value: "all" },
 ];
 
+interface TxOddsCandidateSectionProps {
+  fixtures: FixtureDetail[];
+  isLoading: boolean;
+  isError: boolean;
+  error: unknown;
+}
+
 interface MarketFiltersProps {
   initialQuery: string;
   data: NonNullable<ReturnType<typeof useMarkets>["data"]>;
+}
+
+function TxOddsCandidateSection({ fixtures, isLoading, isError, error }: TxOddsCandidateSectionProps) {
+  const candidates = useMemo(() => {
+    return fixtures
+      .flatMap((fixture) =>
+        fixture.candidates.map((candidate) => ({
+          fixture,
+          candidate,
+          odds: fixture.odds.filter((odd) => odd.marketKey === candidate.sourceMarketId),
+        })),
+      )
+      .slice(0, 6);
+  }, [fixtures]);
+
+  if (isLoading) {
+    return (
+      <section className="mt-10 space-y-4">
+        <div className="h-7 w-56 animate-pulse rounded-lg bg-muted" />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="surface h-64 animate-pulse rounded-2xl" />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (isError) {
+    return (
+      <section className="mt-10 surface border-destructive/30 p-6">
+        <p className="font-display font-semibold text-destructive">Failed to load TXOdds candidates</p>
+        <p className="mt-1 text-sm text-muted-foreground">{getApiErrorMessage(error)}</p>
+      </section>
+    );
+  }
+
+  if (!candidates.length) return null;
+
+  return (
+    <section className="mt-10 space-y-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="font-display text-lg font-bold">Upcoming from TXOdds</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Synced candidates waiting for review and on-chain launch.
+          </p>
+        </div>
+        <Button variant="ghost" size="sm" asChild>
+          <a href="#launched-markets">View launched markets</a>
+        </Button>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {candidates.map(({ fixture, candidate, odds }) => (
+          <CandidateMarketCard
+            key={candidate.id}
+            candidate={candidate}
+            fixture={fixture}
+            odds={odds}
+          />
+        ))}
+      </div>
+    </section>
+  );
 }
 
 function MarketFilters({ initialQuery, data }: MarketFiltersProps) {
@@ -38,7 +114,7 @@ function MarketFilters({ initialQuery, data }: MarketFiltersProps) {
   const rest = filtered.slice(1);
 
   return (
-    <div>
+    <div id="launched-markets">
       <FilterTabs
         tabs={STATUS_TABS}
         value={status}
@@ -87,6 +163,7 @@ export function MarketList() {
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get("q") ?? "";
   const { data, isLoading, isError, error } = useMarkets();
+  const fixturesQuery = useFixtures();
 
   if (isLoading) {
     return (
@@ -117,6 +194,12 @@ export function MarketList() {
     <>
       <PageHeader title="Markets" description="Browse prediction markets across all active events." />
       {data ? <MarketFilters key={urlQuery} initialQuery={urlQuery} data={data} /> : null}
+      <TxOddsCandidateSection
+        fixtures={fixturesQuery.data ?? []}
+        isLoading={fixturesQuery.isLoading}
+        isError={fixturesQuery.isError}
+        error={fixturesQuery.error}
+      />
     </>
   );
 }

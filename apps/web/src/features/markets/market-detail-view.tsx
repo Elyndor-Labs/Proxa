@@ -7,11 +7,16 @@ import { SettlementBadge } from "@/components/domain/settlement-badge";
 import { Badge } from "@/components/ui/badge";
 import { BetPanel } from "@/features/markets/bet-panel";
 import { MarketPositionPanel } from "@/features/markets/market-position-panel";
-import { WordTradeTable } from "@/features/markets/word-trade-table";
+import { OutcomeTradeTable } from "@/features/markets/word-trade-table";
+import { useFixture } from "@/hooks/use-fixture";
 import { useMarket } from "@/hooks/use-market";
 import { useTimeRemaining } from "@/hooks/use-time-remaining";
 import { getApiErrorMessage, isNotFoundError } from "@/lib/api/errors";
+import type { FixtureCandidate, FixtureDetail, OddsSnapshot } from "@/lib/api/fixtures";
 import { bucketChancePct } from "@/lib/format/odds";
+import type { MarketView } from "@/lib/proxa/market-view";
+import { formatSportsMarketName, formatSportsSelection } from "@/lib/proxa/sports-market-labels";
+import { formatStakeTokenLabel } from "@/lib/proxa/stake-token";
 import type { MarketAccount } from "@proxa/sdk";
 
 interface MarketDetailViewProps {
@@ -45,11 +50,63 @@ function PoolChart({ account, labels }: { account: MarketAccount; labels: string
   );
 }
 
-/** Market detail — mentioned.market layout with words table and trade sidebar. */
+function latestOddsLabels(
+  odds: OddsSnapshot[],
+  marketKey: string | null | undefined,
+  teams?: { homeTeam: string; awayTeam: string },
+): string[] {
+  if (!marketKey) return [];
+
+  const seen = new Set<string>();
+  return odds
+    .filter((odd) => odd.marketKey === marketKey)
+    .sort((a, b) => Date.parse(b.capturedAt) - Date.parse(a.capturedAt))
+    .filter((odd) => {
+      if (seen.has(odd.selection)) return false;
+      seen.add(odd.selection);
+      return true;
+    })
+    .reverse()
+    .map((odd) => formatSportsSelection(odd.selection, teams));
+}
+
+function rawMarketParameters(candidate?: FixtureCandidate): string | null {
+  const raw = candidate?.raw;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const value = (raw as Record<string, unknown>).parameters;
+  return typeof value === "string" ? value : null;
+}
+
+function buildDisplayView(view: MarketView, fixture: FixtureDetail | undefined, marketId: string): MarketView {
+  if (!fixture) return view;
+
+  const linkedMarket = fixture.markets.find((market) => String(market.id) === marketId);
+  const candidate = fixture.candidates.find((item) => {
+    if (item.onChainMarketId === Number(marketId)) return true;
+    return Boolean(linkedMarket?.externalMarketId && item.sourceMarketId === linkedMarket.externalMarketId);
+  });
+  const marketKey = candidate?.sourceMarketId ?? linkedMarket?.externalMarketId;
+  const teams = { homeTeam: fixture.homeTeam, awayTeam: fixture.awayTeam };
+  const oddsLabels = latestOddsLabels(fixture.odds, marketKey, teams);
+  const marketName = candidate
+    ? formatSportsMarketName(candidate.marketType || candidate.statLabel, rawMarketParameters(candidate))
+    : linkedMarket?.statLabel ?? view.statLabel;
+  const title = `${fixture.homeTeam} vs ${fixture.awayTeam} - ${marketName}`;
+
+  return {
+    ...view,
+    title: linkedMarket?.title ?? candidate?.title ?? title,
+    statLabel: marketName,
+    bucketLabels: oddsLabels.length === view.numBuckets ? oddsLabels : view.bucketLabels,
+  };
+}
+
+/** Market detail layout with outcome table and trade sidebar. */
 export function MarketDetailView({ marketId }: MarketDetailViewProps) {
   const { data, isLoading, isError, error } = useMarket(marketId, { subscribe: true });
   const betsCloseLabel = useTimeRemaining(data?.view.betsCloseTs ?? 0);
   const [selectedBucket, setSelectedBucket] = useState(0);
+  const fixtureQuery = useFixture(data?.view.fixtureId ?? "");
 
   if (isLoading) {
     return (
@@ -81,7 +138,11 @@ export function MarketDetailView({ marketId }: MarketDetailViewProps) {
   }
 
   const { account, view } = data;
-  const isFree = Number(view.id) % 2 === 1;
+  const displayView = buildDisplayView(view, fixtureQuery.data, marketId);
+  const fixtureLabel = fixtureQuery.data
+    ? `${fixtureQuery.data.homeTeam} vs ${fixtureQuery.data.awayTeam}`
+    : `Fixture #${displayView.fixtureId}`;
+  const tokenLabel = formatStakeTokenLabel(account.stakeMint.toBase58());
 
   return (
     <div className="animate-fade-in">
@@ -91,25 +152,25 @@ export function MarketDetailView({ marketId }: MarketDetailViewProps) {
           Markets
         </Link>
         <ChevronRight className="h-3.5 w-3.5" />
-        <span className="text-foreground">{isFree ? "Free Market" : "Paid Market"}</span>
+        <span className="text-foreground">Market</span>
       </nav>
 
       {/* Header */}
       <header className="mb-8">
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <SettlementBadge status={view.status} />
-          <Badge variant={isFree ? "brand" : "secondary"}>{isFree ? "FREE" : "PAID"}</Badge>
+          <SettlementBadge status={displayView.status} />
+          <Badge variant="secondary">{tokenLabel}</Badge>
           <Link href={`/fixture/${view.fixtureId}`}>
             <Badge variant="muted" className="cursor-pointer hover:bg-muted/80">
-              Fixture #{view.fixtureId}
+              {fixtureLabel}
             </Badge>
           </Link>
         </div>
-        <h1 className="page-title text-3xl sm:text-4xl">{view.title}</h1>
+        <h1 className="page-title text-3xl sm:text-4xl">{displayView.title}</h1>
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 font-label text-sm text-muted-foreground">
-          <span>{view.totalPool} volume</span>
+          <span>{displayView.totalPool} volume</span>
           <span aria-hidden>·</span>
-          <span>{view.numBuckets} words</span>
+          <span>{displayView.numBuckets} outcomes</span>
           <span aria-hidden>·</span>
           <span>
             Closes <span className="font-semibold text-foreground">{betsCloseLabel}</span>
@@ -120,13 +181,13 @@ export function MarketDetailView({ marketId }: MarketDetailViewProps) {
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         {/* Main column */}
         <div className="space-y-5">
-          <PoolChart account={account} labels={view.bucketLabels} />
-          <WordTradeTable
-            view={view}
+          <PoolChart account={account} labels={displayView.bucketLabels} />
+          <OutcomeTradeTable
+            view={displayView}
             account={account}
             selectedBucket={selectedBucket}
             onSelectBucket={setSelectedBucket}
-            disabled={!view.isOpen}
+            disabled={!displayView.isOpen}
           />
           <MarketPositionPanel marketId={marketId} account={account} />
         </div>
@@ -134,7 +195,7 @@ export function MarketDetailView({ marketId }: MarketDetailViewProps) {
         {/* Trade sidebar */}
         <BetPanel
           marketId={marketId}
-          view={view}
+          view={displayView}
           account={account}
           selectedBucket={selectedBucket}
           onSelectBucket={setSelectedBucket}
