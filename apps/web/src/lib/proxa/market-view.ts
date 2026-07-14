@@ -64,8 +64,10 @@ function bucketUnit(statLabel: string): string {
 }
 
 function bucketLabel(index: number, numBuckets: number, statLabel: string): string {
-  if (numBuckets === 2) return index === 0 ? "Yes" : "No";
   const unit = bucketUnit(statLabel);
+  if (numBuckets === 2) {
+    return index === 0 ? `0 ${unit}` : `1+ ${unit}`;
+  }
   if (index === numBuckets - 1) return `${index}+ ${unit}`;
   return `${index} ${unit}`;
 }

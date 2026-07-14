@@ -9,6 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@proxa/sdk": path.resolve(__dirname, "../../packages/sdk/src/index.ts"),
     },
   },
 });

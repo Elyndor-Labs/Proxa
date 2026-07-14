@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { SettlementBadge } from "@/components/domain/settlement-badge";
+import { FixtureStatusBanner } from "@/components/domain/fixture-status-banner";
 import { Badge } from "@/components/ui/badge";
 import { BetPanel } from "@/features/markets/bet-panel";
 import { MarketPositionPanel } from "@/features/markets/market-position-panel";
@@ -17,6 +18,7 @@ import { bucketChancePct } from "@/lib/format/odds";
 import type { MarketView } from "@/lib/proxa/market-view";
 import { formatSportsMarketName, formatSportsSelection } from "@/lib/proxa/sports-market-labels";
 import { formatStakeTokenLabel } from "@/lib/proxa/stake-token";
+import { fixtureUnavailableMessage, isFixtureUnavailable } from "@/lib/proxa/fixture-status";
 import type { MarketAccount } from "@proxa/sdk";
 
 interface MarketDetailViewProps {
@@ -143,6 +145,10 @@ export function MarketDetailView({ marketId }: MarketDetailViewProps) {
     ? `${fixtureQuery.data.homeTeam} vs ${fixtureQuery.data.awayTeam}`
     : `Fixture #${displayView.fixtureId}`;
   const tokenLabel = formatStakeTokenLabel(account.stakeMint.toBase58());
+  const fixtureStatus = fixtureQuery.data?.status;
+  const fixtureUnavailable = isFixtureUnavailable(fixtureStatus);
+  const tradingBlockedMessage =
+    fixtureUnavailable && fixtureStatus ? fixtureUnavailableMessage(fixtureStatus) : undefined;
 
   return (
     <div className="animate-fade-in">
@@ -178,6 +184,12 @@ export function MarketDetailView({ marketId }: MarketDetailViewProps) {
         </div>
       </header>
 
+      {fixtureUnavailable && fixtureStatus ? (
+        <div className="mb-6">
+          <FixtureStatusBanner status={fixtureStatus} />
+        </div>
+      ) : null}
+
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         {/* Main column */}
         <div className="space-y-5">
@@ -187,7 +199,7 @@ export function MarketDetailView({ marketId }: MarketDetailViewProps) {
             account={account}
             selectedBucket={selectedBucket}
             onSelectBucket={setSelectedBucket}
-            disabled={!displayView.isOpen}
+            disabled={!displayView.isOpen || Boolean(tradingBlockedMessage)}
           />
           <MarketPositionPanel marketId={marketId} account={account} />
         </div>
@@ -199,6 +211,7 @@ export function MarketDetailView({ marketId }: MarketDetailViewProps) {
           account={account}
           selectedBucket={selectedBucket}
           onSelectBucket={setSelectedBucket}
+          tradingBlockedMessage={tradingBlockedMessage}
         />
       </div>
     </div>

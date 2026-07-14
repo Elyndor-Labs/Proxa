@@ -23,10 +23,18 @@ interface BetPanelProps {
   account: MarketAccount;
   selectedBucket: number;
   onSelectBucket: (bucket: number) => void;
+  tradingBlockedMessage?: string;
 }
 
 /** Sticky trading sidebar — mentioned.market style. */
-export function BetPanel({ marketId, view, account, selectedBucket, onSelectBucket }: BetPanelProps) {
+export function BetPanel({
+  marketId,
+  view,
+  account,
+  selectedBucket,
+  onSelectBucket,
+  tradingBlockedMessage,
+}: BetPanelProps) {
   const [amount, setAmount] = useState("");
   const [side, setSide] = useState<"buy" | "sell">("buy");
   const { canTransact } = useProxaClient();
@@ -39,7 +47,9 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
   const label = view.bucketLabels[bucket] ?? `Bucket ${bucket + 1}`;
   const estimatedOdds = formatOdds(account, bucket);
   const isBinary = view.numBuckets === 2;
-  const disabled = !view.isOpen || placeBet.isPending;
+  const disabled = !view.isOpen || placeBet.isPending || Boolean(tradingBlockedMessage);
+  const yesLabel = view.bucketLabels[0] ?? "Outcome 1";
+  const noLabel = view.bucketLabels[1] ?? "Outcome 2";
   const stakeTokenLabel = formatStakeTokenLabel(account.stakeMint.toBase58());
   const amountNumber = Number(amount);
   const hasInvalidAmount = !amount || Number.isNaN(amountNumber) || amountNumber <= 0;
@@ -83,6 +93,12 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
 
       <div className="trade-info-banner">${MAX_STAKE.toFixed(2)} max per position</div>
 
+      {tradingBlockedMessage ? (
+        <p className="mx-5 mt-4 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 font-label text-xs text-foreground">
+          {tradingBlockedMessage}
+        </p>
+      ) : null}
+
       <div className="trade-tabs px-5">
         <button
           type="button"
@@ -107,7 +123,7 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
               disabled={disabled}
               onClick={() => onSelectBucket(0)}
             >
-              <span className="trade-btn-label">Yes</span>
+              <span className="trade-btn-label">{yesLabel}</span>
               <span className="trade-btn-price">{formatOdds(account, 0)}x</span>
             </button>
             <button
@@ -117,7 +133,7 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
               disabled={disabled}
               onClick={() => onSelectBucket(1)}
             >
-              <span className="trade-btn-label">No</span>
+              <span className="trade-btn-label">{noLabel}</span>
               <span className="trade-btn-price">{formatOdds(account, 1)}x</span>
             </button>
           </div>
