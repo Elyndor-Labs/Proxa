@@ -11,6 +11,7 @@ import { STAKE_DECIMALS } from "@/lib/proxa/market-view";
 import { queryKeys } from "@/lib/proxa/query-keys";
 import { sendStakeTransaction } from "@/lib/proxa/send-transaction";
 import { txToast } from "@/lib/solana/toast";
+import { linkCandidateMarket } from "@/lib/api/admin";
 
 export interface CreateMarketInput {
   fixtureId: string;
@@ -21,6 +22,7 @@ export interface CreateMarketInput {
   resolveAfterHours: number;
   resolveDeadlineHours: number;
   seedPerOutcome: string;
+  candidateId?: string;
 }
 
 /** Mutation hook to create a new market (protocol authority only). */
@@ -42,6 +44,7 @@ export function useCreateMarket() {
       const marketId = await client.nextMarketId();
       const tokenProgram = await client.tokenProgramFor(config.stakeMint);
       const now = Math.floor(Date.now() / 1000);
+      const statKey = buildStatKey(input.stat.value, input.period.value);
 
       const ix = await client.createMarketIx({
         authority: wallet.publicKey,
@@ -50,7 +53,7 @@ export function useCreateMarket() {
         tokenProgram,
         args: {
           fixtureId: Number(input.fixtureId),
-          statKey: buildStatKey(input.stat.value, input.period.value),
+          statKey,
           numBuckets: input.numBuckets,
           betsCloseTs: now + input.betsCloseHours * 3600,
           resolveAfterTs: now + input.resolveAfterHours * 3600,
@@ -90,14 +93,19 @@ export function useCreateMarket() {
         });
       }
 
-      return { signature, marketId: marketId.toString() };
+      if (input.candidateId) {
+        await linkCandidateMarket(input.candidateId, Number(marketId), statKey);
+      }
+
+      return { signature, marketId: marketId.toString(), statKey };
     },
     onMutate: () => ({ toastId: txToast.pending("Creating market…") }),
     onSuccess: ({ signature }, _vars, context) => {
       if (context?.toastId) txToast.dismiss(context.toastId);
-      txToast.success(signature, "Market created");
+      txToast.success(signature, "Market created and linked");
       queryClient.invalidateQueries({ queryKey: queryKeys.markets });
       queryClient.invalidateQueries({ queryKey: queryKeys.config });
+      queryClient.invalidateQueries({ queryKey: queryKeys.fixtures });
     },
     onError: (error, _vars, context) => {
       if (context?.toastId) txToast.dismiss(context.toastId);

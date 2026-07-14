@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { RequireWallet } from "@/components/auth/require-wallet";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { FixturePicker } from "@/features/create/fixture-picker";
 import { useAnchorWallet } from "@/hooks/use-anchor-wallet";
 import { useCreateMarket } from "@/hooks/use-create-market";
 import { useFixtures } from "@/hooks/use-fixtures";
@@ -22,17 +23,23 @@ import {
 } from "@/lib/proxa/stat-options";
 import { formatSportsMarketName } from "@/lib/proxa/sports-market-labels";
 
-/** Admin-only form to launch a reviewed market on-chain. */
+const LAUNCHABLE_STATUSES = new Set(["candidate", "approved"]);
+
+/** Admin launch wizard: pick fixture + approved candidate, then create on-chain. */
 export function CreateMarketForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const wallet = useAnchorWallet();
   const { data: config } = useConfig();
   const fixturesQuery = useFixtures();
   const { canTransact } = useProxaClient();
   const createMarket = useCreateMarket();
 
+  const [fixtureSearch, setFixtureSearch] = useState("");
+  const [selectedFixtureId, setSelectedFixtureId] = useState<number | null>(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
-  const [fixtureId, setFixtureId] = useState("");
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [fixtureIdOverride, setFixtureIdOverride] = useState("");
   const [stat, setStat] = useState<StatOption>(STAT_OPTIONS[0]);
   const [period, setPeriod] = useState<PeriodOption>(PERIOD_OPTIONS[0]);
   const [numBuckets, setNumBuckets] = useState<number>(2);
@@ -43,14 +50,52 @@ export function CreateMarketForm() {
 
   const isAuthority =
     Boolean(wallet?.publicKey && config?.authority && wallet.publicKey.equals(config.authority));
-  const candidates = (fixturesQuery.data ?? []).flatMap((fixture) =>
-    fixture.candidates.map((candidate) => ({ fixture, candidate })),
+
+  const fixtures = fixturesQuery.data ?? [];
+  const selectedFixture = fixtures.find((fixture) => fixture.id === selectedFixtureId) ?? null;
+
+  const launchableCandidates = useMemo(
+    () =>
+      fixtures.flatMap((fixture) =>
+        fixture.candidates
+          .filter((candidate) => LAUNCHABLE_STATUSES.has(candidate.status))
+          .filter((candidate) => candidate.onChainMarketId == null)
+          .map((candidate) => ({ fixture, candidate })),
+      ),
+    [fixtures],
   );
-  const selectedCandidate = candidates.find((item) => item.candidate.id === selectedCandidateId);
+
+  const fixtureCandidates = useMemo(
+    () =>
+      selectedFixture
+        ? launchableCandidates.filter((item) => item.fixture.id === selectedFixture.id)
+        : launchableCandidates,
+    [launchableCandidates, selectedFixture],
+  );
+
+  const selectedEntry = launchableCandidates.find(
+    (item) => item.candidate.id === selectedCandidateId,
+  );
+
+  useEffect(() => {
+    const candidateId = searchParams.get("candidate");
+    if (!candidateId || selectedCandidateId) return;
+    const entry = launchableCandidates.find((item) => item.candidate.id === candidateId);
+    if (entry) {
+      selectCandidate(entry.fixture, entry.candidate);
+    }
+  }, [searchParams, launchableCandidates, selectedCandidateId]);
+
+  const selectFixture = (fixture: FixtureDetail) => {
+    setSelectedFixtureId(fixture.id);
+    setFixtureIdOverride(String(fixture.id));
+    setSelectedCandidateId(null);
+  };
 
   const selectCandidate = (fixture: FixtureDetail, candidate: FixtureCandidate) => {
+    setSelectedFixtureId(fixture.id);
     setSelectedCandidateId(candidate.id);
-    setFixtureId(String(fixture.id));
+    setFixtureIdOverride(String(fixture.id));
     setNumBuckets(candidate.numBuckets);
 
     if (candidate.statKey != null) {
@@ -62,13 +107,15 @@ export function CreateMarketForm() {
     }
   };
 
+  const effectiveFixtureId = selectedFixtureId ?? (fixtureIdOverride ? Number(fixtureIdOverride) : null);
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!isAuthority) return;
+    if (!isAuthority || effectiveFixtureId == null) return;
 
     createMarket.mutate(
       {
-        fixtureId,
+        fixtureId: String(effectiveFixtureId),
         stat,
         period,
         numBuckets,
@@ -76,6 +123,7 @@ export function CreateMarketForm() {
         resolveAfterHours: Number(resolveAfterHours),
         resolveDeadlineHours: Number(resolveDeadlineHours),
         seedPerOutcome,
+        candidateId: selectedCandidateId ?? undefined,
       },
       {
         onSuccess: ({ marketId }) => router.push(`/markets/${marketId}`),
@@ -86,15 +134,19 @@ export function CreateMarketForm() {
   return (
     <RequireWallet>
       <PageHeader
-        title="Admin Market Launch"
-        description="Launch approved TXOdds markets on-chain with the protocol authority wallet."
+        title="Launch Market"
+        description="Pick a synced fixture and approved candidate, then deploy the market on-chain."
+        actions={
+          <Button variant="outline" asChild>
+            <Link href="/admin">Admin ops</Link>
+          </Button>
+        }
       />
 
       {!config && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Loading protocol config</CardTitle>
-            <CardDescription>Checking the authority wallet before showing launch controls.</CardDescription>
           </CardHeader>
         </Card>
       )}
@@ -102,10 +154,10 @@ export function CreateMarketForm() {
       {config && !isAuthority && (
         <Card className="border-warning/30">
           <CardHeader>
-            <CardTitle className="text-base">Admin wallet required</CardTitle>
+            <CardTitle className="text-base">Authority wallet required</CardTitle>
             <CardDescription>
-              Market creation is restricted to the protocol authority wallet (
-              {config.authority.toBase58().slice(0, 8)}...). Connect that wallet to launch markets.
+              Connect the protocol authority wallet ({config.authority.toBase58().slice(0, 8)}…)
+              to launch markets.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -120,8 +172,28 @@ export function CreateMarketForm() {
         <div className="space-y-5">
           <Card>
             <CardHeader>
-              <CardTitle>TXOdds Candidates</CardTitle>
-              <CardDescription>Select a synced market candidate before launching on-chain.</CardDescription>
+              <CardTitle>1. Choose fixture</CardTitle>
+              <CardDescription>
+                Search synced TXOdds fixtures. No manual fixture ID entry required.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FixturePicker
+                fixtures={fixtures}
+                selectedFixtureId={selectedFixtureId}
+                onSelect={selectFixture}
+                search={fixtureSearch}
+                onSearchChange={setFixtureSearch}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>2. Choose candidate</CardTitle>
+              <CardDescription>
+                Approved or pending candidates ready for on-chain launch.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {fixturesQuery.isLoading && (
@@ -132,15 +204,19 @@ export function CreateMarketForm() {
                 </div>
               )}
 
-              {!fixturesQuery.isLoading && candidates.length === 0 && (
+              {!fixturesQuery.isLoading && fixtureCandidates.length === 0 && (
                 <p className="text-sm text-muted-foreground">
-                  No TXOdds candidates are synced yet. Sync fixtures and odds from the admin API first.
+                  No launchable candidates. Sync odds in{" "}
+                  <Link href="/admin" className="text-brand underline">
+                    Admin ops
+                  </Link>{" "}
+                  first.
                 </p>
               )}
 
-              {candidates.length > 0 && (
+              {fixtureCandidates.length > 0 && (
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {candidates.map(({ fixture, candidate }) => {
+                  {fixtureCandidates.map(({ fixture, candidate }) => {
                     const selected = candidate.id === selectedCandidateId;
                     return (
                       <button
@@ -183,142 +259,158 @@ export function CreateMarketForm() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Launch Parameters</CardTitle>
+              <CardTitle>3. Confirm launch</CardTitle>
               <CardDescription>
-                {selectedCandidate
-                  ? selectedCandidate.candidate.title
-                  : "Choose a candidate above, then confirm the on-chain parameters."}
+                {selectedEntry
+                  ? selectedEntry.candidate.title
+                  : "Select a fixture and candidate above."}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {selectedCandidate?.candidate.statKey == null && (
+              {selectedEntry?.candidate.statKey == null && (
                 <div className="mb-4 rounded-lg border border-warning/30 bg-warning/10 p-4 text-sm text-warning">
-                  This TXOdds candidate does not have a stat-key mapping yet. Confirm the stat and period manually
-                  before launching, then link the created market to this candidate through the admin API.
+                  This candidate has no automatic stat-key mapping. Confirm stat and period
+                  manually before launch.
                 </div>
               )}
 
+              {effectiveFixtureId != null && (
+                <p className="mb-4 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
+                  Fixture <span className="font-semibold">{effectiveFixtureId}</span>
+                  {selectedFixture
+                    ? ` · ${selectedFixture.homeTeam} vs ${selectedFixture.awayTeam}`
+                    : ""}
+                </p>
+              )}
+
               <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
-              <Field label="Fixture ID">
-                <Input
-                  required
-                  type="number"
-                  min="1"
-                  placeholder="18237038"
-                  value={fixtureId}
-                  onChange={(e) => setFixtureId(e.target.value)}
-                />
-              </Field>
+                <Field label={`Outcomes: ${numBuckets}`}>
+                  <input
+                    type="range"
+                    min={2}
+                    max={12}
+                    step={1}
+                    value={numBuckets}
+                    onChange={(e) => setNumBuckets(Number(e.target.value))}
+                    className="w-full accent-brand"
+                  />
+                </Field>
 
-              <Field label={`Outcomes: ${numBuckets}`}>
-                <input
-                  type="range"
-                  min={2}
-                  max={12}
-                  step={1}
-                  value={numBuckets}
-                  onChange={(e) => setNumBuckets(Number(e.target.value))}
-                  className="w-full accent-brand"
-                />
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {Array.from({ length: numBuckets }, (_, i) => (
-                    <span
-                      key={i}
-                      className="rounded-md border border-border bg-muted px-2 py-0.5 font-label text-xs"
-                    >
-                      {bucketPreviewLabel(i, numBuckets, stat.label)}
-                    </span>
-                  ))}
+                <Field label="Stat">
+                  <select
+                    className="flex h-10 w-full rounded-lg border border-input bg-card px-3 text-sm"
+                    value={stat.value}
+                    onChange={(e) => {
+                      const found = STAT_OPTIONS.find((s) => s.value === Number(e.target.value));
+                      if (found) setStat(found);
+                    }}
+                  >
+                    {STAT_OPTIONS.map((s) => (
+                      <option key={s.value} value={s.value}>
+                        {s.label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+
+                <Field label="Period">
+                  <select
+                    className="flex h-10 w-full rounded-lg border border-input bg-card px-3 text-sm"
+                    value={period.value}
+                    onChange={(e) => {
+                      const found = PERIOD_OPTIONS.find((p) => p.value === Number(e.target.value));
+                      if (found) setPeriod(found);
+                    }}
+                  >
+                    {PERIOD_OPTIONS.map((p) => (
+                      <option key={p.value} value={p.value}>
+                        {p.label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+
+                <Field label="Bets close (hours)">
+                  <Input
+                    required
+                    type="number"
+                    min="1"
+                    value={betsCloseHours}
+                    onChange={(e) => setBetsCloseHours(e.target.value)}
+                  />
+                </Field>
+
+                <Field label="Resolve after (hours)">
+                  <Input
+                    required
+                    type="number"
+                    min="1"
+                    value={resolveAfterHours}
+                    onChange={(e) => setResolveAfterHours(e.target.value)}
+                  />
+                </Field>
+
+                <Field label="Resolve deadline (hours)">
+                  <Input
+                    required
+                    type="number"
+                    min="1"
+                    value={resolveDeadlineHours}
+                    onChange={(e) => setResolveDeadlineHours(e.target.value)}
+                  />
+                </Field>
+
+                <Field label="Seed per outcome (USDC)">
+                  <Input
+                    required
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={seedPerOutcome}
+                    onChange={(e) => setSeedPerOutcome(e.target.value)}
+                  />
+                </Field>
+
+                <div className="sm:col-span-2">
+                  <button
+                    type="button"
+                    className="text-sm text-muted-foreground underline"
+                    onClick={() => setShowAdvanced((value) => !value)}
+                  >
+                    {showAdvanced ? "Hide advanced" : "Advanced options"}
+                  </button>
+                  {showAdvanced && (
+                    <div className="mt-3">
+                      <Field label="Fixture ID override">
+                        <Input
+                          type="number"
+                          min="1"
+                          placeholder="Only if you need a manual override"
+                          value={fixtureIdOverride}
+                          onChange={(e) => setFixtureIdOverride(e.target.value)}
+                        />
+                      </Field>
+                    </div>
+                  )}
                 </div>
-              </Field>
 
-              <Field label="Stat">
-                <select
-                  className="flex h-10 w-full rounded-lg border border-input bg-card px-3 text-sm"
-                  value={stat.value}
-                  onChange={(e) => {
-                    const found = STAT_OPTIONS.find((s) => s.value === Number(e.target.value));
-                    if (found) setStat(found);
-                  }}
-                >
-                  {STAT_OPTIONS.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-
-              <Field label="Period">
-                <select
-                  className="flex h-10 w-full rounded-lg border border-input bg-card px-3 text-sm"
-                  value={period.value}
-                  onChange={(e) => {
-                    const found = PERIOD_OPTIONS.find((p) => p.value === Number(e.target.value));
-                    if (found) setPeriod(found);
-                  }}
-                >
-                  {PERIOD_OPTIONS.map((p) => (
-                    <option key={p.value} value={p.value}>
-                      {p.label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-
-              <Field label="Bets close (hours)">
-                <Input
-                  required
-                  type="number"
-                  min="1"
-                  value={betsCloseHours}
-                  onChange={(e) => setBetsCloseHours(e.target.value)}
-                />
-              </Field>
-
-              <Field label="Resolve after (hours)">
-                <Input
-                  required
-                  type="number"
-                  min="1"
-                  value={resolveAfterHours}
-                  onChange={(e) => setResolveAfterHours(e.target.value)}
-                />
-              </Field>
-
-              <Field label="Resolve deadline (hours)">
-                <Input
-                  required
-                  type="number"
-                  min="1"
-                  value={resolveDeadlineHours}
-                  onChange={(e) => setResolveDeadlineHours(e.target.value)}
-                />
-              </Field>
-
-              <Field label="Seed per outcome (USDC)">
-                <Input
-                  required
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={seedPerOutcome}
-                  onChange={(e) => setSeedPerOutcome(e.target.value)}
-                />
-              </Field>
-
-              <div className="flex gap-3 sm:col-span-2">
-                <Button
-                  type="submit"
-                  variant="brand"
-                  disabled={createMarket.isPending || !fixtureId || !canTransact || !isAuthority}
-                >
-                  {createMarket.isPending ? "Creating..." : "Launch market"}
-                </Button>
-                <Button type="button" variant="outline" asChild>
-                  <Link href="/markets">Cancel</Link>
-                </Button>
-              </div>
+                <div className="flex gap-3 sm:col-span-2">
+                  <Button
+                    type="submit"
+                    variant="brand"
+                    disabled={
+                      createMarket.isPending ||
+                      effectiveFixtureId == null ||
+                      !canTransact ||
+                      !isAuthority
+                    }
+                  >
+                    {createMarket.isPending ? "Launching…" : "Launch market"}
+                  </Button>
+                  <Button type="button" variant="outline" asChild>
+                    <Link href="/markets">Cancel</Link>
+                  </Button>
+                </div>
               </form>
             </CardContent>
           </Card>
@@ -338,10 +430,10 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 }
 
 function splitStatKey(statKey: number): { stat: StatOption; period: PeriodOption } | null {
-  for (const period of PERIOD_OPTIONS) {
-    const statValue = statKey - period.value;
-    const stat = STAT_OPTIONS.find((option) => option.value === statValue);
-    if (stat) return { stat, period };
+  for (const periodOption of PERIOD_OPTIONS) {
+    const statValue = statKey - periodOption.value;
+    const statOption = STAT_OPTIONS.find((option) => option.value === statValue);
+    if (statOption) return { stat: statOption, period: periodOption };
   }
   return null;
 }
@@ -349,20 +441,8 @@ function splitStatKey(statKey: number): { stat: StatOption; period: PeriodOption
 function rawMarketParameters(candidate: FixtureCandidate): string | null {
   const raw = candidate.raw;
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
-  const value = (raw as Record<string, unknown>).parameters;
-  return typeof value === "string" ? value : null;
-}
-
-function bucketPreviewLabel(index: number, numBuckets: number, statLabel: string): string {
-  const unit = statLabel.toLowerCase();
-  const suffix = unit.includes("corner")
-    ? "corners"
-    : unit.includes("yellow")
-      ? "yellow cards"
-      : unit.includes("red")
-        ? "red cards"
-        : unit.includes("goal")
-          ? "goals"
-          : "value";
-  return index === numBuckets - 1 ? `${index}+ ${suffix}` : `${index} ${suffix}`;
+  const value = (raw as Record<string, unknown>).MarketParameters;
+  if (typeof value === "string") return value;
+  const legacy = (raw as Record<string, unknown>).parameters;
+  return typeof legacy === "string" ? legacy : null;
 }

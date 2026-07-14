@@ -14,8 +14,8 @@ import type { MarketView } from "@/lib/proxa/market-view";
 import { STAKE_DECIMALS } from "@/lib/proxa/market-view";
 import { formatStakeTokenLabel } from "@/lib/proxa/stake-token";
 
-const MAX_STAKE = 2;
-const PRESETS = [0.25, 0.5, 0.75, 1] as const;
+const MAX_STAKE = Number(process.env.NEXT_PUBLIC_MAX_STAKE ?? "100");
+const PRESETS = [0.25, 0.5, 1, 2].filter((value) => value <= MAX_STAKE) as readonly number[];
 
 interface BetPanelProps {
   marketId: string;
@@ -81,7 +81,7 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
         </div>
       </div>
 
-      <div className="trade-info-banner">$2 max per position</div>
+      <div className="trade-info-banner">${MAX_STAKE.toFixed(2)} max per position</div>
 
       <div className="trade-tabs px-5">
         <button

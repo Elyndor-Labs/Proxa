@@ -24,7 +24,9 @@ export function SiteHeader() {
   const [search, setSearch] = useState("");
   const isAuthority =
     Boolean(wallet?.publicKey && config?.authority && wallet.publicKey.equals(config.authority));
-  const navItems = primaryNav.filter((item) => item.href !== "/create" || isAuthority);
+  const navItems = primaryNav.filter(
+    (item) => !["/admin", "/create"].includes(item.href) || isAuthority,
+  );
 
   const submitSearch = () => {
     const q = search.trim();

@@ -7,7 +7,8 @@ export interface NavItem {
 export const primaryNav: NavItem[] = [
   { label: "Markets", href: "/markets" },
   { label: "Portfolio", href: "/portfolio" },
-  { label: "Admin Launch", href: "/create" },
+  { label: "Admin", href: "/admin" },
+  { label: "Launch", href: "/create" },
   { label: "Governance", href: "/governance" },
 ];
 

@@ -6,6 +6,7 @@ import {
   toDateFromMs,
   txOddsGameStateToStatus,
 } from "../services/txodds";
+import { mapTxOddsSnapshotToStatKey } from "../services/statKeyMapping";
 
 export const adminRouter: Router = Router();
 
@@ -153,13 +154,15 @@ adminRouter.post("/txodds/fixtures/:id/sync-odds", async (req: Request, res: Res
           },
         });
         if (!existing) {
+          const mapping = mapTxOddsSnapshotToStatKey(snapshot);
           await prisma.marketCandidate.create({
             data: {
               fixtureId,
               source: "txodds",
               sourceMarketId: marketKey,
-              statLabel: marketName,
-              marketType: "odds_snapshot",
+              statKey: mapping.statKey ?? undefined,
+              statLabel: mapping.statLabel,
+              marketType: marketName,
               title: oddsMarketTitle(fixture, marketName),
               numBuckets: Math.max(names.length, 2),
               startsAt: fixture.startsAt,
@@ -339,8 +342,8 @@ adminRouter.post("/candidates/:id/link-market", async (req: Request, res: Respon
       res.status(404).json({ error: "Candidate not found" });
       return;
     }
-    if (candidate.status !== "approved" && candidate.status !== "published") {
-      res.status(409).json({ error: "Candidate must be approved before linking" });
+    if (!["candidate", "approved", "published"].includes(candidate.status)) {
+      res.status(409).json({ error: "Rejected candidates cannot be linked" });
       return;
     }
 
