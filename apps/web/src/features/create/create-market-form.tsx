@@ -21,7 +21,11 @@ import {
   type PeriodOption,
   type StatOption,
 } from "@/lib/proxa/stat-options";
-import { formatSportsMarketName } from "@/lib/proxa/sports-market-labels";
+import {
+  formatSportsMarketName,
+  parseMarketLine,
+  rawMarketParameters,
+} from "@/lib/proxa/sports-market-labels";
 import { countBucketBounds, overFromHalfLine, thresholdBucketBounds } from "@proxa/sdk";
 
 const LAUNCHABLE_STATUSES = new Set(["candidate", "approved"]);
@@ -101,7 +105,14 @@ export function CreateMarketForm() {
     setSelectedCandidateId(candidate.id);
     setFixtureIdOverride(String(fixture.id));
     setNumBuckets(candidate.numBuckets);
-    setBucketMode(candidate.numBuckets === 2 ? "threshold" : "count");
+
+    const line = parseMarketLine(rawMarketParameters(candidate.raw));
+    if (candidate.numBuckets === 2 && line) {
+      setBucketMode("threshold");
+      setOverLine(line);
+    } else {
+      setBucketMode("count");
+    }
 
     if (candidate.statKey != null) {
       const match = splitStatKey(candidate.statKey);
@@ -258,7 +269,7 @@ export function CreateMarketForm() {
                           {fixture.homeTeam} vs {fixture.awayTeam}
                         </p>
                         <p className="mt-2 text-xs text-muted-foreground">
-                          {formatSportsMarketName(candidate.marketType, rawMarketParameters(candidate))} ·{" "}
+                          {formatSportsMarketName(candidate.marketType, rawMarketParameters(candidate.raw))} ·{" "}
                           {candidate.numBuckets} outcomes
                         </p>
                       </button>
@@ -476,13 +487,4 @@ function splitStatKey(statKey: number): { stat: StatOption; period: PeriodOption
     if (statOption) return { stat: statOption, period: periodOption };
   }
   return null;
-}
-
-function rawMarketParameters(candidate: FixtureCandidate): string | null {
-  const raw = candidate.raw;
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
-  const value = (raw as Record<string, unknown>).MarketParameters;
-  if (typeof value === "string") return value;
-  const legacy = (raw as Record<string, unknown>).parameters;
-  return typeof legacy === "string" ? legacy : null;
 }

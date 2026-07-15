@@ -8,6 +8,7 @@ import {
   formatSportsMarketName,
   formatSportsSelection,
   formatTxOddsPrice,
+  rawMarketParameters,
 } from "@/lib/proxa/sports-market-labels";
 
 interface CandidateMarketCardProps {
@@ -16,14 +17,8 @@ interface CandidateMarketCardProps {
   odds: OddsSnapshot[];
 }
 
-function rawMarketParameters(raw: unknown): string | null {
-  if (!raw || typeof raw !== "object" || !("MarketParameters" in raw)) return null;
-  const value = (raw as { MarketParameters?: unknown }).MarketParameters;
-  return typeof value === "string" ? value : null;
-}
-
 export function CandidateMarketCard({ candidate, fixture, odds }: CandidateMarketCardProps) {
-  const marketName = formatSportsMarketName(candidate.statLabel, rawMarketParameters(candidate.raw));
+  const marketName = formatSportsMarketName(candidate.marketType, rawMarketParameters(candidate.raw));
   const teams = { homeTeam: fixture.homeTeam, awayTeam: fixture.awayTeam };
 
   return (

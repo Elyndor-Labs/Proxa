@@ -49,6 +49,13 @@ export function parseMarketLine(parameters?: string | null): string | null {
   return line ? line.slice("line=".length) : null;
 }
 
+export function rawMarketParameters(raw: unknown): string | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const record = raw as Record<string, unknown>;
+  const value = record.MarketParameters ?? record.parameters;
+  return typeof value === "string" ? value : null;
+}
+
 function titleCase(value: string): string {
   return value
     .split(/\s+/)
