@@ -509,6 +509,51 @@ export type Proxa = {
       ]
     },
     {
+      "name": "updateStakeMint",
+      "discriminator": [
+        45,
+        56,
+        230,
+        191,
+        24,
+        80,
+        194,
+        233
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "stakeMint"
+        },
+        {
+          "name": "treasury"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "voidMarket",
       "discriminator": [
         243,
@@ -681,81 +726,86 @@ export type Proxa = {
     },
     {
       "code": 6006,
+      "name": "invalidBucketBounds",
+      "msg": "Invalid bucket bounds"
+    },
+    {
+      "code": 6007,
       "name": "invalidResolveWindow",
       "msg": "Invalid resolve window"
     },
     {
-      "code": 6007,
+      "code": 6008,
       "name": "marketNotOpen",
       "msg": "Market is not open"
     },
     {
-      "code": 6008,
+      "code": 6009,
       "name": "bettingClosed",
       "msg": "Betting is closed"
     },
     {
-      "code": 6009,
+      "code": 6010,
       "name": "invalidAmount",
       "msg": "Amount must be greater than zero"
     },
     {
-      "code": 6010,
+      "code": 6011,
       "name": "overflow",
       "msg": "Arithmetic overflow"
     },
     {
-      "code": 6011,
+      "code": 6012,
       "name": "invalidBucket",
       "msg": "Invalid bucket"
     },
     {
-      "code": 6012,
+      "code": 6013,
       "name": "resolveTooEarly",
       "msg": "Resolve is too early"
     },
     {
-      "code": 6013,
+      "code": 6014,
       "name": "resolveDeadlineNotReached",
       "msg": "Resolve deadline has not been reached"
     },
     {
-      "code": 6014,
+      "code": 6015,
       "name": "notResolved",
       "msg": "Market is not resolved"
     },
     {
-      "code": 6015,
+      "code": 6016,
       "name": "feeAlreadyCollected",
       "msg": "Fee already collected"
     },
     {
-      "code": 6016,
+      "code": 6017,
       "name": "fixtureMismatch",
       "msg": "Fixture does not match market"
     },
     {
-      "code": 6017,
+      "code": 6018,
       "name": "statKeyMismatch",
       "msg": "Stat key does not match market"
     },
     {
-      "code": 6018,
+      "code": 6019,
       "name": "invalidDailyScoresRoots",
       "msg": "Invalid daily scores roots account"
     },
     {
-      "code": 6019,
+      "code": 6020,
       "name": "invalidDailyScoresOwner",
       "msg": "Invalid daily scores roots owner"
     },
     {
-      "code": 6020,
+      "code": 6021,
       "name": "proofRejected",
       "msg": "Proof was rejected"
     },
     {
-      "code": 6021,
+      "code": 6022,
       "name": "negativeWinningValue",
       "msg": "Winning value cannot be negative"
     }
@@ -855,6 +905,15 @@ export type Proxa = {
             "type": "u8"
           },
           {
+            "name": "bucketBounds",
+            "type": {
+              "array": [
+                "i32",
+                12
+              ]
+            }
+          },
+          {
             "name": "betsCloseTs",
             "type": "i64"
           },
@@ -893,6 +952,15 @@ export type Proxa = {
           {
             "name": "numBuckets",
             "type": "u8"
+          },
+          {
+            "name": "bucketBounds",
+            "type": {
+              "array": [
+                "i32",
+                12
+              ]
+            }
           },
           {
             "name": "betsCloseTs",

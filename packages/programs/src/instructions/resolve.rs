@@ -73,12 +73,8 @@ pub fn handler(ctx: Context<crate::Resolve>, args: crate::ResolveArgs) -> Result
     require!(value >= 0, ProxaError::NegativeWinningValue);
 
     let num_buckets = market.num_buckets;
-    let overflow = num_buckets.saturating_sub(1);
-    let winning_bucket = if value >= overflow as i32 {
-        overflow
-    } else {
-        value as u8
-    };
+    let winning_bucket =
+        crate::buckets::winning_bucket_for(value, num_buckets, &market.bucket_bounds);
     require!(winning_bucket < num_buckets, ProxaError::InvalidBucket);
 
     let fee_u128 = (market.total_pool as u128)

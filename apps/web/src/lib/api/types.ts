@@ -8,6 +8,7 @@ export interface WireMarketAccount {
   fixtureId: string | number;
   statKey: number;
   numBuckets: number;
+  bucketBounds?: number[];
   betsCloseTs: string | number;
   resolveAfterTs: string | number;
   resolveDeadlineTs: string | number;
@@ -58,6 +59,7 @@ export interface ApiMarket {
   statKey: number;
   status: "open" | "resolved" | "voided";
   numBuckets: number;
+  bucketBounds?: number[];
   winningBucket: number;
   winningValue: number;
   totalPool: string | number;

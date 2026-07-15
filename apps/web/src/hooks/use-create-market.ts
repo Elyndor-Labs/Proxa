@@ -18,6 +18,7 @@ export interface CreateMarketInput {
   stat: StatOption;
   period: PeriodOption;
   numBuckets: number;
+  bucketBounds?: number[];
   betsCloseHours: number;
   resolveAfterHours: number;
   resolveDeadlineHours: number;
@@ -55,6 +56,7 @@ export function useCreateMarket() {
           fixtureId: Number(input.fixtureId),
           statKey,
           numBuckets: input.numBuckets,
+          bucketBounds: input.bucketBounds,
           betsCloseTs: now + input.betsCloseHours * 3600,
           resolveAfterTs: now + input.resolveAfterHours * 3600,
           resolveDeadlineTs: now + input.resolveDeadlineHours * 3600,

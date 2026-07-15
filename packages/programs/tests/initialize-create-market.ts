@@ -9,7 +9,7 @@ import {
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 import assert from "assert";
-import { findEvent, parseTransactionEvents } from "./helpers";
+import { countBucketBounds, findEvent, parseTransactionEvents } from "./helpers";
 
 const DEVNET_USDC_MINT = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
 
@@ -86,6 +86,7 @@ describe("initialize and create market", () => {
         fixtureId: new anchor.BN(17271370),
         statKey: 1001,
         numBuckets: 6,
+        bucketBounds: countBucketBounds(6),
         betsCloseTs: new anchor.BN(now + 3600),
         resolveAfterTs: new anchor.BN(now + 7200),
         resolveDeadlineTs: new anchor.BN(now + 10_800),

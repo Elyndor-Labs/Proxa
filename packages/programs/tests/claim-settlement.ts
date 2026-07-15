@@ -14,7 +14,7 @@ import {
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 import assert from "assert";
-import { findEvent, parseTransactionEvents, txlineReady } from "./helpers";
+import { countBucketBounds, findEvent, parseTransactionEvents, txlineReady } from "./helpers";
 
 const TXORACLE_PROGRAM_ID = new PublicKey("6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J");
 const DEVNET_USDC_MINT = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
@@ -22,7 +22,7 @@ const DEFAULT_API_BASE = "https://txline-dev.txodds.com";
 const DEFAULT_FIXTURE_ID = "17271370";
 const DEFAULT_SEQ = "401";
 const DEFAULT_STAT_KEY = "1";
-const FEE_ALREADY_COLLECTED = 6014;
+const FEE_ALREADY_COLLECTED = 6016;
 
 function requiredEnv(name: string): string {
   const value = process.env[name];

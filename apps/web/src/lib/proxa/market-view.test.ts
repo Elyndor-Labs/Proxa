@@ -9,6 +9,7 @@ function mockMarketAccount(overrides: Partial<MarketAccount> = {}): MarketAccoun
     fixtureId: new BN(123),
     statKey: 1,
     numBuckets: 2,
+    bucketBounds: [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     status: { open: {} },
     bucketPools: [new BN(0), new BN(0)],
     totalPool: new BN(0),
@@ -25,13 +26,34 @@ function mockMarketAccount(overrides: Partial<MarketAccount> = {}): MarketAccoun
 }
 
 describe("toMarketView bucket labels", () => {
-  it("labels binary markets by count buckets instead of yes/no", () => {
-    const view = toMarketView(mockMarketAccount({ numBuckets: 2 }));
+  it("labels count buckets from on-chain bounds", () => {
+    const view = toMarketView(
+      mockMarketAccount({
+        numBuckets: 2,
+        bucketBounds: [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      }),
+    );
     expect(view.bucketLabels).toEqual(["0 goals", "1+ goals"]);
   });
 
+  it("labels threshold markets like Over 2.5", () => {
+    const view = toMarketView(
+      mockMarketAccount({
+        numBuckets: 2,
+        bucketBounds: [0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      }),
+    );
+    expect(view.bucketLabels).toEqual(["Under 2.5 goals", "Over 2.5 goals"]);
+  });
+
   it("labels multi-bucket markets with overflow bucket", () => {
-    const view = toMarketView(mockMarketAccount({ numBuckets: 4 }));
+    const view = toMarketView(
+      mockMarketAccount({
+        numBuckets: 4,
+        bucketBounds: [0, 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0],
+        bucketPools: [new BN(0), new BN(0), new BN(0), new BN(0)],
+      }),
+    );
     expect(view.bucketLabels).toEqual(["0 goals", "1 goals", "2 goals", "3+ goals"]);
   });
 });

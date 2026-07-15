@@ -9,7 +9,8 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import { ConfigAccount, MarketAccount, PositionAccount } from "./accounts";
-import { DEVNET, NetworkConfig, RESOLVE_COMPUTE_UNITS } from "./constants";
+import { countBucketBounds, padBucketBounds } from "./buckets";
+import { DEVNET, MAX_BUCKETS, NetworkConfig, RESOLVE_COMPUTE_UNITS } from "./constants";
 import { ProxaEvent, parseEvents } from "./events";
 import proxaIdl from "./idl/proxa.json";
 import type { Proxa } from "./idl/proxa";
@@ -29,6 +30,8 @@ export interface CreateMarketParams {
   fixtureId: number | BN;
   statKey: number;
   numBuckets: number;
+  /** Lower bounds per bucket; defaults to count-style [0,1,2,...,n-1]. */
+  bucketBounds?: number[];
   betsCloseTs: number | BN;
   resolveAfterTs: number | BN;
   resolveDeadlineTs: number | BN;
@@ -160,10 +163,15 @@ export class ProxaClient {
     tokenProgram: PublicKey;
     args: CreateMarketParams;
   }): Promise<TransactionInstruction> {
+    const bounds = padBucketBounds(params.args.bucketBounds ?? countBucketBounds(params.args.numBuckets));
+    if (bounds.length !== MAX_BUCKETS) {
+      throw new Error(`bucketBounds must pad to ${MAX_BUCKETS}`);
+    }
     const args = {
       fixtureId: new BN(params.args.fixtureId.toString()),
       statKey: params.args.statKey,
       numBuckets: params.args.numBuckets,
+      bucketBounds: bounds,
       betsCloseTs: new BN(params.args.betsCloseTs.toString()),
       resolveAfterTs: new BN(params.args.resolveAfterTs.toString()),
       resolveDeadlineTs: new BN(params.args.resolveDeadlineTs.toString()),

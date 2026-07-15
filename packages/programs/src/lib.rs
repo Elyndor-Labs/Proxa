@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
+pub mod buckets;
 pub mod constants;
 pub mod events;
 pub mod errors;
@@ -17,6 +18,7 @@ pub struct CreateMarketArgs {
     pub fixture_id: i64,
     pub stat_key: u32,
     pub num_buckets: u8,
+    pub bucket_bounds: [i32; MAX_BUCKETS],
     pub bets_close_ts: i64,
     pub resolve_after_ts: i64,
     pub resolve_deadline_ts: i64,

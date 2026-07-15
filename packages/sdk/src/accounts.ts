@@ -18,6 +18,7 @@ export interface MarketAccount {
   fixtureId: BN;
   statKey: number;
   numBuckets: number;
+  bucketBounds: number[];
   betsCloseTs: BN;
   resolveAfterTs: BN;
   resolveDeadlineTs: BN;

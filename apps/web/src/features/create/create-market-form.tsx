@@ -22,8 +22,10 @@ import {
   type StatOption,
 } from "@/lib/proxa/stat-options";
 import { formatSportsMarketName } from "@/lib/proxa/sports-market-labels";
+import { countBucketBounds, overFromHalfLine, thresholdBucketBounds } from "@proxa/sdk";
 
 const LAUNCHABLE_STATUSES = new Set(["candidate", "approved"]);
+type BucketMode = "count" | "threshold";
 
 /** Admin launch wizard: pick fixture + approved candidate, then create on-chain. */
 export function CreateMarketForm() {
@@ -43,6 +45,8 @@ export function CreateMarketForm() {
   const [stat, setStat] = useState<StatOption>(STAT_OPTIONS[0]);
   const [period, setPeriod] = useState<PeriodOption>(PERIOD_OPTIONS[0]);
   const [numBuckets, setNumBuckets] = useState<number>(2);
+  const [bucketMode, setBucketMode] = useState<BucketMode>("count");
+  const [overLine, setOverLine] = useState("2.5");
   const [betsCloseHours, setBetsCloseHours] = useState("1");
   const [resolveAfterHours, setResolveAfterHours] = useState("2");
   const [resolveDeadlineHours, setResolveDeadlineHours] = useState("3");
@@ -97,6 +101,7 @@ export function CreateMarketForm() {
     setSelectedCandidateId(candidate.id);
     setFixtureIdOverride(String(fixture.id));
     setNumBuckets(candidate.numBuckets);
+    setBucketMode(candidate.numBuckets === 2 ? "threshold" : "count");
 
     if (candidate.statKey != null) {
       const match = splitStatKey(candidate.statKey);
@@ -113,12 +118,19 @@ export function CreateMarketForm() {
     e.preventDefault();
     if (!isAuthority || effectiveFixtureId == null) return;
 
+    const bucketBounds =
+      bucketMode === "threshold"
+        ? thresholdBucketBounds(overFromHalfLine(Number(overLine)))
+        : countBucketBounds(numBuckets);
+    const resolvedBuckets = bucketMode === "threshold" ? 2 : numBuckets;
+
     createMarket.mutate(
       {
         fixtureId: String(effectiveFixtureId),
         stat,
         period,
-        numBuckets,
+        numBuckets: resolvedBuckets,
+        bucketBounds,
         betsCloseHours: Number(betsCloseHours),
         resolveAfterHours: Number(resolveAfterHours),
         resolveDeadlineHours: Number(resolveDeadlineHours),
@@ -284,17 +296,45 @@ export function CreateMarketForm() {
               )}
 
               <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
-                <Field label={`Outcomes: ${numBuckets}`}>
-                  <input
-                    type="range"
-                    min={2}
-                    max={12}
-                    step={1}
-                    value={numBuckets}
-                    onChange={(e) => setNumBuckets(Number(e.target.value))}
-                    className="w-full accent-brand"
-                  />
+                <Field label="Bucket model">
+                  <select
+                    className="flex h-10 w-full rounded-lg border border-input bg-card px-3 text-sm"
+                    value={bucketMode}
+                    onChange={(e) => {
+                      const mode = e.target.value as BucketMode;
+                      setBucketMode(mode);
+                      if (mode === "threshold") setNumBuckets(2);
+                    }}
+                  >
+                    <option value="count">Count (0, 1, 2, ...)</option>
+                    <option value="threshold">Over / Under line</option>
+                  </select>
                 </Field>
+
+                {bucketMode === "threshold" ? (
+                  <Field label="Over line (e.g. 2.5)">
+                    <Input
+                      required
+                      type="number"
+                      min="0.5"
+                      step="0.5"
+                      value={overLine}
+                      onChange={(e) => setOverLine(e.target.value)}
+                    />
+                  </Field>
+                ) : (
+                  <Field label={`Outcomes: ${numBuckets}`}>
+                    <input
+                      type="range"
+                      min={2}
+                      max={12}
+                      step={1}
+                      value={numBuckets}
+                      onChange={(e) => setNumBuckets(Number(e.target.value))}
+                      className="w-full accent-brand"
+                    />
+                  </Field>
+                )}
 
                 <Field label="Stat">
                   <select
