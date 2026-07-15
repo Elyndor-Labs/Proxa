@@ -51,7 +51,6 @@ export function usePlaceBets() {
       for (const group of grouped.values()) {
         const instructions = await Promise.all(
           group.legs.map(async (leg) => {
-            const { account: market } = await fetchMarketRecord(leg.marketId, client);
             const ata = bettorTokenAccount(group.stakeMint, wallet.publicKey, group.tokenProgram);
             return client.placeBetIx({
               bettor: wallet.publicKey,

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { RequireWallet } from "@/components/auth/require-wallet";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -59,7 +59,7 @@ export function CreateMarketForm() {
   const isAuthority =
     Boolean(wallet?.publicKey && config?.authority && wallet.publicKey.equals(config.authority));
 
-  const fixtures = fixturesQuery.data ?? [];
+  const fixtures = useMemo(() => fixturesQuery.data ?? [], [fixturesQuery.data]);
   const selectedFixture = fixtures.find((fixture) => fixture.id === selectedFixtureId) ?? null;
 
   const launchableCandidates = useMemo(
@@ -85,22 +85,13 @@ export function CreateMarketForm() {
     (item) => item.candidate.id === selectedCandidateId,
   );
 
-  useEffect(() => {
-    const candidateId = searchParams.get("candidate");
-    if (!candidateId || selectedCandidateId) return;
-    const entry = launchableCandidates.find((item) => item.candidate.id === candidateId);
-    if (entry) {
-      selectCandidate(entry.fixture, entry.candidate);
-    }
-  }, [searchParams, launchableCandidates, selectedCandidateId]);
-
   const selectFixture = (fixture: FixtureDetail) => {
     setSelectedFixtureId(fixture.id);
     setFixtureIdOverride(String(fixture.id));
     setSelectedCandidateId(null);
   };
 
-  const selectCandidate = (fixture: FixtureDetail, candidate: FixtureCandidate) => {
+  const selectCandidate = useCallback((fixture: FixtureDetail, candidate: FixtureCandidate) => {
     setSelectedFixtureId(fixture.id);
     setSelectedCandidateId(candidate.id);
     setFixtureIdOverride(String(fixture.id));
@@ -121,7 +112,18 @@ export function CreateMarketForm() {
         setPeriod(match.period);
       }
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const candidateId = searchParams.get("candidate");
+    if (!candidateId || selectedCandidateId) return;
+    const entry = launchableCandidates.find((item) => item.candidate.id === candidateId);
+    if (entry) {
+      // Candidate rows load asynchronously, so this syncs /create?candidate=... into the form once.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      selectCandidate(entry.fixture, entry.candidate);
+    }
+  }, [searchParams, launchableCandidates, selectedCandidateId, selectCandidate]);
 
   const effectiveFixtureId = selectedFixtureId ?? (fixtureIdOverride ? Number(fixtureIdOverride) : null);
 
