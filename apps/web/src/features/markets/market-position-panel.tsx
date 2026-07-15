@@ -17,23 +17,43 @@ export function MarketPositionPanel({ marketId, account }: MarketPositionPanelPr
   const { data: positions } = usePositions();
   const view = toMarketView(account);
 
-  const position = positions?.find((p) => p.account.marketId.toString() === marketId);
-  if (!position) return null;
-
-  const claimable = quoteClaim(account, position.account);
-  const bucketLabel = view.bucketLabels[position.account.bucket] ?? `Bucket ${position.account.bucket + 1}`;
+  const marketPositions = positions?.filter((p) => p.account.marketId.toString() === marketId) ?? [];
+  if (!marketPositions.length) return null;
 
   return (
     <div className="surface p-5">
-      <p className="section-label mb-3">Your position</p>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="font-display text-base font-bold">{bucketLabel}</p>
-          <p className="mt-0.5 font-label text-sm text-muted-foreground">
-            Stake <span className="font-semibold text-foreground">${formatStake(position.account.amount)}</span>
-          </p>
-        </div>
-        <ClaimButton marketId={marketId} bucket={position.account.bucket} claimable={claimable} size="default" />
+      <p className="section-label mb-3">
+        {marketPositions.length === 1 ? "Your position" : "Your positions"}
+      </p>
+      <div className="space-y-3">
+        {marketPositions.map((position) => {
+          const claimable = quoteClaim(account, position.account);
+          const bucketLabel =
+            view.bucketLabels[position.account.bucket] ?? `Bucket ${position.account.bucket + 1}`;
+
+          return (
+            <div
+              key={position.address.toBase58()}
+              className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-[var(--surface-border)] bg-black/20 px-3 py-3"
+            >
+              <div>
+                <p className="font-display text-base font-bold">{bucketLabel}</p>
+                <p className="mt-0.5 font-label text-sm text-muted-foreground">
+                  Stake{" "}
+                  <span className="font-semibold text-foreground">
+                    ${formatStake(position.account.amount)}
+                  </span>
+                </p>
+              </div>
+              <ClaimButton
+                marketId={marketId}
+                bucket={position.account.bucket}
+                claimable={claimable}
+                size="default"
+              />
+            </div>
+          );
+        })}
       </div>
     </div>
   );
