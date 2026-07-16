@@ -9,6 +9,9 @@ export const wireMarketStatusSchema = z.union([
   z.object({ open: emptyRecord }),
   z.object({ resolved: emptyRecord }),
   z.object({ voided: emptyRecord }),
+  z.object({ Open: emptyRecord }),
+  z.object({ Resolved: emptyRecord }),
+  z.object({ Voided: emptyRecord }),
 ]);
 
 export const wireMarketAccountSchema = z.object({
@@ -17,6 +20,7 @@ export const wireMarketAccountSchema = z.object({
   fixtureId: numericString,
   statKey: z.number(),
   numBuckets: z.number(),
+  bucketBounds: z.array(z.number()).optional(),
   betsCloseTs: numericString,
   resolveAfterTs: numericString,
   resolveDeadlineTs: numericString,
@@ -73,6 +77,7 @@ export const apiMarketSchema = z.object({
   statKey: z.number(),
   status: z.enum(["open", "resolved", "voided"]),
   numBuckets: z.number(),
+  bucketBounds: z.array(z.number()).optional(),
   winningBucket: z.number(),
   winningValue: z.number(),
   totalPool: numericString,

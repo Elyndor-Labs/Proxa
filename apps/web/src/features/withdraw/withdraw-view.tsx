@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { BN } from "@coral-xyz/anchor";
 import { ArrowRight, WalletCards } from "lucide-react";
 import { ClaimButton } from "@/components/domain/claim-button";
 import { SettlementBadge } from "@/components/domain/settlement-badge";
 import { Button } from "@/components/ui/button";
+import { useClaimMany } from "@/hooks/use-claim";
 import { useEnrichedPositions } from "@/hooks/use-enriched-positions";
+import { useProxaClient } from "@/hooks/use-proxa-client";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatStake } from "@/lib/format/odds";
 import { formatStakeTokenLabel } from "@/lib/proxa/stake-token";
@@ -13,8 +16,22 @@ import { formatStakeTokenLabel } from "@/lib/proxa/stake-token";
 /** Claimable payouts for resolved winning positions. */
 export function WithdrawView() {
   const { data, isLoading, isError, error } = useEnrichedPositions();
+  const claimMany = useClaimMany();
+  const { canTransact } = useProxaClient();
   const claimable = (data ?? []).filter((position) => position.claimable.gtn(0));
-  const total = claimable.reduce((sum, item) => sum + Number(formatStake(item.claimable)), 0);
+  const total = claimable.reduce((sum, item) => sum.add(item.claimable), new BN(0));
+  const tokenLabels = new Set(
+    claimable.map((item) => formatStakeTokenLabel(item.market.stakeMint.toBase58())),
+  );
+  const totalTokenLabel = tokenLabels.size === 1 ? [...tokenLabels][0] : "stake token";
+  const claimAll = () => {
+    claimMany.mutate(
+      claimable.map((item) => ({
+        marketId: item.marketId,
+        bucket: item.position.account.bucket,
+      })),
+    );
+  };
 
   if (isLoading) {
     return <div className="surface h-64 animate-pulse rounded-2xl" />;
@@ -39,7 +56,7 @@ export function WithdrawView() {
         <div className="stat-tile sm:col-span-2">
           <p className="section-label">Estimated claimable payout</p>
           <p className="stat-tile__value stat-tile__value--highlight mt-3">
-            {total.toFixed(2)} stake token
+            {formatStake(total)} {totalTokenLabel}
           </p>
         </div>
       </div>
@@ -60,6 +77,23 @@ export function WithdrawView() {
         </div>
       ) : (
         <div className="space-y-3">
+          <div className="surface flex flex-wrap items-center justify-between gap-4 p-5">
+            <div>
+              <p className="font-display text-base font-bold">Ready to withdraw</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Claim {claimable.length} payout{claimable.length === 1 ? "" : "s"} to your wallet.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="brand"
+              disabled={!canTransact || claimMany.isPending || claimable.length === 0}
+              onClick={claimAll}
+            >
+              {claimMany.isPending ? "Claiming..." : `Claim all ${formatStake(total)} ${totalTokenLabel}`}
+            </Button>
+          </div>
+
           {claimable.map(({ position, market, marketId, claimable: amount, view }) => {
             const tokenLabel = formatStakeTokenLabel(market.stakeMint.toBase58());
             return (

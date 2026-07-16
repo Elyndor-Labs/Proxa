@@ -1,6 +1,15 @@
 /** JSON wire types returned by the Proxa REST API. */
 
-export type WireMarketStatus = "open" | "resolved" | "voided" | { open: Record<string, never> } | { resolved: Record<string, never> } | { voided: Record<string, never> };
+export type WireMarketStatus =
+  | "open"
+  | "resolved"
+  | "voided"
+  | { open: Record<string, never> }
+  | { resolved: Record<string, never> }
+  | { voided: Record<string, never> }
+  | { Open: Record<string, never> }
+  | { Resolved: Record<string, never> }
+  | { Voided: Record<string, never> };
 
 export interface WireMarketAccount {
   marketId: string | number;
@@ -8,6 +17,7 @@ export interface WireMarketAccount {
   fixtureId: string | number;
   statKey: number;
   numBuckets: number;
+  bucketBounds?: number[];
   betsCloseTs: string | number;
   resolveAfterTs: string | number;
   resolveDeadlineTs: string | number;
@@ -58,6 +68,7 @@ export interface ApiMarket {
   statKey: number;
   status: "open" | "resolved" | "voided";
   numBuckets: number;
+  bucketBounds?: number[];
   winningBucket: number;
   winningValue: number;
   totalPool: string | number;

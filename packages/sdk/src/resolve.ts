@@ -157,8 +157,3 @@ export function buildResolveArgs(payload: StatValidationPayload): ResolveArgs {
     statA: statTermOf(payload),
   };
 }
-
-export function expectedWinningBucket(value: number, numBuckets: number): number {
-  const overflow = numBuckets - 1;
-  return value >= overflow ? overflow : value;
-}

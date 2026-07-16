@@ -8,5 +8,6 @@ export * from "./events";
 export * from "./errors";
 export * from "./txline";
 export * from "./client";
+export * from "./buckets";
 export type { Proxa } from "./idl/proxa";
 export { default as PROXA_IDL } from "./idl/proxa.json";

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Trash2, X } from "lucide-react";
-import { toast } from "sonner";
 import { previewBet, toBaseUnits } from "@proxa/sdk";
 import { useState } from "react";
 import { TxActionFallback } from "@/components/domain/tx-action-fallback";
@@ -11,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { useBetSlipStore, type BetLeg } from "@/features/bet-slip/store";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { useMarket } from "@/hooks/use-market";
-import { usePlaceBet } from "@/hooks/use-place-bet";
+import { usePlaceBets } from "@/hooks/use-place-bets";
 import { useProxaClient } from "@/hooks/use-proxa-client";
 import { formatStake } from "@/lib/format/odds";
 import { STAKE_DECIMALS } from "@/lib/proxa/market-view";
@@ -22,7 +21,7 @@ import { cn } from "@/lib/utils";
 export function BetSlipDrawer() {
   const { legs, open, setOpen, updateLeg, removeLeg, clear } = useBetSlipStore();
   const { canTransact } = useProxaClient();
-  const placeBet = usePlaceBet();
+  const placeBets = usePlaceBets();
   const [placingAll, setPlacingAll] = useState(false);
   const trapRef = useFocusTrap<HTMLElement>(open);
 
@@ -34,33 +33,24 @@ export function BetSlipDrawer() {
   const handlePlaceAll = async () => {
     if (!validLegs.length) return;
     setPlacingAll(true);
-    let succeeded = 0;
-    const failed: string[] = [];
 
     try {
-      for (const leg of validLegs) {
-        try {
-          await placeBet.mutateAsync(
-            { marketId: leg.marketId, bucket: leg.bucket, amount: leg.amount },
-            { onError: () => {} },
-          );
-          succeeded += 1;
-        } catch {
-          failed.push(leg.title || `Market #${leg.marketId}`);
-        }
-      }
-
-      if (failed.length === 0) {
-        clear();
-      } else if (succeeded > 0) {
-        toast.warning(`Placed ${succeeded} of ${validLegs.length} bets. Failed: ${failed.join(", ")}`);
-      }
+      await placeBets.mutateAsync(
+        validLegs.map((leg) => ({
+          marketId: leg.marketId,
+          bucket: leg.bucket,
+          amount: leg.amount,
+        })),
+      );
+      clear();
+    } catch {
+      // Error toast handled by mutation.
     } finally {
       setPlacingAll(false);
     }
   };
 
-  const busy = placeBet.isPending || placingAll;
+  const busy = placeBets.isPending || placingAll;
 
   return (
     <>
@@ -101,11 +91,11 @@ export function BetSlipDrawer() {
         </div>
 
         <div className="space-y-3 border-t border-border p-4">
-          {validLegs.length > 1 && (
-            <p className="font-label text-sm text-muted-foreground">
+          <div className="space-y-1 font-label text-sm text-muted-foreground">
+            <p>
               Total stake: <span className="font-medium text-foreground">${totalStake.toFixed(2)}</span>
             </p>
-          )}
+          </div>
           {canTransact ? (
             <Button
               variant="brand"

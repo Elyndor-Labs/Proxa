@@ -193,7 +193,13 @@ export function MarketList() {
   return (
     <>
       <PageHeader title="Markets" description="Browse prediction markets across all active events." />
-      {data ? <MarketFilters key={urlQuery} initialQuery={urlQuery} data={data} /> : null}
+      {data ? (
+        <MarketFilters
+          key={urlQuery}
+          initialQuery={urlQuery}
+          data={data}
+        />
+      ) : null}
       <TxOddsCandidateSection
         fixtures={fixturesQuery.data ?? []}
         isLoading={fixturesQuery.isLoading}

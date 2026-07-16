@@ -1,8 +1,10 @@
+import "dotenv/config";
 import { AnchorProvider, Wallet } from "@coral-xyz/anchor";
 import { DEVNET, MAINNET, ProxaClient } from "@proxa/sdk";
 import { Connection, Keypair } from "@solana/web3.js";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
+import { join } from "node:path";
 
 function keypairFromBytes(secret: unknown): Keypair {
   if (!Array.isArray(secret)) {
@@ -23,17 +25,27 @@ function keypairFromSource(source: string): Keypair {
     return keypairFromBytes(JSON.parse(value));
   }
 
-  return keypairFromBytes(JSON.parse(readFileSync(value, "utf8")));
+  return keypairFromBytes(JSON.parse(readFileSync(resolveHomePath(value), "utf8")));
+}
+
+function resolveHomePath(path: string): string {
+  if (path === "~") return homedir();
+  if (path.startsWith("~/") || path.startsWith("~\\")) {
+    return join(homedir(), path.slice(2));
+  }
+  return path;
 }
 
 function loadKeypair(): Keypair {
   if (process.env.KEEPER_KEYPAIR_JSON) {
-    return keypairFromBytes(JSON.parse(process.env.KEEPER_KEYPAIR_JSON));
+    return keypairFromSource(process.env.KEEPER_KEYPAIR_JSON);
   }
 
   const p = process.env.KEEPER_KEYPAIR ?? `${homedir()}/.config/solana/id.json`;
   return keypairFromSource(p);
 }
+
+export const apiKeypair = loadKeypair();
 
 export function createClient(): ProxaClient {
   const network =
@@ -41,11 +53,10 @@ export function createClient(): ProxaClient {
       ? MAINNET
       : DEVNET;
   const rpc = process.env.RPC_URL ?? network.rpc;
-  const keypair = loadKeypair();
   const connection = new Connection(rpc, "confirmed");
   const provider = new AnchorProvider(
     connection,
-    new Wallet(keypair),
+    new Wallet(apiKeypair),
     { commitment: "confirmed" }
   );
   return new ProxaClient(provider, { network });

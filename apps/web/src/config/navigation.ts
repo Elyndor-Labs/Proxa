@@ -7,14 +7,15 @@ export interface NavItem {
 export const primaryNav: NavItem[] = [
   { label: "Markets", href: "/markets" },
   { label: "Portfolio", href: "/portfolio" },
-  { label: "Admin Launch", href: "/create" },
+  { label: "Admin", href: "/admin" },
+  { label: "Launch", href: "/create" },
   { label: "Governance", href: "/governance" },
 ];
 
 export const footerNav = {
   social: [
-    { label: "Discord", href: "https://discord.gg/proxa" },
-    { label: "Twitter", href: "https://twitter.com/proxa" },
+    { label: "Discord", href: "https://discord.gg/" },
+    { label: "Twitter", href: "https://twitter.com/" },
   ],
   legal: [
     { label: "Terms of Service", href: "/terms" },

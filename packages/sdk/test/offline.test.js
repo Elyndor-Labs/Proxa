@@ -33,6 +33,14 @@ check(
 );
 check("expectedWinningBucket", sdk.expectedWinningBucket(1, 6) === 1);
 check("overflow bucket collapses", sdk.expectedWinningBucket(20, 6) === 5);
+check("threshold under bucket", sdk.expectedWinningBucket(2, 2, sdk.thresholdBucketBounds(3)) === 0);
+check("threshold over bucket", sdk.expectedWinningBucket(3, 2, sdk.thresholdBucketBounds(3)) === 1);
+check(
+  "threshold bucket labels",
+  JSON.stringify(sdk.bucketLabelsFromBounds(2, sdk.thresholdBucketBounds(3), "goals")) ===
+    JSON.stringify(["Under 2.5 goals", "Over 2.5 goals"]),
+);
+check("countBucketBounds length", sdk.countBucketBounds(4).length === 12);
 
 // amount helpers
 check("toBaseUnits", sdk.toBaseUnits("1.5", 6).toString() === "1500000");
@@ -57,15 +65,15 @@ const voided = { status: { voided: {} }, winningBucket: 255, netPool: new BN(0),
 check("quoteClaim refund on void", sdk.quoteClaim(voided, { bucket: 3, amount: new BN(100) }).toString() === "100");
 
 // error mapping
-check("proxaErrorName", sdk.proxaErrorName(6020) === "ProofRejected");
+check("proxaErrorName", sdk.proxaErrorName(6021) === "ProofRejected");
 check("proxaErrorByCode", sdk.proxaErrorByCode(6000).name === "Unauthorized");
 check(
   "parseProxaError from anchor error",
-  sdk.parseProxaError({ error: { errorCode: { number: 6020, code: "ProofRejected" } } }).name === "ProofRejected",
+  sdk.parseProxaError({ error: { errorCode: { number: 6021, code: "ProofRejected" } } }).name === "ProofRejected",
 );
 check(
   "parseProxaError from logs",
-  sdk.parseProxaError({ logs: ["Program log: Error Number: 6014. Error Message: Market is not resolved."] }).name ===
+  sdk.parseProxaError({ logs: ["Program log: Error Number: 6015. Error Message: Market is not resolved."] }).name ===
     "NotResolved",
 );
 

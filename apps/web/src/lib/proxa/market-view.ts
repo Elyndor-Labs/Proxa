@@ -1,7 +1,5 @@
-import { PERIOD, STAT_BASE } from "@proxa/sdk";
+import { PERIOD, STAT_BASE, statusLabel, fromBaseUnits, bucketLabelsFromBounds, countBucketBounds } from "@proxa/sdk";
 import type { MarketAccount } from "@proxa/sdk";
-import { statusLabel } from "@proxa/sdk";
-import { fromBaseUnits } from "@proxa/sdk";
 import { formatTimeRemaining } from "@/lib/format/time";
 
 const STAKE_DECIMALS = 6;
@@ -63,17 +61,14 @@ function bucketUnit(statLabel: string): string {
   return "value";
 }
 
-function bucketLabel(index: number, numBuckets: number, statLabel: string): string {
-  if (numBuckets === 2) return index === 0 ? "Yes" : "No";
-  const unit = bucketUnit(statLabel);
-  if (index === numBuckets - 1) return `${index}+ ${unit}`;
-  return `${index} ${unit}`;
-}
-
 export function toMarketView(account: MarketAccount): MarketView {
   const status = statusLabel(account.status);
   const statLabel = resolveStatLabel(account.statKey);
   const closeTs = account.betsCloseTs.toNumber() * 1000;
+  const acceptsBets = status === "open" && closeTs > Date.now();
+  const bounds = account.bucketBounds?.length
+    ? account.bucketBounds
+    : countBucketBounds(account.numBuckets);
 
   return {
     id: account.marketId.toString(),
@@ -83,11 +78,11 @@ export function toMarketView(account: MarketAccount): MarketView {
     status,
     totalPool: formatPool(account.totalPool),
     bucketPools: account.bucketPools.map(formatPool),
-    bucketLabels: Array.from({ length: account.numBuckets }, (_, i) => bucketLabel(i, account.numBuckets, statLabel)),
+    bucketLabels: bucketLabelsFromBounds(account.numBuckets, bounds, bucketUnit(statLabel)),
     betsCloseLabel: formatTimeRemaining(closeTs),
     betsCloseTs: closeTs,
     numBuckets: account.numBuckets,
-    isOpen: status === "open",
+    isOpen: acceptsBets,
   };
 }
 
