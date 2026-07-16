@@ -6,6 +6,7 @@ import { WalletButton } from "@/components/domain/wallet-button";
 import { useBetSlipStore } from "@/features/bet-slip/store";
 import { usePlaceBet } from "@/hooks/use-place-bet";
 import { useProxaClient } from "@/hooks/use-proxa-client";
+import { useConfig } from "@/hooks/use-protocol-stats";
 import { useStakeTokenBalance } from "@/hooks/use-token-balance";
 import { useWalletAuth } from "@/hooks/use-wallet-auth";
 import { formatOdds } from "@/lib/format/odds";
@@ -14,7 +15,7 @@ import type { MarketView } from "@/lib/proxa/market-view";
 import { STAKE_DECIMALS } from "@/lib/proxa/market-view";
 import { formatStakeTokenLabel } from "@/lib/proxa/stake-token";
 
-const MAX_STAKE = Number(process.env.NEXT_PUBLIC_MAX_STAKE ?? "100");
+const MAX_STAKE = 100;
 const PRESETS = [0.25, 0.5, 0.75, 1] as const;
 
 interface BetPanelProps {
@@ -40,6 +41,7 @@ export function BetPanel({
   const { canTransact } = useProxaClient();
   const { connected } = useWalletAuth();
   const { data: cash } = useStakeTokenBalance();
+  const { data: config } = useConfig();
   const placeBet = usePlaceBet();
   const { addLeg, setOpen } = useBetSlipStore();
 
@@ -50,11 +52,11 @@ export function BetPanel({
   const disabled = !view.isOpen || placeBet.isPending || Boolean(tradingBlockedMessage);
   const yesLabel = view.bucketLabels[0] ?? "Outcome 1";
   const noLabel = view.bucketLabels[1] ?? "Outcome 2";
-  const stakeTokenLabel = formatStakeTokenLabel(account.stakeMint.toBase58());
+  const stakeTokenLabel = formatStakeTokenLabel((config?.stakeMint ?? account.stakeMint).toBase58());
   const amountNumber = Number(amount);
   const hasInvalidAmount = !amount || Number.isNaN(amountNumber) || amountNumber <= 0;
   const insufficientBalance = Boolean(cash && amountNumber > cash.amount);
-  const maxSpendable = Math.min(MAX_STAKE, cash?.amount ?? MAX_STAKE);
+  const maxSpendable = Math.max(0, Math.min(MAX_STAKE, cash?.amount ?? MAX_STAKE));
 
   const preview =
     amount && !Number.isNaN(Number(amount))

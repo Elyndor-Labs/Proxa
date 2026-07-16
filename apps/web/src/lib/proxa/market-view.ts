@@ -65,6 +65,7 @@ export function toMarketView(account: MarketAccount): MarketView {
   const status = statusLabel(account.status);
   const statLabel = resolveStatLabel(account.statKey);
   const closeTs = account.betsCloseTs.toNumber() * 1000;
+  const acceptsBets = status === "open" && closeTs > Date.now();
   const bounds = account.bucketBounds?.length
     ? account.bucketBounds
     : countBucketBounds(account.numBuckets);
@@ -81,7 +82,7 @@ export function toMarketView(account: MarketAccount): MarketView {
     betsCloseLabel: formatTimeRemaining(closeTs),
     betsCloseTs: closeTs,
     numBuckets: account.numBuckets,
-    isOpen: status === "open",
+    isOpen: acceptsBets,
   };
 }
 

@@ -11,6 +11,7 @@ import { MarketPositionPanel } from "@/features/markets/market-position-panel";
 import { OutcomeTradeTable } from "@/features/markets/word-trade-table";
 import { useFixture } from "@/hooks/use-fixture";
 import { useMarket } from "@/hooks/use-market";
+import { useConfig } from "@/hooks/use-protocol-stats";
 import { useTimeRemaining } from "@/hooks/use-time-remaining";
 import { getApiErrorMessage, isNotFoundError } from "@/lib/api/errors";
 import { bucketChancePct } from "@/lib/format/odds";
@@ -56,6 +57,7 @@ export function MarketDetailView({ marketId }: MarketDetailViewProps) {
   const betsCloseLabel = useTimeRemaining(data?.view.betsCloseTs ?? 0);
   const [selectedBucket, setSelectedBucket] = useState(0);
   const fixtureQuery = useFixture(data?.view.fixtureId ?? "");
+  const configQuery = useConfig();
 
   if (isLoading) {
     return (
@@ -91,7 +93,7 @@ export function MarketDetailView({ marketId }: MarketDetailViewProps) {
   const fixtureLabel = fixtureQuery.data
     ? `${fixtureQuery.data.homeTeam} vs ${fixtureQuery.data.awayTeam}`
     : `Fixture #${displayView.fixtureId}`;
-  const tokenLabel = formatStakeTokenLabel(account.stakeMint.toBase58());
+  const tokenLabel = formatStakeTokenLabel((configQuery.data?.stakeMint ?? account.stakeMint).toBase58());
   const fixtureStatus = fixtureQuery.data?.status;
   const fixtureUnavailable = isFixtureUnavailable(fixtureStatus);
   const tradingBlockedMessage =

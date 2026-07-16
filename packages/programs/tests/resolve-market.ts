@@ -277,13 +277,16 @@ describe("resolve market", function () {
     );
 
     const betSig = await methods
-      .placeBet(winningBucket, betAmount)
+      .placeBet(winningBucket, betAmount, new anchor.BN(0))
       .accounts({
+        payer: provider.wallet.publicKey,
         bettor: provider.wallet.publicKey,
+        config: configPda,
         market: marketPda,
         vault: vaultPda,
         position: positionPda,
         bettorTokenAccount: bettorAta,
+        treasury: treasuryAta,
         stakeMint: mint,
         tokenProgram,
         systemProgram: SystemProgram.programId,

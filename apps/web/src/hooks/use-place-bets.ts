@@ -37,12 +37,14 @@ export function usePlaceBets() {
       assertCanSubmitOnChainTx(true);
       if (!legs.length) throw new Error("No bets to place");
 
+      const config = await client.fetchConfig();
+      const stakeMint = config.stakeMint;
+      const tokenProgram = await client.tokenProgramFor(stakeMint);
       const grouped = new Map<string, StakeGroup>();
       for (const leg of legs) {
-        const { account: market } = await fetchMarketRecord(leg.marketId, client);
-        const tokenProgram = await client.tokenProgramFor(market.stakeMint);
-        const key = `${market.stakeMint.toBase58()}:${tokenProgram.toBase58()}`;
-        const group = grouped.get(key) ?? { stakeMint: market.stakeMint, tokenProgram, legs: [] };
+        await fetchMarketRecord(leg.marketId, client);
+        const key = `${stakeMint.toBase58()}:${tokenProgram.toBase58()}`;
+        const group = grouped.get(key) ?? { stakeMint, tokenProgram, legs: [] };
         group.legs.push(leg);
         grouped.set(key, group);
       }

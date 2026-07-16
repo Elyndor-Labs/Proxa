@@ -1,6 +1,15 @@
 /** JSON wire types returned by the Proxa REST API. */
 
-export type WireMarketStatus = "open" | "resolved" | "voided" | { open: Record<string, never> } | { resolved: Record<string, never> } | { voided: Record<string, never> };
+export type WireMarketStatus =
+  | "open"
+  | "resolved"
+  | "voided"
+  | { open: Record<string, never> }
+  | { resolved: Record<string, never> }
+  | { voided: Record<string, never> }
+  | { Open: Record<string, never> }
+  | { Resolved: Record<string, never> }
+  | { Voided: Record<string, never> };
 
 export interface WireMarketAccount {
   marketId: string | number;

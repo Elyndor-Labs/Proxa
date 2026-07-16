@@ -1,7 +1,13 @@
 import { BN } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 
-export type MarketStatus = { open: {} } | { resolved: {} } | { voided: {} };
+export type MarketStatus =
+  | { open: {} }
+  | { resolved: {} }
+  | { voided: {} }
+  | { Open: {} }
+  | { Resolved: {} }
+  | { Voided: {} };
 
 export interface ConfigAccount {
   authority: PublicKey;
@@ -46,11 +52,12 @@ export interface PositionAccount {
 }
 
 export function statusLabel(status: MarketStatus): "open" | "resolved" | "voided" {
-  if ("resolved" in status) return "resolved";
-  if ("voided" in status) return "voided";
-  return "open";
+  if ("open" in status || "Open" in status) return "open";
+  if ("resolved" in status || "Resolved" in status) return "resolved";
+  if ("voided" in status || "Voided" in status) return "voided";
+  return "voided";
 }
 
 export function isResolved(status: MarketStatus): boolean {
-  return "resolved" in status;
+  return "resolved" in status || "Resolved" in status;
 }

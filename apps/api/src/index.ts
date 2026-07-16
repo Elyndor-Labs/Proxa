@@ -1,5 +1,4 @@
 import cors from "cors";
-import dotenv from "dotenv";
 import express from "express";
 import { createServer } from "node:http";
 import { proxaClient } from "./client";
@@ -14,8 +13,6 @@ import { fixturesRouter } from "./routes/fixtures";
 import { marketsRouter } from "./routes/markets";
 import { notificationsRouter } from "./routes/notifications";
 import { positionsRouter } from "./routes/positions";
-
-dotenv.config();
 
 const app = express();
 const server = createServer(app);

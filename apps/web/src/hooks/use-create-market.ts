@@ -67,31 +67,35 @@ export function useCreateMarket() {
 
       const seedAmount = Number(input.seedPerOutcome);
       if (seedAmount > 0) {
-        const seedLamports = toBaseUnits(input.seedPerOutcome, STAKE_DECIMALS);
-        const adminTokenAccount = bettorTokenAccount(config.stakeMint, wallet.publicKey, tokenProgram);
-        const seedTx = new Transaction();
+        try {
+          const seedLamports = toBaseUnits(input.seedPerOutcome, STAKE_DECIMALS);
+          const adminTokenAccount = bettorTokenAccount(config.stakeMint, wallet.publicKey, tokenProgram);
+          const seedTx = new Transaction();
 
-        for (let bucket = 0; bucket < input.numBuckets; bucket += 1) {
-          seedTx.add(
-            await client.placeBetIx({
-              bettor: wallet.publicKey,
-              marketId,
-              bucket,
-              amount: seedLamports,
-              bettorTokenAccount: adminTokenAccount,
-              stakeMint: config.stakeMint,
-              tokenProgram,
-            }),
-          );
+          for (let bucket = 0; bucket < input.numBuckets; bucket += 1) {
+            seedTx.add(
+              await client.placeBetIx({
+                bettor: wallet.publicKey,
+                marketId,
+                bucket,
+                amount: seedLamports,
+                bettorTokenAccount: adminTokenAccount,
+                stakeMint: config.stakeMint,
+                tokenProgram,
+              }),
+            );
+          }
+
+          await sendStakeTransaction({
+            client,
+            payer: wallet.publicKey,
+            stakeMint: config.stakeMint,
+            tokenProgram,
+            instructions: seedTx.instructions,
+          });
+        } catch (error) {
+          txToast.error(error);
         }
-
-        await sendStakeTransaction({
-          client,
-          payer: wallet.publicKey,
-          stakeMint: config.stakeMint,
-          tokenProgram,
-          instructions: seedTx.instructions,
-        });
       }
 
       if (input.candidateId) {

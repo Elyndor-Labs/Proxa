@@ -91,11 +91,11 @@ export function BetSlipDrawer() {
         </div>
 
         <div className="space-y-3 border-t border-border p-4">
-          {validLegs.length > 1 && (
-            <p className="font-label text-sm text-muted-foreground">
+          <div className="space-y-1 font-label text-sm text-muted-foreground">
+            <p>
               Total stake: <span className="font-medium text-foreground">${totalStake.toFixed(2)}</span>
             </p>
-          )}
+          </div>
           {canTransact ? (
             <Button
               variant="brand"

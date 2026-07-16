@@ -220,7 +220,7 @@ export class ProxaClient {
       .instruction();
   }
 
-  placeBetIx(params: {
+  async placeBetIx(params: {
     bettor: PublicKey;
     marketId: MarketId;
     bucket: number;
@@ -229,14 +229,49 @@ export class ProxaClient {
     stakeMint: PublicKey;
     tokenProgram: PublicKey;
   }): Promise<TransactionInstruction> {
-    return this.program.methods
-      .placeBet(params.bucket, new BN(params.amount.toString()))
+    return (this.program.methods as any)
+      .placeBet(params.bucket, new BN(params.amount.toString()), new BN(0))
       .accountsPartial({
         bettor: params.bettor,
+        config: this.configPda(),
         market: this.marketPda(params.marketId),
         vault: this.vaultPda(params.marketId),
         position: this.positionPda(params.marketId, params.bettor, params.bucket),
         bettorTokenAccount: params.bettorTokenAccount,
+        stakeMint: params.stakeMint,
+        tokenProgram: params.tokenProgram,
+        systemProgram: SystemProgram.programId,
+      })
+      .instruction();
+  }
+
+  async sponsoredPlaceBetIx(params: {
+    payer: PublicKey;
+    bettor: PublicKey;
+    marketId: MarketId;
+    bucket: number;
+    amount: number | BN;
+    relayerFee: number | BN;
+    bettorTokenAccount: PublicKey;
+    treasury: PublicKey;
+    stakeMint: PublicKey;
+    tokenProgram: PublicKey;
+  }): Promise<TransactionInstruction> {
+    return (this.program.methods as any)
+      .sponsoredPlaceBet(
+        params.bucket,
+        new BN(params.amount.toString()),
+        new BN(params.relayerFee.toString()),
+      )
+      .accountsPartial({
+        payer: params.payer,
+        bettor: params.bettor,
+        config: this.configPda(),
+        market: this.marketPda(params.marketId),
+        vault: this.vaultPda(params.marketId),
+        position: this.positionPda(params.marketId, params.bettor, params.bucket),
+        bettorTokenAccount: params.bettorTokenAccount,
+        treasury: params.treasury,
         stakeMint: params.stakeMint,
         tokenProgram: params.tokenProgram,
         systemProgram: SystemProgram.programId,

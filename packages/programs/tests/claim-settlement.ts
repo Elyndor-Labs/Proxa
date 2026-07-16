@@ -295,13 +295,16 @@ describe("claim, collect_fee, and void_market", function () {
       [losingBucket, loseAmount, losePosition],
     ] as const) {
       await methods
-        .placeBet(bucket, amount)
+        .placeBet(bucket, amount, new anchor.BN(0))
         .accounts({
+          payer: provider.wallet.publicKey,
           bettor: provider.wallet.publicKey,
+          config: configPda,
           market: marketPda,
           vault: vaultPda,
           position,
           bettorTokenAccount: bettorAta,
+          treasury: treasuryAta,
           stakeMint: mint,
           tokenProgram,
           systemProgram: SystemProgram.programId,
@@ -477,13 +480,16 @@ describe("claim, collect_fee, and void_market", function () {
     }
     const position = positionPda(program.programId, marketPda, provider.wallet.publicKey, bucket);
     await methods
-      .placeBet(bucket, betAmount)
+      .placeBet(bucket, betAmount, new anchor.BN(0))
       .accounts({
+        payer: provider.wallet.publicKey,
         bettor: provider.wallet.publicKey,
+        config: configPda,
         market: marketPda,
         vault: vaultPda,
         position,
         bettorTokenAccount: bettorAta,
+        treasury: treasuryAta,
         stakeMint: mint,
         tokenProgram,
         systemProgram: SystemProgram.programId,

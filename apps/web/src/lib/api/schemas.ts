@@ -9,6 +9,9 @@ export const wireMarketStatusSchema = z.union([
   z.object({ open: emptyRecord }),
   z.object({ resolved: emptyRecord }),
   z.object({ voided: emptyRecord }),
+  z.object({ Open: emptyRecord }),
+  z.object({ Resolved: emptyRecord }),
+  z.object({ Voided: emptyRecord }),
 ]);
 
 export const wireMarketAccountSchema = z.object({

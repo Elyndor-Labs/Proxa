@@ -19,9 +19,10 @@ function toMarketStatus(status: WireMarketStatus): MarketStatus {
     if (status === "voided") return { voided: {} };
     return { open: {} };
   }
-  if ("resolved" in status) return { resolved: {} };
-  if ("voided" in status) return { voided: {} };
-  return { open: {} };
+  if ("open" in status || "Open" in status) return { open: {} };
+  if ("resolved" in status || "Resolved" in status) return { resolved: {} };
+  if ("voided" in status || "Voided" in status) return { voided: {} };
+  return { voided: {} };
 }
 
 export function deserializeMarketAccount(wire: WireMarketAccount): MarketAccount {

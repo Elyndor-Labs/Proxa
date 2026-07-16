@@ -29,9 +29,11 @@ export function usePlaceBet() {
       if (!wallet?.publicKey) throw new Error("Wallet not connected");
       assertCanSubmitOnChainTx(true);
 
-      const { account: market } = await fetchMarketRecord(marketId, client);
-      const tokenProgram = await client.tokenProgramFor(market.stakeMint);
-      const ata = bettorTokenAccount(market.stakeMint, wallet.publicKey, tokenProgram);
+      await fetchMarketRecord(marketId, client);
+      const config = await client.fetchConfig();
+      const stakeMint = config.stakeMint;
+      const tokenProgram = await client.tokenProgramFor(stakeMint);
+      const ata = bettorTokenAccount(stakeMint, wallet.publicKey, tokenProgram);
       const lamports = toBaseUnits(amount, STAKE_DECIMALS);
 
       const ix = await client.placeBetIx({
@@ -40,14 +42,14 @@ export function usePlaceBet() {
         bucket,
         amount: lamports,
         bettorTokenAccount: ata,
-        stakeMint: market.stakeMint,
+        stakeMint,
         tokenProgram,
       });
 
       return sendStakeTransaction({
         client,
         payer: wallet.publicKey,
-        stakeMint: market.stakeMint,
+        stakeMint,
         tokenProgram,
         instructions: [ix],
       });
