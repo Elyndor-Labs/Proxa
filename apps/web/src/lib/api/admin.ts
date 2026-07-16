@@ -41,12 +41,12 @@ async function adminFetch(path: string, init?: RequestInit): Promise<unknown> {
   return text ? JSON.parse(text) : null;
 }
 
-export async function syncFixtures(body?: { startEpochDay?: number; competitionId?: number }) {
+export async function syncFixtures(body?: { startEpochDay?: number; competitionId?: number; days?: number }) {
   const json = await adminFetch("txodds/sync-fixtures", {
     method: "POST",
     body: JSON.stringify(body ?? {}),
   });
-  return z.object({ count: z.number() }).parse(json);
+  return z.object({ count: z.number(), days: z.number().optional() }).parse(json);
 }
 
 export async function syncFixtureOdds(fixtureId: number) {

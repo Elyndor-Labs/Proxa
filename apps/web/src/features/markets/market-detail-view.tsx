@@ -13,10 +13,8 @@ import { useFixture } from "@/hooks/use-fixture";
 import { useMarket } from "@/hooks/use-market";
 import { useTimeRemaining } from "@/hooks/use-time-remaining";
 import { getApiErrorMessage, isNotFoundError } from "@/lib/api/errors";
-import type { FixtureCandidate, FixtureDetail, OddsSnapshot } from "@/lib/api/fixtures";
 import { bucketChancePct } from "@/lib/format/odds";
-import type { MarketView } from "@/lib/proxa/market-view";
-import { formatSportsMarketName, formatSportsSelection } from "@/lib/proxa/sports-market-labels";
+import { applyFixtureMarketMetadata } from "@/lib/proxa/market-metadata";
 import { formatStakeTokenLabel } from "@/lib/proxa/stake-token";
 import { fixtureUnavailableMessage, isFixtureUnavailable } from "@/lib/proxa/fixture-status";
 import type { MarketAccount } from "@proxa/sdk";
@@ -50,57 +48,6 @@ function PoolChart({ account, labels }: { account: MarketAccount; labels: string
       </div>
     </div>
   );
-}
-
-function latestOddsLabels(
-  odds: OddsSnapshot[],
-  marketKey: string | null | undefined,
-  teams?: { homeTeam: string; awayTeam: string },
-): string[] {
-  if (!marketKey) return [];
-
-  const seen = new Set<string>();
-  return odds
-    .filter((odd) => odd.marketKey === marketKey)
-    .sort((a, b) => Date.parse(b.capturedAt) - Date.parse(a.capturedAt))
-    .filter((odd) => {
-      if (seen.has(odd.selection)) return false;
-      seen.add(odd.selection);
-      return true;
-    })
-    .reverse()
-    .map((odd) => formatSportsSelection(odd.selection, teams));
-}
-
-function rawMarketParameters(candidate?: FixtureCandidate): string | null {
-  const raw = candidate?.raw;
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
-  const value = (raw as Record<string, unknown>).parameters;
-  return typeof value === "string" ? value : null;
-}
-
-function buildDisplayView(view: MarketView, fixture: FixtureDetail | undefined, marketId: string): MarketView {
-  if (!fixture) return view;
-
-  const linkedMarket = fixture.markets.find((market) => String(market.id) === marketId);
-  const candidate = fixture.candidates.find((item) => {
-    if (item.onChainMarketId === Number(marketId)) return true;
-    return Boolean(linkedMarket?.externalMarketId && item.sourceMarketId === linkedMarket.externalMarketId);
-  });
-  const marketKey = candidate?.sourceMarketId ?? linkedMarket?.externalMarketId;
-  const teams = { homeTeam: fixture.homeTeam, awayTeam: fixture.awayTeam };
-  const oddsLabels = latestOddsLabels(fixture.odds, marketKey, teams);
-  const marketName = candidate
-    ? formatSportsMarketName(candidate.marketType || candidate.statLabel, rawMarketParameters(candidate))
-    : linkedMarket?.statLabel ?? view.statLabel;
-  const title = `${fixture.homeTeam} vs ${fixture.awayTeam} - ${marketName}`;
-
-  return {
-    ...view,
-    title: linkedMarket?.title ?? candidate?.title ?? title,
-    statLabel: marketName,
-    bucketLabels: oddsLabels.length === view.numBuckets ? oddsLabels : view.bucketLabels,
-  };
 }
 
 /** Market detail layout with outcome table and trade sidebar. */
@@ -140,7 +87,7 @@ export function MarketDetailView({ marketId }: MarketDetailViewProps) {
   }
 
   const { account, view } = data;
-  const displayView = buildDisplayView(view, fixtureQuery.data, marketId);
+  const displayView = applyFixtureMarketMetadata(view, fixtureQuery.data);
   const fixtureLabel = fixtureQuery.data
     ? `${fixtureQuery.data.homeTeam} vs ${fixtureQuery.data.awayTeam}`
     : `Fixture #${displayView.fixtureId}`;
@@ -201,7 +148,7 @@ export function MarketDetailView({ marketId }: MarketDetailViewProps) {
             onSelectBucket={setSelectedBucket}
             disabled={!displayView.isOpen || Boolean(tradingBlockedMessage)}
           />
-          <MarketPositionPanel marketId={marketId} account={account} />
+          <MarketPositionPanel marketId={marketId} account={account} view={displayView} />
         </div>
 
         {/* Trade sidebar */}

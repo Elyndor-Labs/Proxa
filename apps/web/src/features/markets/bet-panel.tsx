@@ -15,7 +15,7 @@ import { STAKE_DECIMALS } from "@/lib/proxa/market-view";
 import { formatStakeTokenLabel } from "@/lib/proxa/stake-token";
 
 const MAX_STAKE = Number(process.env.NEXT_PUBLIC_MAX_STAKE ?? "100");
-const PRESETS = [0.25, 0.5, 1, 2].filter((value) => value <= MAX_STAKE) as readonly number[];
+const PRESETS = [0.25, 0.5, 0.75, 1] as const;
 
 interface BetPanelProps {
   marketId: string;
@@ -54,6 +54,7 @@ export function BetPanel({
   const amountNumber = Number(amount);
   const hasInvalidAmount = !amount || Number.isNaN(amountNumber) || amountNumber <= 0;
   const insufficientBalance = Boolean(cash && amountNumber > cash.amount);
+  const maxSpendable = Math.min(MAX_STAKE, cash?.amount ?? MAX_STAKE);
 
   const preview =
     amount && !Number.isNaN(Number(amount))
@@ -61,7 +62,7 @@ export function BetPanel({
       : null;
 
   const applyPreset = (fraction: number) => {
-    setAmount((MAX_STAKE * fraction).toFixed(2));
+    setAmount((maxSpendable * fraction).toFixed(2));
   };
 
   const handlePlaceBet = () => {

@@ -56,6 +56,12 @@ export function rawMarketParameters(raw: unknown): string | null {
   return typeof value === "string" ? value : null;
 }
 
+export function rawSuperOddsType(raw: unknown): string | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const value = (raw as Record<string, unknown>).SuperOddsType;
+  return typeof value === "string" ? value : null;
+}
+
 function titleCase(value: string): string {
   return value
     .split(/\s+/)

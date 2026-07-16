@@ -20,9 +20,11 @@ export function useAdminCandidates(status?: string) {
 export function useSyncFixtures() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => syncFixtures(),
+    mutationFn: (body?: { startEpochDay?: number; competitionId?: number; days?: number }) =>
+      syncFixtures(body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.fixtures });
+      queryClient.invalidateQueries({ queryKey: queryKeys.markets });
     },
   });
 }

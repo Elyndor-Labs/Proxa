@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
+import { usePagedEnrichedPositions } from "@/hooks/use-enriched-positions";
 import { useMarkNotificationRead, useNotifications } from "@/hooks/use-notifications";
+import { formatStake } from "@/lib/format/odds";
 import { cn } from "@/lib/utils";
 
 interface NotificationsPanelProps {
@@ -26,8 +28,26 @@ function formatWhen(iso: string): string {
 export function NotificationsPanel({ open, onClose, className }: NotificationsPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const { data: notifications, isLoading } = useNotifications();
+  const { data: positionNotifications, isLoading: positionsLoading } = usePagedEnrichedPositions(0, 5, {
+    enabled: open,
+  });
   const markRead = useMarkNotificationRead();
-  const unreadCount = notifications?.filter((n) => !n.read).length ?? 0;
+  const fallbackNotifications = (positionNotifications?.items ?? []).map(({ position, marketId, view }) => {
+    const bucketLabel = view.bucketLabels[position.account.bucket] ?? `Bucket ${position.account.bucket + 1}`;
+    return {
+      id: `position-${position.address.toBase58()}`,
+      marketId: Number(marketId),
+      message: `${bucketLabel} position opened for ${formatStake(position.account.amount)} USDC`,
+      read: true,
+      createdAt: "",
+      local: true,
+    };
+  });
+  const visibleNotifications =
+    notifications && notifications.length > 0
+      ? notifications.map((notification) => ({ ...notification, local: false }))
+      : fallbackNotifications;
+  const unreadCount = visibleNotifications.filter((n) => !n.read).length;
 
   useEffect(() => {
     if (!open) return;
@@ -65,19 +85,19 @@ export function NotificationsPanel({ open, onClose, className }: NotificationsPa
       </div>
 
       <div className="max-h-80 overflow-y-auto">
-        {isLoading ? (
+        {isLoading || (!notifications?.length && positionsLoading) ? (
           <p className="px-4 py-6 text-center font-label text-sm text-muted-foreground">Loading…</p>
-        ) : !notifications?.length ? (
+        ) : !visibleNotifications.length ? (
           <p className="px-4 py-6 text-center font-label text-sm text-muted-foreground">
             No notifications yet
           </p>
         ) : (
-          notifications.map((notification) => (
+          visibleNotifications.map((notification) => (
             <button
               key={notification.id}
               type="button"
               onClick={() => {
-                if (!notification.read) {
+                if (!notification.read && !notification.local) {
                   markRead.mutate(notification.id);
                 }
                 onClose();
@@ -90,7 +110,7 @@ export function NotificationsPanel({ open, onClose, className }: NotificationsPa
               <p className="font-label text-sm text-foreground">{notification.message}</p>
               <div className="mt-1.5 flex items-center justify-between gap-2">
                 <span className="font-label text-[11px] text-muted-foreground">
-                  {formatWhen(notification.createdAt)}
+                  {notification.local ? "Local position" : formatWhen(notification.createdAt)}
                 </span>
                 <Link
                   href={`/markets/${notification.marketId}`}

@@ -3,13 +3,18 @@ import {
   formatSportsMarketName,
   parseMarketLine,
   rawMarketParameters,
+  rawSuperOddsType,
 } from "@/lib/proxa/sports-market-labels";
 
 describe("sports market labels", () => {
   it("extracts market line parameters from TXOdds raw payloads", () => {
-    const raw = { MarketParameters: "line=2.5;scope=match" };
+    const raw = {
+      MarketParameters: "line=2.5;scope=match",
+      SuperOddsType: "OVERUNDER_PARTICIPANT_GOALS",
+    };
     expect(rawMarketParameters(raw)).toBe("line=2.5;scope=match");
     expect(parseMarketLine(rawMarketParameters(raw))).toBe("2.5");
+    expect(rawSuperOddsType(raw)).toBe("OVERUNDER_PARTICIPANT_GOALS");
   });
 
   it("supports legacy lower-case raw parameters", () => {

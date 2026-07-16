@@ -19,10 +19,23 @@ import { useConfig } from "@/hooks/use-protocol-stats";
 
 type StatusFilter = "all" | "candidate" | "approved" | "published" | "rejected";
 
+const ADMIN_FIXTURE_WINDOW_MS = 10 * 24 * 60 * 60 * 1000;
+const HIDDEN_FIXTURE_STATUSES = new Set([
+  "finished",
+  "ended",
+  "complete",
+  "completed",
+  "cancelled",
+  "postponed",
+  "abandoned",
+]);
+
 export function AdminOpsView() {
   const wallet = useAnchorWallet();
   const { data: config } = useConfig();
   const fixturesQuery = useFixtures();
+  const [fixtureWindowStart] = useState(() => Date.now());
+  const fixtureWindowEnd = fixtureWindowStart + ADMIN_FIXTURE_WINDOW_MS;
   const [fixtureSearch, setFixtureSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("candidate");
 
@@ -36,7 +49,9 @@ export function AdminOpsView() {
 
   const filteredFixtures = useMemo(() => {
     const q = fixtureSearch.trim().toLowerCase();
-    const fixtures = fixturesQuery.data ?? [];
+    const fixtures = (fixturesQuery.data ?? []).filter((fixture) =>
+      isUpcomingAdminFixture(fixture.startsAt, fixture.status, fixtureWindowStart, fixtureWindowEnd),
+    );
     if (!q) return fixtures;
     return fixtures.filter((fixture) => {
       const haystack = [
@@ -49,7 +64,7 @@ export function AdminOpsView() {
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [fixtureSearch, fixturesQuery.data]);
+  }, [fixtureSearch, fixtureWindowEnd, fixtureWindowStart, fixturesQuery.data]);
 
   return (
     <RequireWallet>
@@ -96,7 +111,7 @@ export function AdminOpsView() {
               <Button
                 variant="brand"
                 disabled={syncFixtures.isPending}
-                onClick={() => syncFixtures.mutate()}
+                onClick={() => syncFixtures.mutate(undefined)}
               >
                 {syncFixtures.isPending ? "Syncing fixtures…" : "Sync fixtures"}
               </Button>
@@ -123,7 +138,8 @@ export function AdminOpsView() {
                           {fixture.homeTeam} vs {fixture.awayTeam}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          ID {fixture.id} · {fixture.league} · {fixture.status}
+                          ID {fixture.id} · {fixture.league} · {formatFixtureDate(fixture.startsAt)} ·{" "}
+                          {fixture.status}
                         </p>
                       </div>
                       <Button
@@ -235,4 +251,31 @@ export function AdminOpsView() {
       )}
     </RequireWallet>
   );
+}
+
+function isUpcomingAdminFixture(
+  startsAt: string,
+  status: string,
+  windowStart: number,
+  windowEnd: number,
+) {
+  const startsAtMs = new Date(startsAt).getTime();
+  const normalizedStatus = status.trim().toLowerCase();
+  return (
+    Number.isFinite(startsAtMs) &&
+    startsAtMs >= windowStart &&
+    startsAtMs <= windowEnd &&
+    !HIDDEN_FIXTURE_STATUSES.has(normalizedStatus)
+  );
+}
+
+function formatFixtureDate(startsAt: string) {
+  const date = new Date(startsAt);
+  if (Number.isNaN(date.getTime())) return "Date unavailable";
+  return date.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }

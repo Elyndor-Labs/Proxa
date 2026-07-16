@@ -19,9 +19,9 @@ export interface CreateMarketInput {
   period: PeriodOption;
   numBuckets: number;
   bucketBounds?: number[];
-  betsCloseHours: number;
-  resolveAfterHours: number;
-  resolveDeadlineHours: number;
+  betsCloseTs: number;
+  resolveAfterTs: number;
+  resolveDeadlineTs: number;
   seedPerOutcome: string;
   candidateId?: string;
 }
@@ -44,7 +44,6 @@ export function useCreateMarket() {
 
       const marketId = await client.nextMarketId();
       const tokenProgram = await client.tokenProgramFor(config.stakeMint);
-      const now = Math.floor(Date.now() / 1000);
       const statKey = buildStatKey(input.stat.value, input.period.value);
 
       const ix = await client.createMarketIx({
@@ -57,9 +56,9 @@ export function useCreateMarket() {
           statKey,
           numBuckets: input.numBuckets,
           bucketBounds: input.bucketBounds,
-          betsCloseTs: now + input.betsCloseHours * 3600,
-          resolveAfterTs: now + input.resolveAfterHours * 3600,
-          resolveDeadlineTs: now + input.resolveDeadlineHours * 3600,
+          betsCloseTs: input.betsCloseTs,
+          resolveAfterTs: input.resolveAfterTs,
+          resolveDeadlineTs: input.resolveDeadlineTs,
         },
       });
 

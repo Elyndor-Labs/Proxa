@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { FixturePicker } from "@/features/create/fixture-picker";
 import { useAnchorWallet } from "@/hooks/use-anchor-wallet";
+import { useSyncFixtureOdds, useSyncFixtures } from "@/hooks/use-admin-ops";
 import { useCreateMarket } from "@/hooks/use-create-market";
 import { useFixtures } from "@/hooks/use-fixtures";
 import { useProxaClient } from "@/hooks/use-proxa-client";
@@ -25,10 +26,21 @@ import {
   formatSportsMarketName,
   parseMarketLine,
   rawMarketParameters,
+  rawSuperOddsType,
 } from "@/lib/proxa/sports-market-labels";
 import { countBucketBounds, overFromHalfLine, thresholdBucketBounds } from "@proxa/sdk";
 
 const LAUNCHABLE_STATUSES = new Set(["candidate", "approved"]);
+const LAUNCH_WINDOW_MS = 10 * 24 * 60 * 60_000;
+const HIDDEN_FIXTURE_STATUSES = new Set([
+  "finished",
+  "ended",
+  "complete",
+  "completed",
+  "cancelled",
+  "postponed",
+  "abandoned",
+]);
 type BucketMode = "count" | "threshold";
 
 /** Admin launch wizard: pick fixture + approved candidate, then create on-chain. */
@@ -40,6 +52,8 @@ export function CreateMarketForm() {
   const fixturesQuery = useFixtures();
   const { canTransact } = useProxaClient();
   const createMarket = useCreateMarket();
+  const syncFixtures = useSyncFixtures();
+  const syncOdds = useSyncFixtureOdds();
 
   const [fixtureSearch, setFixtureSearch] = useState("");
   const [selectedFixtureId, setSelectedFixtureId] = useState<number | null>(null);
@@ -51,26 +65,41 @@ export function CreateMarketForm() {
   const [numBuckets, setNumBuckets] = useState<number>(2);
   const [bucketMode, setBucketMode] = useState<BucketMode>("count");
   const [overLine, setOverLine] = useState("2.5");
-  const [betsCloseHours, setBetsCloseHours] = useState("1");
-  const [resolveAfterHours, setResolveAfterHours] = useState("2");
-  const [resolveDeadlineHours, setResolveDeadlineHours] = useState("3");
+  const [betsCloseAt, setBetsCloseAt] = useState("");
+  const [resolveAfterAt, setResolveAfterAt] = useState("");
+  const [resolveDeadlineAt, setResolveDeadlineAt] = useState("");
   const [seedPerOutcome, setSeedPerOutcome] = useState("0.25");
+  const [launchCutoffTs] = useState(() => Date.now());
 
   const isAuthority =
     Boolean(wallet?.publicKey && config?.authority && wallet.publicKey.equals(config.authority));
 
   const fixtures = useMemo(() => fixturesQuery.data ?? [], [fixturesQuery.data]);
-  const selectedFixture = fixtures.find((fixture) => fixture.id === selectedFixtureId) ?? null;
+  const launchFixtures = useMemo(
+    () =>
+      fixtures.filter((fixture) => {
+        const startsAt = Date.parse(fixture.startsAt);
+        const normalizedStatus = fixture.status.trim().toLowerCase();
+        return (
+          Number.isFinite(startsAt) &&
+          startsAt >= launchCutoffTs &&
+          startsAt <= launchCutoffTs + LAUNCH_WINDOW_MS &&
+          !HIDDEN_FIXTURE_STATUSES.has(normalizedStatus)
+        );
+      }),
+    [fixtures, launchCutoffTs],
+  );
+  const selectedFixture = launchFixtures.find((fixture) => fixture.id === selectedFixtureId) ?? null;
 
   const launchableCandidates = useMemo(
     () =>
-      fixtures.flatMap((fixture) =>
+      launchFixtures.flatMap((fixture) =>
         fixture.candidates
           .filter((candidate) => LAUNCHABLE_STATUSES.has(candidate.status))
           .filter((candidate) => candidate.onChainMarketId == null)
           .map((candidate) => ({ fixture, candidate })),
       ),
-    [fixtures],
+    [launchFixtures],
   );
 
   const fixtureCandidates = useMemo(
@@ -89,6 +118,11 @@ export function CreateMarketForm() {
     setSelectedFixtureId(fixture.id);
     setFixtureIdOverride(String(fixture.id));
     setSelectedCandidateId(null);
+    applyDefaultMarketTimes(fixture, {
+      setBetsCloseAt,
+      setResolveAfterAt,
+      setResolveDeadlineAt,
+    });
   };
 
   const selectCandidate = useCallback((fixture: FixtureDetail, candidate: FixtureCandidate) => {
@@ -96,6 +130,11 @@ export function CreateMarketForm() {
     setSelectedCandidateId(candidate.id);
     setFixtureIdOverride(String(fixture.id));
     setNumBuckets(candidate.numBuckets);
+    applyDefaultMarketTimes(fixture, {
+      setBetsCloseAt,
+      setResolveAfterAt,
+      setResolveDeadlineAt,
+    });
 
     const line = parseMarketLine(rawMarketParameters(candidate.raw));
     if (candidate.numBuckets === 2 && line) {
@@ -136,6 +175,10 @@ export function CreateMarketForm() {
         ? thresholdBucketBounds(overFromHalfLine(Number(overLine)))
         : countBucketBounds(numBuckets);
     const resolvedBuckets = bucketMode === "threshold" ? 2 : numBuckets;
+    const betsCloseTs = datetimeLocalToUnixSeconds(betsCloseAt);
+    const resolveAfterTs = datetimeLocalToUnixSeconds(resolveAfterAt);
+    const resolveDeadlineTs = datetimeLocalToUnixSeconds(resolveDeadlineAt);
+    if (!betsCloseTs || !resolveAfterTs || !resolveDeadlineTs) return;
 
     createMarket.mutate(
       {
@@ -144,9 +187,9 @@ export function CreateMarketForm() {
         period,
         numBuckets: resolvedBuckets,
         bucketBounds,
-        betsCloseHours: Number(betsCloseHours),
-        resolveAfterHours: Number(resolveAfterHours),
-        resolveDeadlineHours: Number(resolveDeadlineHours),
+        betsCloseTs,
+        resolveAfterTs,
+        resolveDeadlineTs,
         seedPerOutcome,
         candidateId: selectedCandidateId ?? undefined,
       },
@@ -197,14 +240,26 @@ export function CreateMarketForm() {
         <div className="space-y-5">
           <Card>
             <CardHeader>
-              <CardTitle>1. Choose fixture</CardTitle>
-              <CardDescription>
-                Search synced TXOdds fixtures. No manual fixture ID entry required.
-              </CardDescription>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <CardTitle>1. Choose fixture</CardTitle>
+                  <CardDescription>
+                    Search synced TXOdds fixtures for the next 10 days. No manual fixture ID entry required.
+                  </CardDescription>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={syncFixtures.isPending}
+                  onClick={() => syncFixtures.mutate({ days: 10 })}
+                >
+                  {syncFixtures.isPending ? "Syncing..." : "Sync next 10 days"}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <FixturePicker
-                fixtures={fixtures}
+                fixtures={launchFixtures}
                 selectedFixtureId={selectedFixtureId}
                 onSelect={selectFixture}
                 search={fixtureSearch}
@@ -230,13 +285,27 @@ export function CreateMarketForm() {
               )}
 
               {!fixturesQuery.isLoading && fixtureCandidates.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  No launchable candidates. Sync odds in{" "}
-                  <Link href="/admin" className="text-brand underline">
-                    Admin ops
-                  </Link>{" "}
-                  first.
-                </p>
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4">
+                  <p className="text-sm text-muted-foreground">
+                    {selectedFixture
+                      ? "No launchable candidates for this fixture yet. Sync odds to prepare markets."
+                      : "Select a fixture to see or sync launchable candidates."}
+                  </p>
+                  {selectedFixture ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={syncOdds.isPending}
+                      onClick={() => syncOdds.mutate(selectedFixture.id)}
+                    >
+                      {syncOdds.isPending ? "Syncing odds..." : "Sync odds"}
+                    </Button>
+                  ) : (
+                    <Button variant="outline" asChild>
+                      <Link href="/admin">Admin ops</Link>
+                    </Button>
+                  )}
+                </div>
               )}
 
               {fixtureCandidates.length > 0 && (
@@ -271,7 +340,7 @@ export function CreateMarketForm() {
                           {fixture.homeTeam} vs {fixture.awayTeam}
                         </p>
                         <p className="mt-2 text-xs text-muted-foreground">
-                          {formatSportsMarketName(candidate.marketType, rawMarketParameters(candidate.raw))} ·{" "}
+                          {formatSportsMarketName(candidateMarketType(candidate), rawMarketParameters(candidate.raw))} ·{" "}
                           {candidate.numBuckets} outcomes
                         </p>
                       </button>
@@ -383,33 +452,30 @@ export function CreateMarketForm() {
                   </select>
                 </Field>
 
-                <Field label="Bets close (hours)">
+                <Field label="Bets close">
                   <Input
                     required
-                    type="number"
-                    min="1"
-                    value={betsCloseHours}
-                    onChange={(e) => setBetsCloseHours(e.target.value)}
+                    type="datetime-local"
+                    value={betsCloseAt}
+                    onChange={(e) => setBetsCloseAt(e.target.value)}
                   />
                 </Field>
 
-                <Field label="Resolve after (hours)">
+                <Field label="Resolve after">
                   <Input
                     required
-                    type="number"
-                    min="1"
-                    value={resolveAfterHours}
-                    onChange={(e) => setResolveAfterHours(e.target.value)}
+                    type="datetime-local"
+                    value={resolveAfterAt}
+                    onChange={(e) => setResolveAfterAt(e.target.value)}
                   />
                 </Field>
 
-                <Field label="Resolve deadline (hours)">
+                <Field label="Resolve deadline">
                   <Input
                     required
-                    type="number"
-                    min="1"
-                    value={resolveDeadlineHours}
-                    onChange={(e) => setResolveDeadlineHours(e.target.value)}
+                    type="datetime-local"
+                    value={resolveDeadlineAt}
+                    onChange={(e) => setResolveDeadlineAt(e.target.value)}
                   />
                 </Field>
 
@@ -489,4 +555,34 @@ function splitStatKey(statKey: number): { stat: StatOption; period: PeriodOption
     if (statOption) return { stat: statOption, period: periodOption };
   }
   return null;
+}
+
+function candidateMarketType(candidate: FixtureCandidate): string {
+  return rawSuperOddsType(candidate.raw) ?? candidate.marketType;
+}
+
+function toDatetimeLocalValue(date: Date): string {
+  const offsetMs = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+}
+
+function datetimeLocalToUnixSeconds(value: string): number | null {
+  const ms = Date.parse(value);
+  return Number.isNaN(ms) ? null : Math.floor(ms / 1000);
+}
+
+function applyDefaultMarketTimes(
+  fixture: FixtureDetail,
+  setters: {
+    setBetsCloseAt: (value: string) => void;
+    setResolveAfterAt: (value: string) => void;
+    setResolveDeadlineAt: (value: string) => void;
+  },
+) {
+  const start = new Date(fixture.startsAt);
+  if (Number.isNaN(start.getTime())) return;
+
+  setters.setBetsCloseAt(toDatetimeLocalValue(start));
+  setters.setResolveAfterAt(toDatetimeLocalValue(new Date(start.getTime() + 2 * 60 * 60_000)));
+  setters.setResolveDeadlineAt(toDatetimeLocalValue(new Date(start.getTime() + 24 * 60 * 60_000)));
 }
