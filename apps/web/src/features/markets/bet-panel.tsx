@@ -6,6 +6,7 @@ import { WalletButton } from "@/components/domain/wallet-button";
 import { useBetSlipStore } from "@/features/bet-slip/store";
 import { usePlaceBet } from "@/hooks/use-place-bet";
 import { useProxaClient } from "@/hooks/use-proxa-client";
+import { useConfig } from "@/hooks/use-protocol-stats";
 import { useStakeTokenBalance } from "@/hooks/use-token-balance";
 import { useWalletAuth } from "@/hooks/use-wallet-auth";
 import { formatOdds } from "@/lib/format/odds";
@@ -14,7 +15,7 @@ import type { MarketView } from "@/lib/proxa/market-view";
 import { STAKE_DECIMALS } from "@/lib/proxa/market-view";
 import { formatStakeTokenLabel } from "@/lib/proxa/stake-token";
 
-const MAX_STAKE = 2;
+const MAX_STAKE = 100;
 const PRESETS = [0.25, 0.5, 0.75, 1] as const;
 
 interface BetPanelProps {
@@ -23,15 +24,24 @@ interface BetPanelProps {
   account: MarketAccount;
   selectedBucket: number;
   onSelectBucket: (bucket: number) => void;
+  tradingBlockedMessage?: string;
 }
 
 /** Sticky trading sidebar — mentioned.market style. */
-export function BetPanel({ marketId, view, account, selectedBucket, onSelectBucket }: BetPanelProps) {
+export function BetPanel({
+  marketId,
+  view,
+  account,
+  selectedBucket,
+  onSelectBucket,
+  tradingBlockedMessage,
+}: BetPanelProps) {
   const [amount, setAmount] = useState("");
   const [side, setSide] = useState<"buy" | "sell">("buy");
   const { canTransact } = useProxaClient();
   const { connected } = useWalletAuth();
   const { data: cash } = useStakeTokenBalance();
+  const { data: config } = useConfig();
   const placeBet = usePlaceBet();
   const { addLeg, setOpen } = useBetSlipStore();
 
@@ -39,11 +49,14 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
   const label = view.bucketLabels[bucket] ?? `Bucket ${bucket + 1}`;
   const estimatedOdds = formatOdds(account, bucket);
   const isBinary = view.numBuckets === 2;
-  const disabled = !view.isOpen || placeBet.isPending;
-  const stakeTokenLabel = formatStakeTokenLabel(account.stakeMint.toBase58());
+  const disabled = !view.isOpen || placeBet.isPending || Boolean(tradingBlockedMessage);
+  const yesLabel = view.bucketLabels[0] ?? "Outcome 1";
+  const noLabel = view.bucketLabels[1] ?? "Outcome 2";
+  const stakeTokenLabel = formatStakeTokenLabel((config?.stakeMint ?? account.stakeMint).toBase58());
   const amountNumber = Number(amount);
   const hasInvalidAmount = !amount || Number.isNaN(amountNumber) || amountNumber <= 0;
   const insufficientBalance = Boolean(cash && amountNumber > cash.amount);
+  const maxSpendable = Math.max(0, Math.min(MAX_STAKE, cash?.amount ?? MAX_STAKE));
 
   const preview =
     amount && !Number.isNaN(Number(amount))
@@ -51,7 +64,7 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
       : null;
 
   const applyPreset = (fraction: number) => {
-    setAmount((MAX_STAKE * fraction).toFixed(2));
+    setAmount((maxSpendable * fraction).toFixed(2));
   };
 
   const handlePlaceBet = () => {
@@ -81,7 +94,13 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
         </div>
       </div>
 
-      <div className="trade-info-banner">$2 max per position</div>
+      <div className="trade-info-banner">${MAX_STAKE.toFixed(2)} max per position</div>
+
+      {tradingBlockedMessage ? (
+        <p className="mx-5 mt-4 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 font-label text-xs text-foreground">
+          {tradingBlockedMessage}
+        </p>
+      ) : null}
 
       <div className="trade-tabs px-5">
         <button
@@ -107,7 +126,7 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
               disabled={disabled}
               onClick={() => onSelectBucket(0)}
             >
-              <span className="trade-btn-label">Yes</span>
+              <span className="trade-btn-label">{yesLabel}</span>
               <span className="trade-btn-price">{formatOdds(account, 0)}x</span>
             </button>
             <button
@@ -117,7 +136,7 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
               disabled={disabled}
               onClick={() => onSelectBucket(1)}
             >
-              <span className="trade-btn-label">No</span>
+              <span className="trade-btn-label">{noLabel}</span>
               <span className="trade-btn-price">{formatOdds(account, 1)}x</span>
             </button>
           </div>

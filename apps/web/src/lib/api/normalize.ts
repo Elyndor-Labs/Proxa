@@ -58,6 +58,7 @@ export function normalizeApiMarket(
       fixtureId: market.fixtureId,
       statKey: market.statKey,
       numBuckets: market.numBuckets,
+      bucketBounds: market.bucketBounds,
       betsCloseTs: market.betsCloseTs,
       resolveAfterTs: market.resolveAfterTs,
       resolveDeadlineTs: market.resolveDeadlineTs ?? market.resolveAfterTs,

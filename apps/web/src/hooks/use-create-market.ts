@@ -11,16 +11,19 @@ import { STAKE_DECIMALS } from "@/lib/proxa/market-view";
 import { queryKeys } from "@/lib/proxa/query-keys";
 import { sendStakeTransaction } from "@/lib/proxa/send-transaction";
 import { txToast } from "@/lib/solana/toast";
+import { linkCandidateMarket } from "@/lib/api/admin";
 
 export interface CreateMarketInput {
   fixtureId: string;
   stat: StatOption;
   period: PeriodOption;
   numBuckets: number;
-  betsCloseHours: number;
-  resolveAfterHours: number;
-  resolveDeadlineHours: number;
+  bucketBounds?: number[];
+  betsCloseTs: number;
+  resolveAfterTs: number;
+  resolveDeadlineTs: number;
   seedPerOutcome: string;
+  candidateId?: string;
 }
 
 /** Mutation hook to create a new market (protocol authority only). */
@@ -41,7 +44,7 @@ export function useCreateMarket() {
 
       const marketId = await client.nextMarketId();
       const tokenProgram = await client.tokenProgramFor(config.stakeMint);
-      const now = Math.floor(Date.now() / 1000);
+      const statKey = buildStatKey(input.stat.value, input.period.value);
 
       const ix = await client.createMarketIx({
         authority: wallet.publicKey,
@@ -50,11 +53,12 @@ export function useCreateMarket() {
         tokenProgram,
         args: {
           fixtureId: Number(input.fixtureId),
-          statKey: buildStatKey(input.stat.value, input.period.value),
+          statKey,
           numBuckets: input.numBuckets,
-          betsCloseTs: now + input.betsCloseHours * 3600,
-          resolveAfterTs: now + input.resolveAfterHours * 3600,
-          resolveDeadlineTs: now + input.resolveDeadlineHours * 3600,
+          bucketBounds: input.bucketBounds,
+          betsCloseTs: input.betsCloseTs,
+          resolveAfterTs: input.resolveAfterTs,
+          resolveDeadlineTs: input.resolveDeadlineTs,
         },
       });
 
@@ -63,41 +67,50 @@ export function useCreateMarket() {
 
       const seedAmount = Number(input.seedPerOutcome);
       if (seedAmount > 0) {
-        const seedLamports = toBaseUnits(input.seedPerOutcome, STAKE_DECIMALS);
-        const adminTokenAccount = bettorTokenAccount(config.stakeMint, wallet.publicKey, tokenProgram);
-        const seedTx = new Transaction();
+        try {
+          const seedLamports = toBaseUnits(input.seedPerOutcome, STAKE_DECIMALS);
+          const adminTokenAccount = bettorTokenAccount(config.stakeMint, wallet.publicKey, tokenProgram);
+          const seedTx = new Transaction();
 
-        for (let bucket = 0; bucket < input.numBuckets; bucket += 1) {
-          seedTx.add(
-            await client.placeBetIx({
-              bettor: wallet.publicKey,
-              marketId,
-              bucket,
-              amount: seedLamports,
-              bettorTokenAccount: adminTokenAccount,
-              stakeMint: config.stakeMint,
-              tokenProgram,
-            }),
-          );
+          for (let bucket = 0; bucket < input.numBuckets; bucket += 1) {
+            seedTx.add(
+              await client.placeBetIx({
+                bettor: wallet.publicKey,
+                marketId,
+                bucket,
+                amount: seedLamports,
+                bettorTokenAccount: adminTokenAccount,
+                stakeMint: config.stakeMint,
+                tokenProgram,
+              }),
+            );
+          }
+
+          await sendStakeTransaction({
+            client,
+            payer: wallet.publicKey,
+            stakeMint: config.stakeMint,
+            tokenProgram,
+            instructions: seedTx.instructions,
+          });
+        } catch (error) {
+          txToast.error(error);
         }
-
-        await sendStakeTransaction({
-          client,
-          payer: wallet.publicKey,
-          stakeMint: config.stakeMint,
-          tokenProgram,
-          instructions: seedTx.instructions,
-        });
       }
 
-      return { signature, marketId: marketId.toString() };
+      if (input.candidateId) {
+        await linkCandidateMarket(input.candidateId, Number(marketId), statKey);
+      }
+
+      return { signature, marketId: marketId.toString(), statKey };
     },
     onMutate: () => ({ toastId: txToast.pending("Creating market…") }),
     onSuccess: ({ signature }, _vars, context) => {
       if (context?.toastId) txToast.dismiss(context.toastId);
-      txToast.success(signature, "Market created");
+      txToast.success(signature, "Market created and linked");
       queryClient.invalidateQueries({ queryKey: queryKeys.markets });
       queryClient.invalidateQueries({ queryKey: queryKeys.config });
+      queryClient.invalidateQueries({ queryKey: queryKeys.fixtures });
     },
     onError: (error, _vars, context) => {
       if (context?.toastId) txToast.dismiss(context.toastId);

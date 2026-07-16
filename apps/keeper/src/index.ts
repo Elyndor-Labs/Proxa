@@ -41,6 +41,7 @@ async function runWatch(args: string[]): Promise<void> {
   await keeper.watch(entries, {
     intervalMs: Number(process.env.POLL_INTERVAL_MS ?? "30000"),
     onResolve: (r) => console.log("resolved:", JSON.stringify(r)),
+    onVoid: (r) => console.log("voided:", JSON.stringify(r)),
     onError: (marketId, err) => console.error(`market ${marketId}:`, err instanceof Error ? err.message : err),
   });
   console.log("all markets settled");

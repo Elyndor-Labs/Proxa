@@ -6,6 +6,7 @@ import {
   toDateFromMs,
   txOddsGameStateToStatus,
 } from "../services/txodds";
+import { mapTxOddsSnapshotToStatKey } from "../services/statKeyMapping";
 
 export const adminRouter: Router = Router();
 
@@ -20,6 +21,14 @@ function parseOptionalInt(value: unknown): number | undefined {
   if (value === undefined || value === null || value === "") return undefined;
   const parsed = Number(value);
   return Number.isInteger(parsed) ? parsed : undefined;
+}
+
+function currentEpochDay(): number {
+  return Math.floor(Date.now() / 86_400_000);
+}
+
+function defaultFixtureSyncDays(): number {
+  return 10;
 }
 
 function oddsMarketKey(snapshot: {
@@ -47,13 +56,23 @@ function oddsMarketTitle(fixture: {
 adminRouter.post("/txodds/sync-fixtures", async (req: Request, res: Response) => {
   try {
     const txodds = new TxOddsService();
-    const fixtures = await txodds.fetchFixtures({
-      startEpochDay: parseOptionalInt(req.body.startEpochDay),
-      competitionId: parseOptionalInt(req.body.competitionId),
-    });
+    const startEpochDay = parseOptionalInt(req.body.startEpochDay) ?? currentEpochDay();
+    const days = Math.max(1, Math.min(parseOptionalInt(req.body.days) ?? defaultFixtureSyncDays(), 10));
+    const competitionId = parseOptionalInt(req.body.competitionId);
+    const fixturesById = new Map<number, Awaited<ReturnType<TxOddsService["fetchFixtures"]>>[number]>();
+
+    for (let offset = 0; offset < days; offset += 1) {
+      const fixturesForDay = await txodds.fetchFixtures({
+        startEpochDay: startEpochDay + offset,
+        competitionId,
+      });
+      for (const fixture of fixturesForDay) {
+        fixturesById.set(fixture.FixtureId, fixture);
+      }
+    }
 
     const synced = [];
-    for (const f of fixtures) {
+    for (const f of fixturesById.values()) {
       const homeTeam = f.Participant1IsHome ? f.Participant1 : f.Participant2;
       const awayTeam = f.Participant1IsHome ? f.Participant2 : f.Participant1;
       const fixture = await prisma.fixture.upsert({
@@ -85,7 +104,7 @@ adminRouter.post("/txodds/sync-fixtures", async (req: Request, res: Response) =>
       synced.push(fixture);
     }
 
-    res.json({ count: synced.length, data: synced });
+    res.json({ count: synced.length, days, data: synced });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -153,13 +172,15 @@ adminRouter.post("/txodds/fixtures/:id/sync-odds", async (req: Request, res: Res
           },
         });
         if (!existing) {
+          const mapping = mapTxOddsSnapshotToStatKey(snapshot);
           await prisma.marketCandidate.create({
             data: {
               fixtureId,
               source: "txodds",
               sourceMarketId: marketKey,
-              statLabel: marketName,
-              marketType: "odds_snapshot",
+              statKey: mapping.statKey ?? undefined,
+              statLabel: mapping.statLabel,
+              marketType: marketName,
               title: oddsMarketTitle(fixture, marketName),
               numBuckets: Math.max(names.length, 2),
               startsAt: fixture.startsAt,
@@ -167,6 +188,20 @@ adminRouter.post("/txodds/fixtures/:id/sync-odds", async (req: Request, res: Res
             },
           });
           candidatesCreated++;
+        } else {
+          const mapping = mapTxOddsSnapshotToStatKey(snapshot);
+          await prisma.marketCandidate.update({
+            where: { id: existing.id },
+            data: {
+              statKey: mapping.statKey ?? undefined,
+              statLabel: mapping.statLabel,
+              marketType: marketName,
+              title: oddsMarketTitle(fixture, marketName),
+              numBuckets: Math.max(names.length, 2),
+              startsAt: fixture.startsAt,
+              raw: snapshot as any,
+            },
+          });
         }
       }
     }
@@ -339,8 +374,8 @@ adminRouter.post("/candidates/:id/link-market", async (req: Request, res: Respon
       res.status(404).json({ error: "Candidate not found" });
       return;
     }
-    if (candidate.status !== "approved" && candidate.status !== "published") {
-      res.status(409).json({ error: "Candidate must be approved before linking" });
+    if (!["candidate", "approved", "published"].includes(candidate.status)) {
+      res.status(409).json({ error: "Rejected candidates cannot be linked" });
       return;
     }
 

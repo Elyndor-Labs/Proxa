@@ -1,5 +1,6 @@
 import { BN } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
+import { countBucketBounds } from "@proxa/sdk";
 import type { MarketAccount, MarketStatus, PositionAccount } from "@proxa/sdk";
 import type { MarketRecord, PositionRecord } from "@proxa/sdk";
 import type { WireMarketAccount, WireMarketRecord, WireMarketStatus, WirePositionRecord } from "@/lib/api/types";
@@ -18,9 +19,10 @@ function toMarketStatus(status: WireMarketStatus): MarketStatus {
     if (status === "voided") return { voided: {} };
     return { open: {} };
   }
-  if ("resolved" in status) return { resolved: {} };
-  if ("voided" in status) return { voided: {} };
-  return { open: {} };
+  if ("open" in status || "Open" in status) return { open: {} };
+  if ("resolved" in status || "Resolved" in status) return { resolved: {} };
+  if ("voided" in status || "Voided" in status) return { voided: {} };
+  return { voided: {} };
 }
 
 export function deserializeMarketAccount(wire: WireMarketAccount): MarketAccount {
@@ -30,6 +32,9 @@ export function deserializeMarketAccount(wire: WireMarketAccount): MarketAccount
     fixtureId: toBn(wire.fixtureId),
     statKey: wire.statKey,
     numBuckets: wire.numBuckets,
+    bucketBounds: wire.bucketBounds?.length
+      ? wire.bucketBounds
+      : countBucketBounds(wire.numBuckets),
     betsCloseTs: toBn(wire.betsCloseTs),
     resolveAfterTs: toBn(wire.resolveAfterTs),
     resolveDeadlineTs: toBn(wire.resolveDeadlineTs),

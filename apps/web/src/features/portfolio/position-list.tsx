@@ -1,38 +1,39 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { ClaimButton } from "@/components/domain/claim-button";
 import { SettlementBadge } from "@/components/domain/settlement-badge";
-import { FilterTabs } from "@/components/layout/filter-tabs";
 import { Button } from "@/components/ui/button";
-import { useEnrichedPositions } from "@/hooks/use-enriched-positions";
+import { useEnrichedPositions, type EnrichedPosition } from "@/hooks/use-enriched-positions";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatStake } from "@/lib/format/odds";
 import { formatStakeTokenLabel } from "@/lib/proxa/stake-token";
 import { cn } from "@/lib/utils";
 
-const VIEW_TABS = [
-  { label: "Open Positions", value: "open" },
-  { label: "History", value: "history" },
-];
+const STAGGER = [
+  "",
+  "animate-slide-up-delay-1",
+  "animate-slide-up-delay-2",
+  "animate-slide-up-delay-3",
+  "animate-slide-up-delay-4",
+] as const;
 
-const STAGGER = ["", "animate-slide-up-delay-1", "animate-slide-up-delay-2", "animate-slide-up-delay-3", "animate-slide-up-delay-4"] as const;
-
-/** Portfolio positions with stat tiles and position list. */
+/** Portfolio positions with stat tiles and status-grouped position lists. */
 export function PositionList() {
-  const [view, setView] = useState("open");
   const { data: enriched, isLoading, isError, error } = useEnrichedPositions();
-
-  const openPositions = enriched?.filter(({ view: v }) => v.isOpen) ?? [];
-  const historyPositions = enriched?.filter(({ view: v }) => !v.isOpen) ?? [];
-  const displayed = view === "open" ? openPositions : historyPositions;
+  const positions = enriched ?? [];
+  const openPositions = positions.filter(({ view }) => view.isOpen);
+  const claimablePositions = positions.filter(({ claimable }) => claimable.gtn(0));
+  const historyPositions = positions.filter(({ view }) => !view.isOpen);
 
   const stats = {
-    markets: new Set(enriched?.map((p) => p.marketId) ?? []).size,
-    tokensStaked: enriched?.reduce((sum, p) => sum + Number(formatStake(p.position.account.amount)), 0) ?? 0,
-    trades: enriched?.length ?? 0,
+    markets: new Set(positions.map((p) => p.marketId)).size,
+    tokensStaked: positions.reduce(
+      (sum, p) => sum + Number(formatStake(p.position.account.amount)),
+      0,
+    ),
+    trades: positions.length,
   };
 
   if (isLoading) {
@@ -68,69 +69,92 @@ export function PositionList() {
       </div>
 
       <div>
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-          <p className="section-label">{view === "open" ? "Open Positions" : "Trade History"}</p>
-          <FilterTabs tabs={VIEW_TABS} value={view} onChange={setView} aria-label="Position view" />
+        <div className="mb-5">
+          <p className="section-label">Positions</p>
+          <p className="mt-1 text-sm text-muted-foreground">Grouped by current status.</p>
         </div>
 
-        {!displayed.length ? (
+        {!positions.length ? (
           <div className="surface p-10 text-center">
-            <p className="font-display text-lg font-bold">
-              {view === "open" ? "No open positions" : "No trade history"}
-            </p>
+            <p className="font-display text-lg font-bold">No positions</p>
             <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-              {view === "open"
-                ? "Place a bet on a live market to see your portfolio here."
-                : "Resolved trades will appear here."}
+              Place a bet on a live market to see your portfolio here.
             </p>
-            {view === "open" && (
-              <Button variant="brand" size="lg" className="mt-6" asChild>
-                <Link href="/markets">
-                  Browse markets
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
-              </Button>
-            )}
+            <Button variant="brand" size="lg" className="mt-6" asChild>
+              <Link href="/markets">
+                Browse markets
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </Button>
           </div>
         ) : (
-          <div className="space-y-3">
-            {displayed.map(({ position, market, marketId, claimable, view: marketView }) => {
-              const tokenLabel = formatStakeTokenLabel(market.stakeMint.toBase58());
-              return (
-                <div key={position.address.toBase58()} className="surface surface-interactive p-5">
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div className="space-y-1.5">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-display text-base font-bold">{marketView.title}</h3>
-                        <SettlementBadge status={marketView.status} />
-                      </div>
-                      <p className="font-label text-sm text-muted-foreground">
-                        {marketView.bucketLabels[position.account.bucket] ?? `Bucket ${position.account.bucket + 1}`}
-                        <span aria-hidden> · </span>
-                        Stake{" "}
-                        <span className="font-semibold text-foreground">
-                          {formatStake(position.account.amount)} {tokenLabel}
-                        </span>
-                      </p>
-                    </div>
-                    <ClaimButton
-                      marketId={marketId}
-                      bucket={position.account.bucket}
-                      claimable={claimable}
-                      tokenLabel={tokenLabel}
-                    />
-                  </div>
-                  <div className="mt-4 border-t border-[var(--surface-border)] pt-4">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/markets/${marketId}`}>View Market</Link>
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="space-y-6">
+            <PositionSection title="Claimable" positions={claimablePositions} empty="No claimable positions." />
+            <PositionSection title="Open Positions" positions={openPositions} empty="No open positions." />
+            <PositionSection title="History" positions={historyPositions} empty="No settled history." />
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+function PositionSection({
+  title,
+  positions,
+  empty,
+}: {
+  title: string;
+  positions: EnrichedPosition[];
+  empty: string;
+}) {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="section-label">{title}</p>
+        <span className="font-label text-xs text-muted-foreground">{positions.length}</span>
+      </div>
+
+      {positions.length === 0 ? (
+        <div className="surface p-4 text-sm text-muted-foreground">{empty}</div>
+      ) : (
+        <div className="space-y-3">
+          {positions.map(({ position, market, marketId, claimable, view: marketView }) => {
+            const tokenLabel = formatStakeTokenLabel(market.stakeMint.toBase58());
+            return (
+              <div key={position.address.toBase58()} className="surface surface-interactive p-5">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-display text-base font-bold">{marketView.title}</h3>
+                      <SettlementBadge status={marketView.status} />
+                    </div>
+                    <p className="font-label text-sm text-muted-foreground">
+                      {marketView.bucketLabels[position.account.bucket] ?? `Bucket ${position.account.bucket + 1}`}
+                      <span aria-hidden> · </span>
+                      Stake{" "}
+                      <span className="font-semibold text-foreground">
+                        {formatStake(position.account.amount)} {tokenLabel}
+                      </span>
+                    </p>
+                  </div>
+                  <ClaimButton
+                    marketId={marketId}
+                    bucket={position.account.bucket}
+                    claimable={claimable}
+                    tokenLabel={tokenLabel}
+                  />
+                </div>
+                <div className="mt-4 border-t border-[var(--surface-border)] pt-4">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/markets/${marketId}`}>View Market</Link>
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }
