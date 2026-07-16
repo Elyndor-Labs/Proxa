@@ -4,6 +4,10 @@ import { prisma } from "../db";
 
 export const marketsRouter: Router = Router();
 
+function isLegacyMarketDecodeError(error: unknown): boolean {
+  return error instanceof RangeError && error.message.includes("offset");
+}
+
 function toMarketResponse(m: Awaited<ReturnType<ProxaClient["fetchAllMarkets"]>>[number]) {
   return {
     marketId: m.account.marketId.toString(),
@@ -40,7 +44,15 @@ marketsRouter.get("/", async (req: Request, res: Response) => {
   try {
     const proxa: ProxaClient = (req as any).proxa;
     const statusFilter = req.query.status as string | undefined;
-    const markets = await proxa.fetchAllMarkets();
+    let markets: Awaited<ReturnType<ProxaClient["fetchAllMarkets"]>>;
+    try {
+      markets = await proxa.fetchAllMarkets();
+    } catch (err) {
+      if (!isLegacyMarketDecodeError(err)) throw err;
+      console.warn("Unable to decode legacy market accounts; returning an empty market list.");
+      res.json({ data: [] });
+      return;
+    }
 
     let data = markets.map(toMarketResponse);
 
@@ -59,7 +71,15 @@ marketsRouter.get("/fixture/:fixtureId", async (req: Request, res: Response) => 
   try {
     const proxa: ProxaClient = (req as any).proxa;
     const fixtureId = Number(req.params.fixtureId);
-    const markets = await proxa.fetchMarketsByFixture(fixtureId);
+    let markets: Awaited<ReturnType<ProxaClient["fetchMarketsByFixture"]>>;
+    try {
+      markets = await proxa.fetchMarketsByFixture(fixtureId);
+    } catch (err) {
+      if (!isLegacyMarketDecodeError(err)) throw err;
+      console.warn("Unable to decode legacy fixture market accounts; returning an empty market list.");
+      res.json({ data: [] });
+      return;
+    }
     const data = markets.map(toMarketResponse);
 
     res.json({ data });
@@ -73,7 +93,17 @@ marketsRouter.get("/:id", async (req: Request, res: Response) => {
   try {
     const proxa: ProxaClient = (req as any).proxa;
     const marketId = Number(req.params.id);
-    const m = await proxa.fetchMarket(marketId);
+    let m: Awaited<ReturnType<ProxaClient["fetchMarket"]>>;
+    try {
+      m = await proxa.fetchMarket(marketId);
+    } catch (err) {
+      if (!isLegacyMarketDecodeError(err)) throw err;
+      res.status(410).json({
+        error:
+          "This local market was created with an older account layout. Recreate it after the bucket bounds upgrade.",
+      });
+      return;
+    }
     res.json({
       marketId: m.marketId.toString(),
       fixtureId: m.fixtureId.toString(),

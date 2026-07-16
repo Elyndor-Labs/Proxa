@@ -95,8 +95,22 @@ export class ProxaClient {
   }
 
   async fetchAllMarkets(): Promise<MarketRecord[]> {
-    const rows = await this.program.account.market.all();
-    return rows.map((row) => ({ address: row.publicKey, account: row.account as unknown as MarketAccount }));
+    const rows = await this.connection.getProgramAccounts(this.programId, {
+      filters: [{ dataSize: this.program.account.market.size }],
+    });
+
+    const markets: MarketRecord[] = [];
+    for (const row of rows) {
+      try {
+        markets.push({
+          address: row.pubkey,
+          account: this.program.coder.accounts.decode("market", row.account.data) as unknown as MarketAccount,
+        });
+      } catch {
+        // Local/devnet may contain accounts from an older Market layout. Skip them so new markets still list.
+      }
+    }
+    return markets;
   }
 
   async fetchMarketsByFixture(fixtureId: number | BN): Promise<MarketRecord[]> {

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 function apiBase(): string {
   const base = process.env.NEXT_PUBLIC_API_URL;
@@ -7,9 +9,25 @@ function apiBase(): string {
 }
 
 function adminKey(): string {
-  const key = process.env.ADMIN_API_KEY;
+  const key = process.env.ADMIN_API_KEY ?? readApiAdminKey();
   if (!key) throw new Error("ADMIN_API_KEY is not configured");
   return key;
+}
+
+function readApiAdminKey(): string | undefined {
+  if (process.env.NODE_ENV === "production") return undefined;
+
+  try {
+    const envPath = resolve(process.cwd(), "../api/.env");
+    const env = readFileSync(envPath, "utf8");
+    const line = env
+      .split(/\r?\n/)
+      .map((entry) => entry.trim())
+      .find((entry) => entry.startsWith("ADMIN_API_KEY="));
+    return line?.slice("ADMIN_API_KEY=".length).trim();
+  } catch {
+    return undefined;
+  }
 }
 
 async function proxyAdmin(req: NextRequest, pathSegments: string[]) {
