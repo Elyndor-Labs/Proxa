@@ -1587,7 +1587,8 @@
   animation: overflow-marquee-scroll 10s linear infinite;
 }
 
-.overflow-marquee--active:hover .overflow-marquee__run {
+.overflow-marquee--active:hover .overflow-marquee__run,
+.overflow-marquee--active:focus-within .overflow-marquee__run {
   animation-play-state: paused;
 }
 
@@ -1613,9 +1614,9 @@
 .nav-search-control:focus,
 .nav-search-control:focus-visible,
 .nav-search-control:focus-within {
-  outline: none !important;
-  box-shadow: none !important;
-  border-color: var(--surface-border) !important;
+  outline: none;
+  border-color: var(--brand) !important;
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 45%, transparent) !important;
 }
 
 .market-list-grid {
@@ -1707,7 +1708,8 @@
   animation-duration: 16s;
 }
 
-.outcome-stack-marquee:hover .outcome-stack-marquee__track {
+.outcome-stack-marquee:hover .outcome-stack-marquee__track,
+.outcome-stack-marquee:focus-within .outcome-stack-marquee__track {
   animation-play-state: paused;
 }
 
@@ -1724,6 +1726,36 @@
   box-shadow: none;
   padding: var(--space-3) var(--space-4) var(--space-4);
   overflow: hidden;
+}
+
+.odds-chart__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.odds-chart__title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-label), sans-serif;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.odds-chart__sim-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-control);
+  padding: 0.1rem 0.4rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
 }
 
 .odds-chart:focus,
@@ -2011,7 +2043,9 @@
 
   .live-pill__dot,
   .badge-pulse,
-  .skeleton {
-    animation: none;
+  .skeleton,
+  .overflow-marquee--active .overflow-marquee__run,
+  .outcome-stack-marquee__track {
+    animation: none !important;
   }
 }

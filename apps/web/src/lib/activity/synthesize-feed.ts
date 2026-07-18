@@ -66,12 +66,11 @@ export function synthesizeActivityFeed(
       marketId: view.id,
       outcome: `${side} ${cents}¢`,
       ago: formatAgo(minutesAgo),
+      minutesAgo,
     };
-  }).sort((a, b) => {
-    const aMin = parseInt(a.ago, 10) || 0;
-    const bMin = parseInt(b.ago, 10) || 0;
-    return aMin - bMin;
-  });
+  })
+    .sort((a, b) => a.minutesAgo - b.minutesAgo)
+    .map(({ minutesAgo: _minutesAgo, ...item }) => item);
 }
 
 export interface LeaderboardEntry {

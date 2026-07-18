@@ -23,9 +23,11 @@ export function AnimatedNumber({
     const controls = animate(previous.current, value, {
       duration: 0.4,
       ease: "easeOut",
-      onUpdate: (v) => setDisplay(v),
+      onUpdate: (v) => {
+        previous.current = v;
+        setDisplay(v);
+      },
     });
-    previous.current = value;
     return () => controls.stop();
   }, [value]);
 

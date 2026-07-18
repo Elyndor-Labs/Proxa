@@ -49,17 +49,23 @@ export function OddsHistoryChart({
       className={cn("odds-chart", compact && "odds-chart--compact", className)}
       tabIndex={-1}
     >
-      {!compact && (
-        <div className="odds-chart__legend">
-          {current.map(({ label, pct, color }) => (
-            <div key={label} className="odds-chart__legend-item">
-              <span className="odds-chart__legend-dot" style={{ background: color }} />
-              <span className="odds-chart__legend-label">{label}</span>
-              <span className="odds-chart__legend-pct">{pct}%</span>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="odds-chart__meta">
+        <p className="odds-chart__title">
+          {compact ? "Odds path" : "Odds history"}
+          <span className="odds-chart__sim-badge">Simulated</span>
+        </p>
+        {!compact && (
+          <div className="odds-chart__legend">
+            {current.map(({ label, pct, color }) => (
+              <div key={label} className="odds-chart__legend-item">
+                <span className="odds-chart__legend-dot" style={{ background: color }} />
+                <span className="odds-chart__legend-label">{label}</span>
+                <span className="odds-chart__legend-pct">{pct}%</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
       <ResponsiveContainer width="100%" height={height} style={{ outline: "none" }}>
         <LineChart
           data={data}

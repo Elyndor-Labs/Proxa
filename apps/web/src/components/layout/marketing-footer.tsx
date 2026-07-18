@@ -1,5 +1,39 @@
+import Link from "next/link";
 import { footerNav } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
+
+function FooterItem({
+  label,
+  href,
+  external,
+}: {
+  label: string;
+  href?: string;
+  external?: boolean;
+}) {
+  if (!href) {
+    return <span>{label}</span>;
+  }
+
+  if (external) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        className="transition-colors hover:text-foreground"
+      >
+        {label}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={href} className="transition-colors hover:text-foreground">
+      {label}
+    </Link>
+  );
+}
 
 /** Public marketing footer — mentioned.market style. */
 export function MarketingFooter() {
@@ -10,7 +44,7 @@ export function MarketingFooter() {
           {footerNav.social.map((item, i) => (
             <span key={item.label} className="flex items-center gap-2">
               {i > 0 && <span aria-hidden>·</span>}
-              <span>{item.label}</span>
+              <FooterItem label={item.label} />
             </span>
           ))}
         </div>
@@ -19,7 +53,7 @@ export function MarketingFooter() {
           {footerNav.legal.map((item, i) => (
             <span key={item.label} className="flex items-center gap-2">
               {i > 0 && <span aria-hidden>·</span>}
-              <span>{item.label}</span>
+              <FooterItem label={item.label} href={item.href} />
             </span>
           ))}
         </div>

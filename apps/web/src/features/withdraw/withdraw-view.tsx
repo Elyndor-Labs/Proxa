@@ -5,6 +5,8 @@ import { BN } from "@coral-xyz/anchor";
 import { ArrowRight, WalletCards } from "lucide-react";
 import { ClaimButton } from "@/components/domain/claim-button";
 import { SettlementBadge } from "@/components/domain/settlement-badge";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
+import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { useClaimMany } from "@/hooks/use-claim";
 import { useEnrichedPositions } from "@/hooks/use-enriched-positions";
@@ -34,20 +36,29 @@ export function WithdrawView() {
   };
 
   if (isLoading) {
-    return <div className="surface h-64 animate-pulse rounded-2xl" />;
+    return (
+      <div className="space-y-6">
+        <WithdrawHeader />
+        <div className="surface h-64 animate-pulse rounded-2xl" />
+      </div>
+    );
   }
 
   if (isError) {
     return (
-      <div className="surface border-destructive/30 p-6">
-        <p className="font-display font-semibold text-destructive">Failed to load withdrawals</p>
-        <p className="mt-1 text-sm text-muted-foreground">{getApiErrorMessage(error)}</p>
+      <div className="space-y-6">
+        <WithdrawHeader />
+        <div className="surface border-destructive/30 p-6">
+          <p className="font-display font-semibold text-destructive">Failed to load withdrawals</p>
+          <p className="mt-1 text-sm text-muted-foreground">{getApiErrorMessage(error)}</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      <WithdrawHeader />
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="stat-tile">
           <p className="section-label">Claimable positions</p>
@@ -126,6 +137,18 @@ export function WithdrawView() {
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+function WithdrawHeader() {
+  return (
+    <div>
+      <Breadcrumbs className="mb-4" items={[{ label: "Withdraw" }]} />
+      <PageHeader
+        title="Withdraw"
+        description="Claim settled winnings from your resolved positions."
+      />
     </div>
   );
 }
