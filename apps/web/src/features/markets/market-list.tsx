@@ -5,13 +5,13 @@ import { useMemo, useState } from "react";
 import { MarketCard } from "@/components/domain/market-card";
 import { FilterTabs } from "@/components/layout/filter-tabs";
 import { PageHeader } from "@/components/layout/page-header";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useMarkets } from "@/hooks/use-markets";
 import { getApiErrorMessage } from "@/lib/api/errors";
-import { formatOdds } from "@/lib/format/odds";
+import { getOutcomeQuotes } from "@/lib/format/odds";
 import { filterMarkets, type MarketStatusFilter } from "@/lib/proxa/filters";
-import { cn } from "@/lib/utils";
-
-const STAGGER = ["animate-slide-up-delay-1", "animate-slide-up-delay-2", "animate-slide-up-delay-3", "animate-slide-up-delay-4"] as const;
+import { SearchX } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const STATUS_TABS = [
   { label: "Open", value: "open" },
@@ -51,30 +51,30 @@ function MarketFilters({ initialQuery, data }: MarketFiltersProps) {
         <div className="mb-6">
           <MarketCard
             view={featured.view}
-            odds={Array.from({ length: featured.view.numBuckets }, (_, i) =>
-              formatOdds(featured.record.account, i),
-            )}
+            account={featured.record.account}
+            outcomes={getOutcomeQuotes(featured.record.account, featured.view.bucketLabels)}
             featured
           />
         </div>
       )}
 
       {!filtered.length ? (
-        <div className="surface p-8 text-center">
-          <p className="font-display text-lg font-bold">No markets found</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {data.length ? "Try adjusting your filters." : "No markets available yet."}
-          </p>
-        </div>
+        <EmptyState
+          icon={SearchX}
+          title="No markets found"
+          description={
+            data.length ? "Try adjusting your filters or search query." : "No markets available yet."
+          }
+        />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {rest.map(({ record, view }, i) => (
-            <div key={view.id} className={cn(STAGGER[i % STAGGER.length])}>
-              <MarketCard
-                view={view}
-                odds={Array.from({ length: view.numBuckets }, (_, j) => formatOdds(record.account, j))}
-              />
-            </div>
+        <div className="market-list-grid stagger-fade">
+          {rest.map(({ record, view }) => (
+            <MarketCard
+              key={view.id}
+              view={view}
+              account={record.account}
+              outcomes={getOutcomeQuotes(record.account, view.bucketLabels)}
+            />
           ))}
         </div>
       )}
@@ -94,7 +94,7 @@ export function MarketList() {
         <PageHeader title="Markets" description="Browse prediction markets across all active events." />
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="surface h-56 animate-pulse rounded-2xl" />
+            <Skeleton key={i} className="h-56 rounded-[var(--radius-card)]" />
           ))}
         </div>
       </>

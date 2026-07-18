@@ -6,7 +6,8 @@ import { motion } from "motion/react";
 import { CanvasText } from "@/components/ui/canvas-text";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MarketMarquee } from "@/features/landing/market-marquee";
+import { ActivityTicker } from "@/features/activity/activity-ticker";
+// import { MarketMarquee } from "@/features/landing/market-marquee";
 import { siteConfig } from "@/config/site";
 
 const fadeUp = {
@@ -21,7 +22,10 @@ const fadeUp = {
 export function Hero() {
   return (
     <section className="landing-hero relative overflow-hidden">
+      {/* Card strip marquee — replaced by activity ticker for now
       <MarketMarquee />
+      */}
+      <ActivityTicker />
 
       <div className="landing-shell landing-hero-stage relative z-10 px-[var(--container-padding)]">
         <div className="w-full text-center">
@@ -32,9 +36,9 @@ export function Hero() {
           </motion.div>
 
           <motion.div custom={1} initial="hidden" animate="visible" variants={fadeUp} className="mb-6 flex justify-center">
-            <h1 className="sr-only">Trade on what gets said.</h1>
+            <h1 className="sr-only">Trade on live match outcomes.</h1>
             <CanvasText
-              text="Trade on what gets said."
+              text="Trade on live match outcomes."
               className="font-display text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl"
               backgroundClassName="bg-background"
               colors={["#4ade80", "#22c55e", "#86efac", "#bbf7d0", "#16a34a"]}

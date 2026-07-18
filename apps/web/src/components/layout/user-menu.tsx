@@ -3,6 +3,7 @@
 import { Bell, ChevronDown, User } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { UserAvatar } from "@/components/domain/user-avatar";
 import { NotificationsPanel } from "@/components/layout/notifications-panel";
 import { useMounted } from "@/hooks/use-mounted";
 import { useNotifications } from "@/hooks/use-notifications";
@@ -64,16 +65,7 @@ export function UserMenu({ className }: UserMenuProps) {
         aria-expanded={open}
         aria-haspopup="menu"
       >
-        <span
-          className="flex h-7 w-7 items-center justify-center rounded-md border text-xs font-semibold"
-          style={{
-            borderColor: "rgba(74, 222, 128, 0.25)",
-            background: "linear-gradient(145deg, rgba(74, 222, 128, 0.14), rgba(74, 222, 128, 0.04))",
-            color: "var(--brand)",
-          }}
-        >
-          {displayName.slice(1, 2).toUpperCase()}
-        </span>
+        <UserAvatar size={28} className="user-avatar--nav" alt="" />
         <span className="hidden sm:inline">{displayName}</span>
         <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
       </button>
@@ -112,7 +104,7 @@ export function UserMenu({ className }: UserMenuProps) {
           }}
         >
           <Link
-            href="/portfolio"
+            href="/profile"
             role="menuitem"
             onClick={() => setOpen(false)}
             className="flex items-center gap-2.5 px-4 py-2.5 font-label text-sm text-foreground transition-colors hover:bg-[var(--nav-link-hover-bg)]"

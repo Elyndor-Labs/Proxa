@@ -8,18 +8,17 @@ export const primaryNav: NavItem[] = [
   { label: "Markets", href: "/markets" },
   { label: "Portfolio", href: "/portfolio" },
   { label: "Make Markets", href: "/create" },
-  { label: "Governance", href: "/governance" },
+  // { label: "Governance", href: "/governance" },
 ];
 
 export const footerNav = {
   social: [
-    { label: "Discord", href: "https://discord.gg/proxa" },
-    { label: "Twitter", href: "https://twitter.com/proxa" },
+    { label: "Twitter" },
   ],
   legal: [
-    { label: "Terms of Service", href: "/terms" },
-    { label: "Privacy Policy", href: "/privacy" },
-    { label: "Disclaimer", href: "/terms#disclaimer" },
-    { label: "Community Rules", href: "/terms#community" },
+    { label: "Terms of Service" },
+    { label: "Privacy Policy" },
+    { label: "Disclaimer" },
+    { label: "Community Rules" },
   ],
 } as const;

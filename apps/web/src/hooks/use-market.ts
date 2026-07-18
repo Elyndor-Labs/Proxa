@@ -21,6 +21,8 @@ export function useMarket(marketId: string, options: UseMarketOptions = {}) {
   const queryClient = useQueryClient();
   const { subscribe = false } = options;
 
+  const apiMode = isApiEnabled();
+
   const query = useQuery({
     queryKey: queryKeys.market(marketId),
     queryFn: async () => {
@@ -28,12 +30,14 @@ export function useMarket(marketId: string, options: UseMarketOptions = {}) {
       return { account: record.account, view: toMarketView(record.account) };
     },
     enabled: Boolean(marketId),
+    // Poll when subscribed in API mode — WS may be unavailable behind some hosts.
+    refetchInterval: subscribe && apiMode ? 8_000 : false,
   });
 
   useEffect(() => {
     if (!subscribe || !marketId) return;
 
-    if (isApiEnabled()) {
+    if (apiMode) {
       return subscribeToMarketUpdates(marketId, () => {
         void queryClient.invalidateQueries({ queryKey: queryKeys.market(marketId) });
       });
@@ -46,7 +50,7 @@ export function useMarket(marketId: string, options: UseMarketOptions = {}) {
     return () => {
       void client.removeListener(listener);
     };
-  }, [client, marketId, subscribe, queryClient]);
+  }, [apiMode, client, marketId, subscribe, queryClient]);
 
   return query;
 }

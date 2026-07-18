@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Briefcase, History } from "lucide-react";
 import { ClaimButton } from "@/components/domain/claim-button";
+import { EntityAvatar } from "@/components/domain/entity-avatar";
 import { SettlementBadge } from "@/components/domain/settlement-badge";
 import { FilterTabs } from "@/components/layout/filter-tabs";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useEnrichedPositions } from "@/hooks/use-enriched-positions";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { formatStake } from "@/lib/format/odds";
@@ -35,22 +38,31 @@ export function PositionList() {
   };
 
   if (isLoading) {
-    return <div className="surface h-64 animate-pulse rounded-2xl" />;
+    return (
+      <div className="space-y-8">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Skeleton className="h-28 rounded-[var(--radius-card)]" />
+          <Skeleton className="h-28 rounded-[var(--radius-card)]" />
+          <Skeleton className="h-28 rounded-[var(--radius-card)]" />
+        </div>
+        <Skeleton className="h-48 rounded-[var(--radius-card)]" />
+      </div>
+    );
   }
 
   if (isError) {
     return (
       <div className="surface border-destructive/30 p-6">
-        <p className="font-display font-semibold text-destructive">Failed to load positions</p>
-        <p className="mt-1 text-sm text-muted-foreground">{getApiErrorMessage(error)}</p>
+        <p className="type-subheading text-base text-destructive">Failed to load positions</p>
+        <p className="mt-1 text-sm text-text-secondary">{getApiErrorMessage(error)}</p>
       </div>
     );
   }
 
   const statItems = [
-    { label: "Markets", value: stats.markets, highlight: false },
-    { label: "Tokens Spent", value: stats.tokensSpent, highlight: false },
-    { label: "Trades", value: stats.trades, highlight: false },
+    { label: "Markets", value: stats.markets },
+    { label: "Tokens Spent", value: stats.tokensSpent },
+    { label: "Trades", value: stats.trades },
   ];
 
   return (
@@ -59,9 +71,7 @@ export function PositionList() {
         {statItems.map((stat, i) => (
           <div key={stat.label} className={cn("stat-tile", STAGGER[Math.min(i, 4)])}>
             <p className="section-label">{stat.label}</p>
-            <p className={cn("stat-tile__value mt-3", stat.highlight && "stat-tile__value--highlight")}>
-              {stat.value}
-            </p>
+            <p className="stat-tile__value mt-3">{stat.value}</p>
           </div>
         ))}
       </div>
@@ -73,42 +83,52 @@ export function PositionList() {
         </div>
 
         {!displayed.length ? (
-          <div className="surface p-10 text-center">
-            <p className="font-display text-lg font-bold">
-              {view === "open" ? "No open positions" : "No trade history"}
-            </p>
-            <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-              {view === "open"
+          <EmptyState
+            icon={view === "open" ? Briefcase : History}
+            title={view === "open" ? "No open positions" : "No trade history"}
+            description={
+              view === "open"
                 ? "Place a bet on a live market to see your portfolio here."
-                : "Resolved trades will appear here."}
-            </p>
-            {view === "open" && (
-              <Button variant="brand" size="lg" className="mt-6" asChild>
-                <Link href="/markets">
-                  Browse markets
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            )}
-          </div>
+                : "Resolved trades will appear here once markets settle."
+            }
+            action={
+              view === "open" ? (
+                <Button variant="brand" size="lg" className="cta-primary" asChild>
+                  <Link href="/markets">
+                    Browse markets
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              ) : undefined
+            }
+          />
         ) : (
           <div className="space-y-3">
             {displayed.map(({ position, marketId, claimable, view: marketView }) => (
               <div key={position.address.toBase58()} className="surface surface-interactive p-5">
                 <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="space-y-1.5">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-display text-base font-bold">{marketView.title}</h3>
-                      <SettlementBadge status={marketView.status} />
+                  <div className="flex gap-3">
+                    <EntityAvatar
+                      fixtureId={marketView.fixtureId}
+                      statLabel={marketView.statLabel}
+                      size="sm"
+                    />
+                    <div className="space-y-1.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-display text-base font-semibold tracking-tight">
+                          {marketView.title}
+                        </h3>
+                        <SettlementBadge status={marketView.status} />
+                      </div>
+                      <p className="type-caption">
+                        {marketView.bucketLabels[position.account.bucket] ?? `Bucket ${position.account.bucket + 1}`}
+                        <span aria-hidden> · </span>
+                        Stake{" "}
+                        <span className="font-semibold text-foreground">
+                          ${formatStake(position.account.amount)}
+                        </span>
+                      </p>
                     </div>
-                    <p className="font-label text-sm text-muted-foreground">
-                      {marketView.bucketLabels[position.account.bucket] ?? `Bucket ${position.account.bucket + 1}`}
-                      <span aria-hidden> · </span>
-                      Stake{" "}
-                      <span className="font-semibold text-foreground">
-                        ${formatStake(position.account.amount)}
-                      </span>
-                    </p>
                   </div>
                   <ClaimButton marketId={marketId} bucket={position.account.bucket} claimable={claimable} />
                 </div>

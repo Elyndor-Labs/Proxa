@@ -1,8 +1,9 @@
 /**
- * Proxa design tokens — dark-first, Cesto-inspired green palette.
+ * Proxa design tokens — dark-first, mint-green accent palette.
  */
 
 :root {
+  /* Brand */
   --brand: #4ade80;
   --brand-foreground: #050805;
   --secondary: #1a2e1a;
@@ -10,6 +11,7 @@
   --tertiary: #6b7c6b;
   --tertiary-foreground: #e8f0e8;
 
+  /* Surfaces */
   --background: #050805;
   --foreground: #f5f5f0;
   --card: #0c100c;
@@ -17,11 +19,23 @@
   --popover: #0f120f;
   --popover-foreground: #f5f5f0;
 
+  /* Text roles */
   --muted: #141a14;
   --muted-foreground: #8a9a8a;
+  --text-secondary: #a3b0a3;
+  --text-tertiary: #6b7c6b;
+
+  /* Borders & dividers */
   --border: #1e2e1e;
+  --divider: rgba(255, 255, 255, 0.09);
   --input: #1a241a;
   --ring: var(--brand);
+
+  /* Semantic pricing */
+  --positive: #4ade80;
+  --positive-muted: rgba(74, 222, 128, 0.15);
+  --negative: #f87171;
+  --negative-muted: rgba(248, 113, 113, 0.12);
 
   --primary: #f5f5f0;
   --primary-foreground: #050805;
@@ -42,9 +56,45 @@
   --glow: rgba(74, 222, 128, 0.08);
   --glow-strong: rgba(74, 222, 128, 0.15);
 
-  --radius: 0.75rem;
+  /* Spacing scale (4/8/12/16/24/32/48/64px) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* Type scale (12/14/16/20/28/40px) */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.5rem;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --tracking-tight: -0.025em;
+  --tracking-display: -0.035em;
+
+  /* Border radius — cards vs controls only */
+  --radius-card: 1rem;
+  --radius-control: 0.5rem;
+  --radius-pill: 9999px;
+
+  /* Legacy alias */
+  --radius: var(--radius-control);
+
   --sidebar-width: 16rem;
-  --container-padding: 1rem;
+  --container-padding: var(--space-4);
   --content-max-width: 88rem;
 }
 
@@ -63,8 +113,17 @@
 
   --muted: #eef1ee;
   --muted-foreground: #6b7280;
+  --text-secondary: #4b5563;
+  --text-tertiary: #9ca3af;
+
   --border: #d8e0d8;
+  --divider: rgba(0, 0, 0, 0.08);
   --input: #eef1ee;
+
+  --positive: #3d8b5e;
+  --positive-muted: rgba(61, 139, 94, 0.12);
+  --negative: #dc2626;
+  --negative-muted: rgba(220, 38, 38, 0.08);
 
   --primary: #0a0d0a;
   --primary-foreground: #ffffff;

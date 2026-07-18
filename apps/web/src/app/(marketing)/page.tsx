@@ -8,8 +8,8 @@ import { ProductShowcase } from "@/features/landing/product-showcase";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata: Metadata = createPageMetadata(
-  "Trade on What Gets Said",
-  "Proxa — prediction markets for any form of media.",
+  "Trade on live match outcomes.",
+  "Live sports prediction markets powered by TXOdds data and settled on Solana.",
 );
 
 export default function LandingPage() {

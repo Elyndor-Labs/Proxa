@@ -1,5 +1,6 @@
 "use client";
 
+import { ActivityTicker } from "@/features/activity/activity-ticker";
 import { HowItWorksFab } from "@/components/layout/how-it-works-fab";
 import { MarketingFooter } from "@/components/layout/marketing-footer";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -22,6 +23,7 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className="flex min-h-dvh flex-col">
       <SiteHeader />
+      <ActivityTicker />
       <main
         id="main-content"
         className={cn(

@@ -10,31 +10,39 @@ const STEPS = [
   {
     title: "Pick a Market",
     description:
-      "Every market is tied to a live event — a stream, podcast, or tournament. Each has outcomes you can trade on.",
+      "Every market is tied to a live match — goals, cards, corners, and more. Each has outcomes you can trade on.",
     markets: [
-      { icon: "🎙️", title: "Joe Rogan #2210: Elon Musk", words: ["Mars 72¢", "simulation 58¢"] },
-      { icon: "🗣️", title: "Presidential Debate Night", words: ["tariffs 69¢", "border 85¢"] },
-      { icon: "💻", title: "Apple WWDC Keynote", words: ["AI 96¢", "Vision 71¢"] },
+      { icon: "⚽", title: "Fixture #18257865 · P1 Goals", words: ["Over 2.5 61¢", "Under 2.5 39¢"] },
+      { icon: "🟨", title: "Fixture #18143850 · P1 Yellow Cards", words: ["Bucket 1 33¢", "Bucket 2 28¢"] },
+      { icon: "🚩", title: "Fixture #18237038 · P1 Corners", words: ["Yes 42¢", "No 58¢"] },
     ],
   },
   {
-    title: "Browse the Words",
-    description: "Each market has words with live prices. YES means you think it'll be said. Prices move with the crowd.",
+    title: "Browse the Outcomes",
+    description:
+      "Each market has outcomes with live prices. YES means you think it hits. Prices move as volume comes in.",
     words: [
-      { word: "GG", yes: "42¢", no: "58¢", vol: "2.1k" },
-      { word: "nerf", yes: "35¢", no: "65¢", vol: "1.8k" },
-      { word: "clutch", yes: "61¢", no: "39¢", vol: "3.2k" },
+      { word: "Over 2.5", yes: "61¢", no: "39¢", vol: "3.2k" },
+      { word: "Under 2.5", yes: "39¢", no: "61¢", vol: "2.4k" },
+      { word: "Exactly 2", yes: "22¢", no: "78¢", vol: "1.1k" },
     ],
   },
   {
     title: "Place Your Trade",
-    description: "Pick YES or NO, enter your amount, and see exactly what you'll win before you confirm.",
-    trade: { word: "GG", yes: "42¢", payout: "116.2", profit: "+66.2" },
+    description: "Pick YES or NO, enter your USDC amount, and see exactly what you'll win before you confirm.",
+    trade: { word: "Over 2.5", yes: "61¢", no: "39¢", payout: "1.64", profit: "+0.64" },
   },
   {
     title: "Collect Your Winnings",
-    description: "Event ends, transcript is checked. If your word was said and you held YES, you win. One click to claim.",
-    result: { word: "GG", shares: "116.2", cost: "$50.00", payout: "$116.20", profit: "+$66.20 (+132%)" },
+    description:
+      "The match settles via oracle data. If your outcome hit and you held YES, you win. One click to claim.",
+    result: {
+      word: "Over 2.5",
+      shares: "1.64",
+      cost: "$1.00",
+      payout: "$1.64",
+      profit: "+$0.64 (+64%)",
+    },
   },
 ] as const;
 
@@ -84,7 +92,7 @@ function StepContent({ step }: { step: number }) {
         <table className="w-full font-label text-xs">
           <thead>
             <tr className="border-b border-border text-muted-foreground">
-              <th className="px-3 py-2 text-left">Word</th>
+              <th className="px-3 py-2 text-left">Outcome</th>
               <th className="px-3 py-2 text-left">YES</th>
               <th className="px-3 py-2 text-left">NO</th>
               <th className="px-3 py-2 text-right">Vol</th>
@@ -109,23 +117,23 @@ function StepContent({ step }: { step: number }) {
     const t = data.trade;
     return (
       <div className="rounded-xl border border-border bg-muted/30 p-4">
-        <p className="font-label text-xs text-muted-foreground">Selected word</p>
-        <p className="font-display text-lg font-semibold">&quot;{t.word}&quot;</p>
+        <p className="font-label text-xs text-muted-foreground">Selected outcome</p>
+        <p className="font-display text-lg font-semibold">{t.word}</p>
         <div className="mt-3 flex gap-2">
           <div className="flex-1 rounded-lg bg-success/15 py-2 text-center font-label text-sm text-success">
             YES {t.yes}
           </div>
           <div className="flex-1 rounded-lg bg-muted py-2 text-center font-label text-sm text-muted-foreground">
-            NO 58¢
+            NO {t.no}
           </div>
         </div>
         <div className="mt-3 flex justify-between font-label text-xs">
           <span className="text-muted-foreground">Payout if correct</span>
-          <span className="text-success">{t.payout} tokens</span>
+          <span className="text-success">{t.payout} USDC</span>
         </div>
         <div className="mt-1 flex justify-between font-label text-xs">
           <span className="text-muted-foreground">Profit</span>
-          <span className="text-success">{t.profit} tokens</span>
+          <span className="text-success">{t.profit} USDC</span>
         </div>
       </div>
     );
@@ -137,7 +145,7 @@ function StepContent({ step }: { step: number }) {
       <div className="rounded-xl border border-border bg-muted/30 p-4">
         <p className="font-label text-xs text-muted-foreground">Your position</p>
         <p className="font-display text-lg font-semibold">
-          &quot;{r.word}&quot; · {r.shares} YES shares
+          {r.word} · {r.shares} YES shares
         </p>
         <div className="mt-3 space-y-1.5 font-label text-sm">
           <div className="flex justify-between">

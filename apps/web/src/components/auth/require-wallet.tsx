@@ -1,7 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { Wallet } from "lucide-react";
 import { WalletButton } from "@/components/domain/wallet-button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useWalletAuth } from "@/hooks/use-wallet-auth";
 
 interface RequireWalletProps {
@@ -22,14 +24,13 @@ export function RequireWallet({ children, fallback }: RequireWalletProps) {
 
 function ConnectPrompt() {
   return (
-    <div className="surface mx-auto max-w-md p-10 text-center">
-      <p className="font-display text-xl font-bold">Connect your wallet</p>
-      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        Sign in with email, social, or a Solana wallet to view your portfolio and place bets.
-      </p>
-      <div className="mt-6 flex justify-center">
-        <WalletButton size="lg" />
-      </div>
+    <div className="wallet-empty-center">
+      <EmptyState
+        icon={Wallet}
+        title="Connect your wallet"
+        description="Sign in with email, social, or a Solana wallet to view your portfolio and place bets."
+        action={<WalletButton size="lg" />}
+      />
     </div>
   );
 }

@@ -1,16 +1,19 @@
 "use client";
 
 import { previewBet, toBaseUnits, type MarketAccount } from "@proxa/sdk";
-import { useState } from "react";
+import { motion } from "motion/react";
+import { createElement, useMemo, useState } from "react";
 import { WalletButton } from "@/components/domain/wallet-button";
+import { marketCategoryIcon } from "@/lib/format/market-category";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 import { useBetSlipStore } from "@/features/bet-slip/store";
 import { usePlaceBet } from "@/hooks/use-place-bet";
 import { useProxaClient } from "@/hooks/use-proxa-client";
 import { useWalletAuth } from "@/hooks/use-wallet-auth";
-import { bucketPriceCents } from "@/lib/format/odds";
-import { formatStake } from "@/lib/format/odds";
+import { bucketPriceCents, formatStake } from "@/lib/format/odds";
 import type { MarketView } from "@/lib/proxa/market-view";
 import { STAKE_DECIMALS } from "@/lib/proxa/market-view";
+import { cn } from "@/lib/utils";
 
 const MAX_STAKE = 2;
 const PRESETS = [0.25, 0.5, 0.75, 1] as const;
@@ -23,7 +26,7 @@ interface BetPanelProps {
   onSelectBucket: (bucket: number) => void;
 }
 
-/** Sticky trading sidebar — mentioned.market style. */
+/** Sticky trading sidebar — Buy/Sell tabs, quick amounts, animated outcome toggles. */
 export function BetPanel({ marketId, view, account, selectedBucket, onSelectBucket }: BetPanelProps) {
   const [amount, setAmount] = useState("");
   const [side, setSide] = useState<"buy" | "sell">("buy");
@@ -35,14 +38,19 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
   const bucket = selectedBucket;
   const label = view.bucketLabels[bucket] ?? `Bucket ${bucket + 1}`;
   const yesCents = bucketPriceCents(account, bucket);
-  const noCents = 100 - yesCents;
   const isBinary = view.numBuckets === 2;
   const disabled = !view.isOpen || placeBet.isPending;
 
-  const preview =
-    amount && !Number.isNaN(Number(amount))
-      ? previewBet(account, bucket, toBaseUnits(amount, STAKE_DECIMALS))
-      : null;
+  const amountNum = Number(amount) || 0;
+  const remaining = Math.max(0, MAX_STAKE - amountNum);
+
+  const preview = useMemo(
+    () =>
+      amount && !Number.isNaN(amountNum)
+        ? previewBet(account, bucket, toBaseUnits(amount, STAKE_DECIMALS))
+        : null,
+    [account, amount, amountNum, bucket],
+  );
 
   const applyPreset = (fraction: number) => {
     setAmount((MAX_STAKE * fraction).toFixed(2));
@@ -67,11 +75,14 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
     <aside className="trade-card animate-slide-up-delay-1">
       <div className="trade-card__header">
         <span className="trade-card__icon" aria-hidden>
-          {label.charAt(0).toUpperCase()}
+          {createElement(marketCategoryIcon(view.statLabel), {
+            className: "h-5 w-5",
+            strokeWidth: 1.75,
+          })}
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate font-display text-base font-bold">{label}</p>
-          <p className="font-label text-xs text-muted-foreground">Market #{marketId}</p>
+          <p className="font-label text-xs text-text-secondary">Market #{marketId}</p>
         </div>
       </div>
 
@@ -94,29 +105,29 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
       <div className="trade-card__body">
         {isBinary ? (
           <div className="trade-binary">
-            <button
+            <motion.button
               type="button"
               className="trade-btn-yes"
               data-selected={bucket === 0}
               disabled={disabled}
               onClick={() => onSelectBucket(0)}
+              whileTap={{ scale: 0.97 }}
             >
-              <span className="trade-btn-label">Yes</span>
-              <span className="trade-btn-price">{bucketPriceCents(account, 0)}¢</span>
-            </button>
-            <button
+              <span className="trade-btn-label">Yes {bucketPriceCents(account, 0)}¢</span>
+            </motion.button>
+            <motion.button
               type="button"
               className="trade-btn-no"
               data-selected={bucket === 1}
               disabled={disabled}
               onClick={() => onSelectBucket(1)}
+              whileTap={{ scale: 0.97 }}
             >
-              <span className="trade-btn-label">No</span>
-              <span className="trade-btn-price">{bucketPriceCents(account, 1)}¢</span>
-            </button>
+              <span className="trade-btn-label">No {bucketPriceCents(account, 1)}¢</span>
+            </motion.button>
           </div>
         ) : (
-          <p className="font-label text-sm text-muted-foreground">
+          <p className="font-label text-sm text-text-secondary">
             Backing <span className="font-semibold text-foreground">{label}</span> at{" "}
             <span className="font-bold text-brand">{yesCents}¢</span>
           </p>
@@ -138,8 +149,8 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
             disabled={disabled}
             className="trade-amount-input"
           />
-          <p className="trade-amount-hint">
-            ${MAX_STAKE.toFixed(2)} max · {isBinary ? `Yes ${yesCents}¢ / No ${noCents}¢` : `${yesCents}¢ implied`}
+          <p className="trade-stake-remaining">
+            <strong>${remaining.toFixed(2)}</strong> left of ${MAX_STAKE.toFixed(2)} max
           </p>
         </div>
 
@@ -148,7 +159,10 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
             <button
               key={fraction}
               type="button"
-              className="trade-preset"
+              className={cn(
+                "trade-preset",
+                amountNum === MAX_STAKE * fraction && "border-brand/40 bg-brand/10 text-brand",
+              )}
               disabled={disabled}
               onClick={() => applyPreset(fraction)}
             >
@@ -158,16 +172,16 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
         </div>
 
         {preview && preview.projectedPayout.gtn(0) && (
-          <div className="rounded-lg border border-[var(--surface-border)] bg-black/20 px-4 py-3">
-            <p className="font-label text-xs text-muted-foreground">Payout if {label} wins</p>
+          <div className="rounded-[var(--radius-control)] border border-[var(--surface-border)] bg-black/20 px-4 py-3">
+            <p className="font-label text-xs text-text-secondary">Payout if {label} wins</p>
             <p className="mt-0.5 font-display text-xl font-bold text-brand">
-              ${formatStake(preview.projectedPayout)}
+              $<AnimatedNumber value={Number(formatStake(preview.projectedPayout))} />
             </p>
           </div>
         )}
 
         {!view.isOpen && (
-          <p className="text-center font-label text-xs text-muted-foreground">
+          <p className="text-center font-label text-xs text-text-secondary">
             This market is no longer accepting bets.
           </p>
         )}
@@ -180,8 +194,8 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
           <div className="flex flex-col gap-2">
             <button
               type="button"
-              className="trade-cta trade-cta--brand"
-              disabled={disabled || !amount || Number(amount) <= 0}
+              className="trade-cta trade-cta--brand cta-primary"
+              disabled={disabled || !amount || amountNum <= 0}
               onClick={handlePlaceBet}
             >
               {placeBet.isPending ? "Confirming…" : "Place trade"}
@@ -189,8 +203,12 @@ export function BetPanel({ marketId, view, account, selectedBucket, onSelectBuck
             <button
               type="button"
               className="trade-cta"
-              style={{ background: "rgba(255,255,255,0.08)", color: "var(--foreground)", border: "1px solid var(--surface-border)" }}
-              disabled={!amount || Number(amount) <= 0}
+              style={{
+                background: "rgba(255,255,255,0.08)",
+                color: "var(--foreground)",
+                border: "1px solid var(--surface-border)",
+              }}
+              disabled={!amount || amountNum <= 0}
               onClick={handleAddToSlip}
             >
               Add to slip

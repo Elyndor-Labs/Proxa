@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { MarketList } from "@/features/markets/market-list";
-import { OracleFeedTable } from "@/features/markets/oracle-feed-table";
+// import { OracleFeedTable } from "@/features/markets/oracle-feed-table";
+import { LeaderboardPanel } from "@/features/leaderboard/leaderboard-panel";
 
 function MarketsFallback() {
   return (
@@ -18,9 +19,20 @@ function MarketsFallback() {
 export default function MarketsPage() {
   return (
     <Suspense fallback={<MarketsFallback />}>
-      <MarketList />
-      <div className="mt-10">
-        <OracleFeedTable />
+      <div className="grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="min-w-0">
+          <MarketList />
+          {/* Market Settlement Feed — re-enable when ready
+          <div className="mt-12">
+            <OracleFeedTable />
+          </div>
+          */}
+        </div>
+        <aside className="hidden xl:block">
+          <div className="sticky top-[calc(var(--header-height)+1.25rem)] max-h-[calc(100dvh-var(--header-height)-2.5rem)] overflow-y-auto">
+            <LeaderboardPanel />
+          </div>
+        </aside>
       </div>
     </Suspense>
   );
