@@ -14,6 +14,8 @@ pub enum ProxaError {
     InvalidStatKey,
     #[msg("Invalid bucket count")]
     InvalidBucketCount,
+    #[msg("Invalid bucket bounds")]
+    InvalidBucketBounds,
     #[msg("Invalid resolve window")]
     InvalidResolveWindow,
     #[msg("Market is not open")]

@@ -1,19 +1,51 @@
+import "dotenv/config";
 import { AnchorProvider, Wallet } from "@coral-xyz/anchor";
 import { DEVNET, MAINNET, ProxaClient } from "@proxa/sdk";
 import { Connection, Keypair } from "@solana/web3.js";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
+import { join } from "node:path";
+
+function keypairFromBytes(secret: unknown): Keypair {
+  if (!Array.isArray(secret)) {
+    throw new Error("Keypair secret must be a JSON array of bytes.");
+  }
+
+  if (secret.length !== 64 || !secret.every((byte) => Number.isInteger(byte))) {
+    throw new Error("Keypair secret must contain 64 integer bytes.");
+  }
+
+  return Keypair.fromSecretKey(Uint8Array.from(secret as number[]));
+}
+
+function keypairFromSource(source: string): Keypair {
+  const value = source.trim();
+
+  if (value.startsWith("[")) {
+    return keypairFromBytes(JSON.parse(value));
+  }
+
+  return keypairFromBytes(JSON.parse(readFileSync(resolveHomePath(value), "utf8")));
+}
+
+function resolveHomePath(path: string): string {
+  if (path === "~") return homedir();
+  if (path.startsWith("~/") || path.startsWith("~\\")) {
+    return join(homedir(), path.slice(2));
+  }
+  return path;
+}
 
 function loadKeypair(): Keypair {
-  // support env var for production (Render)
   if (process.env.KEEPER_KEYPAIR_JSON) {
-    const secret = JSON.parse(process.env.KEEPER_KEYPAIR_JSON) as number[];
-    return Keypair.fromSecretKey(Uint8Array.from(secret));
+    return keypairFromSource(process.env.KEEPER_KEYPAIR_JSON);
   }
+
   const p = process.env.KEEPER_KEYPAIR ?? `${homedir()}/.config/solana/id.json`;
-  const secret = JSON.parse(readFileSync(p, "utf8")) as number[];
-  return Keypair.fromSecretKey(Uint8Array.from(secret));
+  return keypairFromSource(p);
 }
+
+export const apiKeypair = loadKeypair();
 
 export function createClient(): ProxaClient {
   const network =
@@ -21,11 +53,10 @@ export function createClient(): ProxaClient {
       ? MAINNET
       : DEVNET;
   const rpc = process.env.RPC_URL ?? network.rpc;
-  const keypair = loadKeypair();
   const connection = new Connection(rpc, "confirmed");
   const provider = new AnchorProvider(
     connection,
-    new Wallet(keypair),
+    new Wallet(apiKeypair),
     { commitment: "confirmed" }
   );
   return new ProxaClient(provider, { network });

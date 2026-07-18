@@ -13,15 +13,15 @@ import {
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 import assert from "assert";
-import { findEvent, parseTransactionEvents, txlineReady } from "./helpers";
+import { countBucketBounds, findEvent, parseTransactionEvents, txlineReady } from "./helpers";
 
 const TXORACLE_PROGRAM_ID = new PublicKey("6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J");
-const DEVNET_USDT_MINT = new PublicKey("ELWTKspHKCnCfCiCiqYw1EDH77k8VCP74dK9qytG2Ujh");
+const DEVNET_USDC_MINT = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
 const DEFAULT_API_BASE = "https://txline-dev.txodds.com";
 const DEFAULT_FIXTURE_ID = "17271370";
 const DEFAULT_SEQ = "401";
 const DEFAULT_STAT_KEY = "1";
-const PROOF_REJECTED = 6020;
+const PROOF_REJECTED = 6021;
 
 function requiredEnv(name: string): string {
   const value = process.env[name];
@@ -179,7 +179,7 @@ describe("resolve market", function () {
     const numBuckets = Math.min(12, Math.max(6, value + 2));
     const winningBucket = expectedWinningBucket(value, numBuckets);
 
-    const mint = DEVNET_USDT_MINT;
+    const mint = DEVNET_USDC_MINT;
     const mintInfo = await provider.connection.getAccountInfo(mint);
     assert.ok(mintInfo, "stake mint not found");
     const tokenProgram = mintInfo.owner.equals(TOKEN_2022_PROGRAM_ID)
@@ -277,13 +277,16 @@ describe("resolve market", function () {
     );
 
     const betSig = await methods
-      .placeBet(winningBucket, betAmount)
+      .placeBet(winningBucket, betAmount, new anchor.BN(0))
       .accounts({
+        payer: provider.wallet.publicKey,
         bettor: provider.wallet.publicKey,
+        config: configPda,
         market: marketPda,
         vault: vaultPda,
         position: positionPda,
         bettorTokenAccount: bettorAta,
+        treasury: treasuryAta,
         stakeMint: mint,
         tokenProgram,
         systemProgram: SystemProgram.programId,
@@ -378,7 +381,7 @@ describe("resolve market", function () {
       program.programId,
     );
 
-    const mint = DEVNET_USDT_MINT;
+    const mint = DEVNET_USDC_MINT;
     const mintInfo = await provider.connection.getAccountInfo(mint);
     assert.ok(mintInfo);
     const tokenProgram = mintInfo.owner.equals(TOKEN_2022_PROGRAM_ID)

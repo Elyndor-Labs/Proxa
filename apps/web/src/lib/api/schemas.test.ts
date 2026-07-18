@@ -23,7 +23,7 @@ const mockMarketRecord = {
     resolveAfterTs: "1783155905",
     resolveDeadlineTs: "1783159501",
     feeBps: 100,
-    stakeMint: "ELWTKspHKCnCfCiCiqYw1EDH77k8VCP74dK9qytG2Ujh",
+    stakeMint: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
     vault: "11111111111111111111111111111111",
     totalPool: "0",
     bucketPools: ["0", "0", "0", "0", "0", "0"],

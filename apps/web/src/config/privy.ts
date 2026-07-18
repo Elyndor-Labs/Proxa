@@ -32,9 +32,8 @@ export function getPrivyConfig(): PrivyClientConfig {
       accentColor: "#4ade80",
       showWalletLoginFirst: true,
       walletChainType: "solana-only",
-      walletList: ["phantom", "solflare", "backpack", "detected_solana_wallets"],
     },
-    loginMethods: ["wallet", "email", "google"],
+    loginMethods: ["wallet", "email", "google", "twitter"],
     externalWallets: {
       solana: {
         connectors: solanaConnectors,

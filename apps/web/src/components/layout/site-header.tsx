@@ -6,8 +6,8 @@ import { useState } from "react";
 import { GooeyInput } from "@/components/ui/gooey-input";
 import { PortfolioCash } from "@/components/layout/portfolio-cash";
 import { UserMenu } from "@/components/layout/user-menu";
-import { useMounted } from "@/hooks/use-mounted";
-import { useWalletAuth } from "@/hooks/use-wallet-auth";
+import { useAnchorWallet } from "@/hooks/use-anchor-wallet";
+import { useConfig } from "@/hooks/use-protocol-stats";
 import { primaryNav } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
 
@@ -15,9 +15,14 @@ import { siteConfig } from "@/config/site";
 export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
-  const mounted = useMounted();
-  const { ready, connected } = useWalletAuth();
+  const wallet = useAnchorWallet();
+  const { data: config } = useConfig();
   const [search, setSearch] = useState("");
+  const isAuthority =
+    Boolean(wallet?.publicKey && config?.authority && wallet.publicKey.equals(config.authority));
+  const navItems = primaryNav.filter(
+    (item) => !["/admin", "/create"].includes(item.href) || isAuthority,
+  );
 
   const submitSearch = () => {
     const q = search.trim();
@@ -48,7 +53,7 @@ export function SiteHeader() {
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Primary">
-          {primaryNav.map((item) => (
+          {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -85,25 +90,22 @@ export function SiteHeader() {
         </div>
       </div>
 
-      {/* Mobile nav strip when logged out */}
-      {mounted && ready && !connected && (
-        <nav
-          className="flex gap-1 overflow-x-auto border-t px-[var(--container-padding)] py-2 sm:px-6 lg:hidden"
-          style={{ borderColor: "var(--header-border)" }}
-          aria-label="Primary"
-        >
-          {primaryNav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              data-active={isActive(item.href)}
-              className="nav-link shrink-0"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-      )}
+      <nav
+        className="flex gap-1 overflow-x-auto border-t px-[var(--container-padding)] py-2 sm:px-6 lg:hidden"
+        style={{ borderColor: "var(--header-border)" }}
+        aria-label="Primary"
+      >
+        {navItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            data-active={isActive(item.href)}
+            className="nav-link shrink-0"
+          >
+            {item.label}
+          </Link>
+        ))}
+      </nav>
     </header>
   );
 }

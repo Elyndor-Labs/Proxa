@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Trash2, X } from "lucide-react";
-import { toast } from "sonner";
 import { previewBet, toBaseUnits } from "@proxa/sdk";
 import { useState } from "react";
 import { TxActionFallback } from "@/components/domain/tx-action-fallback";
@@ -11,17 +10,18 @@ import { Input } from "@/components/ui/input";
 import { useBetSlipStore, type BetLeg } from "@/features/bet-slip/store";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { useMarket } from "@/hooks/use-market";
-import { usePlaceBet } from "@/hooks/use-place-bet";
+import { usePlaceBets } from "@/hooks/use-place-bets";
 import { useProxaClient } from "@/hooks/use-proxa-client";
 import { formatStake } from "@/lib/format/odds";
 import { STAKE_DECIMALS } from "@/lib/proxa/market-view";
+import { formatStakeTokenLabel } from "@/lib/proxa/stake-token";
 import { cn } from "@/lib/utils";
 
 /** Persistent multi-leg bet slip drawer across app routes. */
 export function BetSlipDrawer() {
   const { legs, open, setOpen, updateLeg, removeLeg, clear } = useBetSlipStore();
   const { canTransact } = useProxaClient();
-  const placeBet = usePlaceBet();
+  const placeBets = usePlaceBets();
   const [placingAll, setPlacingAll] = useState(false);
   const trapRef = useFocusTrap<HTMLElement>(open);
 
@@ -33,33 +33,24 @@ export function BetSlipDrawer() {
   const handlePlaceAll = async () => {
     if (!validLegs.length) return;
     setPlacingAll(true);
-    let succeeded = 0;
-    const failed: string[] = [];
 
     try {
-      for (const leg of validLegs) {
-        try {
-          await placeBet.mutateAsync(
-            { marketId: leg.marketId, bucket: leg.bucket, amount: leg.amount },
-            { onError: () => {} },
-          );
-          succeeded += 1;
-        } catch {
-          failed.push(leg.title || `Market #${leg.marketId}`);
-        }
-      }
-
-      if (failed.length === 0) {
-        clear();
-      } else if (succeeded > 0) {
-        toast.warning(`Placed ${succeeded} of ${validLegs.length} bets. Failed: ${failed.join(", ")}`);
-      }
+      await placeBets.mutateAsync(
+        validLegs.map((leg) => ({
+          marketId: leg.marketId,
+          bucket: leg.bucket,
+          amount: leg.amount,
+        })),
+      );
+      clear();
+    } catch {
+      // Error toast handled by mutation.
     } finally {
       setPlacingAll(false);
     }
   };
 
-  const busy = placeBet.isPending || placingAll;
+  const busy = placeBets.isPending || placingAll;
 
   return (
     <>
@@ -100,11 +91,11 @@ export function BetSlipDrawer() {
         </div>
 
         <div className="space-y-3 border-t border-border p-4">
-          {validLegs.length > 1 && (
-            <p className="font-label text-sm text-muted-foreground">
+          <div className="space-y-1 font-label text-sm text-muted-foreground">
+            <p>
               Total stake: <span className="font-medium text-foreground">${totalStake.toFixed(2)}</span>
             </p>
-          )}
+          </div>
           {canTransact ? (
             <Button
               variant="brand"
@@ -149,6 +140,7 @@ function BetSlipLegRow({
   }
 
   const { account, view } = data;
+  const stakeTokenLabel = formatStakeTokenLabel(account.stakeMint.toBase58());
   const preview =
     leg.amount && !Number.isNaN(Number(leg.amount))
       ? previewBet(account, leg.bucket, toBaseUnits(leg.amount, STAKE_DECIMALS))
@@ -180,7 +172,7 @@ function BetSlipLegRow({
 
       <div className="mt-3 space-y-2">
         <label htmlFor={`slip-amount-${leg.id}`} className="font-label text-xs text-muted-foreground">
-          Stake (USDC)
+          Stake ({stakeTokenLabel})
         </label>
         <Input
           id={`slip-amount-${leg.id}`}
@@ -196,7 +188,7 @@ function BetSlipLegRow({
 
       {preview && preview.projectedPayout.gtn(0) && (
         <p className="mt-2 font-label text-xs text-muted-foreground">
-          Payout: <span className="text-brand">${formatStake(preview.projectedPayout)}</span>
+          Payout: <span className="text-brand">{formatStake(preview.projectedPayout)} {stakeTokenLabel}</span>
         </p>
       )}
     </div>

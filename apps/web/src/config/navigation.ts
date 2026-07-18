@@ -7,18 +7,20 @@ export interface NavItem {
 export const primaryNav: NavItem[] = [
   { label: "Markets", href: "/markets" },
   { label: "Portfolio", href: "/portfolio" },
-  { label: "Make Markets", href: "/create" },
-  // { label: "Governance", href: "/governance" },
+  { label: "Admin", href: "/admin" },
+  { label: "Launch", href: "/create" },
+  { label: "Governance", href: "/governance" },
 ];
 
 export const footerNav = {
   social: [
-    { label: "Twitter" },
+    { label: "Discord", href: "https://discord.gg/" },
+    { label: "Twitter", href: "https://twitter.com/" },
   ],
   legal: [
-    { label: "Terms of Service" },
-    { label: "Privacy Policy" },
-    { label: "Disclaimer" },
-    { label: "Community Rules" },
+    { label: "Terms of Service", href: "/terms" },
+    { label: "Privacy Policy", href: "/privacy" },
+    { label: "Disclaimer", href: "/terms#disclaimer" },
+    { label: "Community Rules", href: "/terms#community" },
   ],
 } as const;

@@ -1,7 +1,5 @@
-import { PERIOD, STAT_BASE } from "@proxa/sdk";
+import { PERIOD, STAT_BASE, statusLabel, fromBaseUnits, bucketLabelsFromBounds, countBucketBounds } from "@proxa/sdk";
 import type { MarketAccount } from "@proxa/sdk";
-import { statusLabel } from "@proxa/sdk";
-import { fromBaseUnits } from "@proxa/sdk";
 import { formatTimeRemaining } from "@/lib/format/time";
 
 const STAKE_DECIMALS = 6;
@@ -54,15 +52,23 @@ function formatPool(amount: { toString(): string }): string {
   return `$${fromBaseUnits(amount, STAKE_DECIMALS)}`;
 }
 
-function bucketLabel(index: number, numBuckets: number): string {
-  if (numBuckets === 2) return index === 0 ? "Yes" : "No";
-  return `Bucket ${index + 1}`;
+function bucketUnit(statLabel: string): string {
+  const normalized = statLabel.toLowerCase();
+  if (normalized.includes("corner")) return "corners";
+  if (normalized.includes("yellow")) return "yellow cards";
+  if (normalized.includes("red")) return "red cards";
+  if (normalized.includes("goal")) return "goals";
+  return "value";
 }
 
 export function toMarketView(account: MarketAccount): MarketView {
   const status = statusLabel(account.status);
   const statLabel = resolveStatLabel(account.statKey);
   const closeTs = account.betsCloseTs.toNumber() * 1000;
+  const acceptsBets = status === "open" && closeTs > Date.now();
+  const bounds = account.bucketBounds?.length
+    ? account.bucketBounds
+    : countBucketBounds(account.numBuckets);
 
   return {
     id: account.marketId.toString(),
@@ -72,11 +78,11 @@ export function toMarketView(account: MarketAccount): MarketView {
     status,
     totalPool: formatPool(account.totalPool),
     bucketPools: account.bucketPools.map(formatPool),
-    bucketLabels: Array.from({ length: account.numBuckets }, (_, i) => bucketLabel(i, account.numBuckets)),
+    bucketLabels: bucketLabelsFromBounds(account.numBuckets, bounds, bucketUnit(statLabel)),
     betsCloseLabel: formatTimeRemaining(closeTs),
     betsCloseTs: closeTs,
     numBuckets: account.numBuckets,
-    isOpen: status === "open",
+    isOpen: acceptsBets,
   };
 }
 

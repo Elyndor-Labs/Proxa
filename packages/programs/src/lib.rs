@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
+pub mod buckets;
 pub mod constants;
 pub mod events;
 pub mod errors;
@@ -17,6 +18,7 @@ pub struct CreateMarketArgs {
     pub fixture_id: i64,
     pub stat_key: u32,
     pub num_buckets: u8,
+    pub bucket_bounds: [i32; MAX_BUCKETS],
     pub bets_close_ts: i64,
     pub resolve_after_ts: i64,
     pub resolve_deadline_ts: i64,
@@ -73,6 +75,19 @@ pub struct CreateMarket<'info> {
     pub system_program: Program<'info, System>,
 }
 
+#[derive(Accounts)]
+pub struct UpdateStakeMint<'info> {
+    pub authority: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [CONFIG_SEED],
+        bump = config.bump
+    )]
+    pub config: Account<'info, state::Config>,
+    pub stake_mint: InterfaceAccount<'info, Mint>,
+    pub treasury: InterfaceAccount<'info, TokenAccount>,
+}
+
 declare_id!("6LAR9TGXRnsLVtc4MibivdgNgqWGpiXMsR64p21VCRDZ");
 declare_program!(txoracle);
 
@@ -94,8 +109,26 @@ pub mod proxa {
         crate::instructions::create_market::handler(ctx, args)
     }
 
-    pub fn place_bet(ctx: Context<PlaceBet>, bucket: u8, amount: u64) -> Result<()> {
-        crate::instructions::place_bet::handler(ctx, bucket, amount)
+    pub fn update_stake_mint(ctx: Context<UpdateStakeMint>) -> Result<()> {
+        crate::instructions::update_stake_mint::handler(ctx)
+    }
+
+    pub fn place_bet(
+        ctx: Context<PlaceBet>,
+        bucket: u8,
+        amount: u64,
+        relayer_fee: u64,
+    ) -> Result<()> {
+        crate::instructions::place_bet::handler(ctx, bucket, amount, relayer_fee)
+    }
+
+    pub fn sponsored_place_bet(
+        ctx: Context<SponsoredPlaceBet>,
+        bucket: u8,
+        amount: u64,
+        relayer_fee: u64,
+    ) -> Result<()> {
+        crate::instructions::place_bet::handler_sponsored(ctx, bucket, amount, relayer_fee)
     }
 
     pub fn resolve(ctx: Context<Resolve>, args: ResolveArgs) -> Result<()> {
@@ -130,6 +163,11 @@ pub struct PlaceBet<'info> {
     #[account(mut)]
     pub bettor: Signer<'info>,
     #[account(
+        seeds = [CONFIG_SEED],
+        bump = config.bump
+    )]
+    pub config: Account<'info, state::Config>,
+    #[account(
         mut,
         seeds = [MARKET_SEED, &market.market_id.to_le_bytes()],
         bump = market.bump
@@ -156,6 +194,56 @@ pub struct PlaceBet<'info> {
         constraint = bettor_token_account.owner == bettor.key() @ ProxaError::Unauthorized,
     )]
     pub bettor_token_account: InterfaceAccount<'info, TokenAccount>,
+    #[account(constraint = stake_mint.key() == market.stake_mint @ ProxaError::InvalidStakeMint)]
+    pub stake_mint: InterfaceAccount<'info, Mint>,
+    pub token_program: Interface<'info, TokenInterface>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(bucket: u8)]
+pub struct SponsoredPlaceBet<'info> {
+    #[account(mut)]
+    pub payer: Signer<'info>,
+    #[account(mut)]
+    pub bettor: Signer<'info>,
+    #[account(
+        seeds = [CONFIG_SEED],
+        bump = config.bump
+    )]
+    pub config: Account<'info, state::Config>,
+    #[account(
+        mut,
+        seeds = [MARKET_SEED, &market.market_id.to_le_bytes()],
+        bump = market.bump
+    )]
+    pub market: Account<'info, state::Market>,
+    #[account(
+        mut,
+        seeds = [VAULT_SEED, &market.market_id.to_le_bytes()],
+        bump = market.vault_bump,
+        constraint = vault.key() == market.vault @ ProxaError::Unauthorized,
+    )]
+    pub vault: InterfaceAccount<'info, TokenAccount>,
+    /// CHECK: PDA seeds are verified here; data is initialized/deserialized in the handler.
+    #[account(
+        mut,
+        seeds = [POSITION_SEED, market.key().as_ref(), bettor.key().as_ref(), &[bucket]],
+        bump
+    )]
+    pub position: UncheckedAccount<'info>,
+    #[account(
+        mut,
+        constraint = bettor_token_account.mint == stake_mint.key() @ ProxaError::InvalidStakeMint,
+        constraint = bettor_token_account.owner == bettor.key() @ ProxaError::Unauthorized,
+    )]
+    pub bettor_token_account: InterfaceAccount<'info, TokenAccount>,
+    #[account(
+        mut,
+        constraint = treasury.key() == config.treasury @ ProxaError::Unauthorized,
+        constraint = treasury.mint == stake_mint.key() @ ProxaError::InvalidTreasuryMint,
+    )]
+    pub treasury: InterfaceAccount<'info, TokenAccount>,
     #[account(constraint = stake_mint.key() == market.stake_mint @ ProxaError::InvalidStakeMint)]
     pub stake_mint: InterfaceAccount<'info, Mint>,
     pub token_program: Interface<'info, TokenInterface>,

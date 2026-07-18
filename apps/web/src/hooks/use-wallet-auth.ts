@@ -16,7 +16,14 @@ function safePublicKey(address: string): PublicKey | null {
 
 /** Privy auth + Solana wallet state for UI components. */
 export function useWalletAuth() {
-  const { ready: privyReady, authenticated, login: privyLogin, logout: privyLogout, user } = usePrivy();
+  const {
+    ready: privyReady,
+    authenticated,
+    connectWallet,
+    login: privyLogin,
+    logout: privyLogout,
+    user,
+  } = usePrivy();
   const { wallets, ready: walletsReady } = useWallets();
 
   const ready = privyReady && walletsReady;
@@ -25,9 +32,12 @@ export function useWalletAuth() {
 
   /** Disconnects extension wallets first to avoid Privy SIWS nonce errors. */
   const login = useCallback(async () => {
-    await disconnectExternalSolanaWallets();
+    if (authenticated) {
+      connectWallet();
+      return;
+    }
     privyLogin();
-  }, [privyLogin]);
+  }, [authenticated, connectWallet, privyLogin]);
 
   const logout = useCallback(async () => {
     await privyLogout();
@@ -41,5 +51,6 @@ export function useWalletAuth() {
     login,
     logout,
     user,
+    authenticated,
   };
 }

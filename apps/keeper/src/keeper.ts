@@ -9,7 +9,7 @@ import {
   TxLineCredentials,
   statusLabel,
 } from "@proxa/sdk";
-import { Connection, Keypair } from "@solana/web3.js";
+import { Connection, Keypair, Transaction } from "@solana/web3.js";
 
 export interface KeeperOptions {
   connection: Connection;
@@ -26,6 +26,12 @@ export interface ResolveResult {
   winningValue: number;
 }
 
+export interface VoidResult {
+  signature: string;
+  marketId: string;
+  status: string;
+}
+
 export interface WatchEntry {
   marketId: number | string;
   fixtureId: number | string;
@@ -37,6 +43,7 @@ export interface WatchEntry {
 export interface WatchOptions {
   intervalMs?: number;
   onResolve?: (result: ResolveResult) => void;
+  onVoid?: (result: VoidResult) => void;
   onError?: (marketId: string, error: unknown) => void;
 }
 
@@ -75,6 +82,37 @@ export class Keeper {
     return { ready: true };
   }
 
+  async isReadyToVoid(marketId: MarketId): Promise<{ ready: boolean; reason?: string }> {
+    const market = await this.proxa.fetchMarket(marketId);
+    if (statusLabel(market.status) !== "open") {
+      return { ready: false, reason: `status is ${statusLabel(market.status)}` };
+    }
+    const now = Math.floor(Date.now() / 1000);
+    if (now < market.resolveDeadlineTs.toNumber()) {
+      return {
+        ready: false,
+        reason: `resolve_deadline_ts not reached (${market.resolveDeadlineTs.toString()})`,
+      };
+    }
+    return { ready: true };
+  }
+
+  async voidMarket(marketId: MarketId): Promise<VoidResult> {
+    const gate = await this.isReadyToVoid(marketId);
+    if (!gate.ready) throw new Error(`market ${marketId.toString()} not ready to void: ${gate.reason}`);
+
+    const ix = await this.proxa.voidMarketIx({ caller: this.keypair.publicKey, marketId });
+    const tx = new Transaction().add(ix);
+    const signature = await this.proxa.provider.sendAndConfirm(tx, [], { commitment: "confirmed" });
+
+    const market = await this.proxa.fetchMarket(marketId);
+    return {
+      signature,
+      marketId: marketId.toString(),
+      status: statusLabel(market.status),
+    };
+  }
+
   // Fetch the proof for a fixture and settle the market. Tx success == validate_stat returned true.
   async resolveMarket(marketId: MarketId, query: StatValidationQuery): Promise<ResolveResult> {
     const gate = await this.isReadyToResolve(marketId);
@@ -106,7 +144,15 @@ export class Keeper {
         const entry = pending[i];
         try {
           const gate = await this.isReadyToResolve(entry.marketId);
-          if (!gate.ready) continue;
+          if (!gate.ready) {
+            const voidGate = await this.isReadyToVoid(entry.marketId);
+            if (voidGate.ready) {
+              const result = await this.voidMarket(entry.marketId);
+              pending.splice(i, 1);
+              opts.onVoid?.(result);
+            }
+            continue;
+          }
           const result = await this.resolveMarket(entry.marketId, {
             fixtureId: entry.fixtureId,
             seq: entry.seq,

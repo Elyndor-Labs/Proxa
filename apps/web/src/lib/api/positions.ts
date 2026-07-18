@@ -31,7 +31,11 @@ export async function fetchPositionsFromApi(wallet: string): Promise<PositionRec
 /** Fetch positions from the API when configured, otherwise from chain. */
 export async function fetchPositions(wallet: PublicKey, client: ProxaClient): Promise<PositionRecord[]> {
   if (isApiEnabled()) {
-    return fetchPositionsFromApi(wallet.toBase58());
+    try {
+      return await fetchPositionsFromApi(wallet.toBase58());
+    } catch {
+      return client.fetchPositions(wallet);
+    }
   }
   return client.fetchPositions(wallet);
 }

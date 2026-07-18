@@ -1,15 +1,13 @@
-import { neonConfig } from "@neondatabase/serverless";
-import { PrismaNeon } from "@prisma/adapter-neon";
+import { PrismaPg } from "@prisma/adapter-pg";
 import dotenv from "dotenv";
-import ws from "ws";
+import { Pool } from "pg";
 
 dotenv.config();
 
-neonConfig.webSocketConstructor = ws;
-
 const { PrismaClient } = require("@prisma/client");
 
-const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
 
 const globalForPrisma = globalThis as unknown as { prisma: any };
 

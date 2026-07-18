@@ -1,7 +1,6 @@
 "use client";
 
 import { ActivityTicker } from "@/features/activity/activity-ticker";
-import { HowItWorksFab } from "@/components/layout/how-it-works-fab";
 import { MarketingFooter } from "@/components/layout/marketing-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { BetSlipDrawer } from "@/features/bet-slip/bet-slip-drawer";
@@ -45,7 +44,6 @@ export function AppShell({ children }: AppShellProps) {
         </Button>
       )}
 
-      <HowItWorksFab />
       <MarketingFooter />
       <BetSlipDrawer />
     </div>

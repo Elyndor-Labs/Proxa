@@ -1,9 +1,10 @@
 use anchor_lang::prelude::*;
 
+use crate::buckets::validate_bucket_bounds;
 use crate::constants::MAX_BUCKETS;
 use crate::errors::ProxaError;
 use crate::events::MarketCreated;
-use crate::state::{MarketStatus};
+use crate::state::MarketStatus;
 
 pub fn handler(ctx: Context<crate::CreateMarket>, args: crate::CreateMarketArgs) -> Result<()> {
     let config = &mut ctx.accounts.config;
@@ -17,6 +18,7 @@ pub fn handler(ctx: Context<crate::CreateMarket>, args: crate::CreateMarketArgs)
         args.num_buckets >= 2 && (args.num_buckets as usize) <= MAX_BUCKETS,
         ProxaError::InvalidBucketCount
     );
+    validate_bucket_bounds(args.num_buckets, &args.bucket_bounds)?;
     require!(
         args.bets_close_ts <= args.resolve_after_ts
             && args.resolve_after_ts <= args.resolve_deadline_ts,
@@ -35,6 +37,7 @@ pub fn handler(ctx: Context<crate::CreateMarket>, args: crate::CreateMarketArgs)
     market.fixture_id = args.fixture_id;
     market.stat_key = args.stat_key;
     market.num_buckets = args.num_buckets;
+    market.bucket_bounds = args.bucket_bounds;
     market.bets_close_ts = args.bets_close_ts;
     market.resolve_after_ts = args.resolve_after_ts;
     market.resolve_deadline_ts = args.resolve_deadline_ts;

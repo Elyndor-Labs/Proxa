@@ -6,13 +6,16 @@ import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata: Metadata = createPageMetadata(
   "Profile",
-  "Wallet details and protocol access.",
+  "Wallet, login, network, and protocol access details.",
 );
 
 export default function ProfilePage() {
   return (
     <>
-      <PageHeader title="Profile" description="Wallet details and protocol access." />
+      <PageHeader
+        title="Profile"
+        description="Wallet, login, network, and protocol access details."
+      />
       <RequireWallet>
         <ProfileView />
       </RequireWallet>

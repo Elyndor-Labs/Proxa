@@ -1,7 +1,7 @@
 /** Global site metadata and navigation constants. */
 export const siteConfig = {
   name: "Proxa",
-  description: "Prediction markets for any form of media. Pick words. Trade against friends. Win.",
+  description: "Live sports prediction markets powered by TXOdds data and settled on Solana.",
   url: "https://proxa.sol",
   /** Default profile picture until per-user avatars exist on-chain/API. */
   defaultAvatar: "/staticpfp.png",

@@ -9,9 +9,9 @@ import {
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 import assert from "assert";
-import { findEvent, parseTransactionEvents } from "./helpers";
+import { countBucketBounds, findEvent, parseTransactionEvents } from "./helpers";
 
-const DEVNET_USDT_MINT = new PublicKey("ELWTKspHKCnCfCiCiqYw1EDH77k8VCP74dK9qytG2Ujh");
+const DEVNET_USDC_MINT = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
 
 describe("initialize and create market", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
@@ -21,7 +21,7 @@ describe("initialize and create market", () => {
   const accountsNs = (program as any).account;
 
   it("initializes config and creates market with market-owned vault", async () => {
-    const mint = DEVNET_USDT_MINT;
+    const mint = DEVNET_USDC_MINT;
     const mintInfo = await provider.connection.getAccountInfo(mint);
     assert.ok(mintInfo, "stake mint not found");
     const tokenProgram =
@@ -86,6 +86,7 @@ describe("initialize and create market", () => {
         fixtureId: new anchor.BN(17271370),
         statKey: 1001,
         numBuckets: 6,
+        bucketBounds: countBucketBounds(6),
         betsCloseTs: new anchor.BN(now + 3600),
         resolveAfterTs: new anchor.BN(now + 7200),
         resolveDeadlineTs: new anchor.BN(now + 10_800),

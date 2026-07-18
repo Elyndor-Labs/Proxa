@@ -1,123 +1,137 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
-import { AlertTriangle, User } from "lucide-react";
-import { Breadcrumbs } from "@/components/layout/breadcrumbs";
-import { ProfileFieldRow } from "@/components/domain/profile-field-row";
+import { Copy, ExternalLink, ShieldCheck, Wallet } from "lucide-react";
+import { toast } from "sonner";
 import { useCluster } from "@/components/providers/cluster-provider";
-import { AnimatedNumber } from "@/components/ui/animated-number";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useAnchorWallet } from "@/hooks/use-anchor-wallet";
-import { useEnrichedPositions } from "@/hooks/use-enriched-positions";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useConfig } from "@/hooks/use-protocol-stats";
+import { useStakeTokenBalance } from "@/hooks/use-token-balance";
 import { useWalletAuth } from "@/hooks/use-wallet-auth";
 import { truncateAddress } from "@/lib/format/address";
-import { formatStake } from "@/lib/format/odds";
+import { formatStakeTokenLabel } from "@/lib/proxa/stake-token";
 
-/** Wallet identity and protocol access with differentiated field styling. */
+function copy(value: string, label: string) {
+  void navigator.clipboard.writeText(value);
+  toast.success(`${label} copied`);
+}
+
+/** Connected user profile with wallet, network, and protocol details. */
 export function ProfileView() {
   const { publicKey, user } = useWalletAuth();
-  const wallet = useAnchorWallet();
   const { cluster, rpc } = useCluster();
-  const { data: config, isLoading: configLoading } = useConfig();
-  const { data: positions, isLoading: positionsLoading } = useEnrichedPositions();
-
-  const address = publicKey?.toBase58() ?? "—";
-  const privyUser = user?.email?.address ?? user?.wallet?.address ?? "—";
-
-  const portfolioValue = useMemo(
-    () =>
-      positions?.reduce(
-        (sum, { position }) => sum + Number(formatStake(position.account.amount)),
-        0,
-      ) ?? 0,
-    [positions],
-  );
-
+  const { data: config, isLoading } = useConfig();
+  const { data: balance, isLoading: balanceLoading } = useStakeTokenBalance();
+  const wallet = publicKey?.toBase58();
   const isAuthority =
-    wallet?.publicKey && config?.authority && wallet.publicKey.equals(config.authority);
-
-  const loading = configLoading || positionsLoading;
+    Boolean(publicKey && config?.authority && publicKey.equals(config.authority));
+  const stakeMint = config?.stakeMint.toBase58();
 
   return (
-    <div className="space-y-6">
-      <Breadcrumbs items={[{ label: "Profile" }]} />
-      <Card className="profile-panel shadow-none">
-        <CardHeader className="pb-0">
-          <CardTitle className="type-subheading inline-flex items-center gap-2 text-base">
-            <User className="h-4 w-4 text-brand" aria-hidden />
+    <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Wallet className="h-5 w-5 text-brand" aria-hidden="true" />
             Wallet
           </CardTitle>
+          <CardDescription>Your connected Solana identity for Proxa.</CardDescription>
         </CardHeader>
-        <CardContent className="profile-panel__fields pt-4">
-          {loading ? (
-            <>
-              <Skeleton className="h-11 w-full" />
-              <Skeleton className="h-11 w-full" />
-            </>
-          ) : (
-            <>
-              <ProfileFieldRow label="Address" value={truncateAddress(address, 6)} copyable copyText={address} />
-              <ProfileFieldRow
-                label="Portfolio value"
-                value={
-                  <>
-                    $<AnimatedNumber value={portfolioValue} />
-                  </>
-                }
-              />
-            </>
-          )}
+        <CardContent className="space-y-4">
+          <InfoRow label="Address" value={wallet ? truncateAddress(wallet, 8) : "-"} rawValue={wallet} />
+          <InfoRow
+            label="Available balance"
+            value={balanceLoading ? "Loading..." : `${balance?.label ?? "$0.00"} ${formatStakeTokenLabel(stakeMint)}`}
+          />
+          <InfoRow label="Network" value={cluster} />
+          <InfoRow label="RPC" value={rpc} rawValue={rpc} />
+          <InfoRow label="Privy user" value={user?.id ? truncateAddress(user.id, 8) : "Signed in"} rawValue={user?.id} />
         </CardContent>
       </Card>
 
-      <Card className="profile-panel shadow-none">
-        <CardHeader className="pb-0">
-          <CardTitle className="type-subheading text-base">Protocol Access</CardTitle>
-        </CardHeader>
-        <CardContent className="profile-panel__fields pt-4">
-          {loading ? (
-            <>
-              <Skeleton className="h-11 w-full" />
-              <Skeleton className="h-11 w-full" />
-              <Skeleton className="h-11 w-full" />
-            </>
-          ) : (
-            <>
-              <ProfileFieldRow label="Network" value={cluster} readonly />
-              <ProfileFieldRow label="RPC" value={truncateAddress(rpc, 8)} readonly />
-              {config && (
-                <ProfileFieldRow
-                  label="Authority"
-                  value={truncateAddress(config.authority.toBase58(), 6)}
-                  copyable
-                  copyText={config.authority.toBase58()}
-                />
-              )}
-              <ProfileFieldRow label="Privy user" value={privyUser} readonly />
-            </>
-          )}
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <Card className={isAuthority ? "border-brand/40" : undefined}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <ShieldCheck className="h-5 w-5 text-brand" aria-hidden="true" />
+              Protocol access
+            </CardTitle>
+            <CardDescription>
+              {isAuthority ? "This wallet can launch markets." : "This wallet cannot launch markets."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <InfoRow
+              label="Authority"
+              value={
+                isLoading
+                  ? "Loading..."
+                  : config?.authority
+                    ? truncateAddress(config.authority.toBase58(), 6)
+                    : "-"
+              }
+              rawValue={config?.authority.toBase58()}
+            />
+            <InfoRow
+              label="Stake token"
+              value={formatStakeTokenLabel(stakeMint)}
+              rawValue={stakeMint}
+            />
+            {isAuthority && (
+              <Button variant="brand" className="w-full" asChild>
+                <Link href="/create">
+                  Admin launch
+                  <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                </Link>
+              </Button>
+            )}
+          </CardContent>
+        </Card>
 
-      {!loading && config && !isAuthority && (
-        <div className="status-banner status-banner--warning" role="status">
-          <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
-          <span>This wallet cannot launch markets</span>
-        </div>
-      )}
-
-      <div className="profile-actions">
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/portfolio">View portfolio</Link>
-        </Button>
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/withdraw">Withdraw claimable payouts</Link>
-        </Button>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Account actions</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-2">
+            <Button variant="secondary" asChild>
+              <Link href="/portfolio">View portfolio</Link>
+            </Button>
+            <Button variant="secondary" asChild>
+              <Link href="/withdraw">Withdraw claimable payouts</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
+    </div>
+  );
+}
+
+function InfoRow({
+  label,
+  value,
+  rawValue,
+}: {
+  label: string;
+  value: string;
+  rawValue?: string | null;
+}) {
+  return (
+    <div className="flex min-h-11 items-center justify-between gap-3 rounded-lg border border-[var(--surface-border)] bg-black/20 px-3 py-2">
+      <div className="min-w-0">
+        <p className="font-label text-xs text-muted-foreground">{label}</p>
+        <p className="truncate font-label text-sm font-semibold">{value}</p>
+      </div>
+      {rawValue && (
+        <button
+          type="button"
+          className="nav-icon-btn shrink-0"
+          aria-label={`Copy ${label}`}
+          onClick={() => copy(rawValue, label)}
+        >
+          <Copy className="h-4 w-4" aria-hidden="true" />
+        </button>
+      )}
     </div>
   );
 }

@@ -23,3 +23,7 @@ export function findEvent(events: { name: string; data: Record<string, unknown> 
   assert.ok(event, `expected ${name} event`);
   return event;
 }
+
+export function countBucketBounds(numBuckets: number): number[] {
+  return Array.from({ length: 12 }, (_, i) => (i < numBuckets ? i : 0));
+}

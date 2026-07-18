@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
@@ -31,7 +31,7 @@ export function Hero() {
         <div className="w-full text-center">
           <motion.div custom={0} initial="hidden" animate="visible" variants={fadeUp}>
             <Badge variant="brand" className="mb-6 px-4 py-1.5 font-label text-xs font-bold uppercase tracking-widest">
-              Prediction markets · Live media
+              Prediction markets - Live sports
             </Badge>
           </motion.div>
 
@@ -69,7 +69,7 @@ export function Hero() {
             <Button variant="brand" size="lg" className="h-12 px-10 text-base font-bold" asChild>
               <Link href="/markets">
                 Explore Markets
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             </Button>
           </motion.div>

@@ -4,7 +4,6 @@ import { FaqSection } from "@/features/landing/faq-section";
 import { FeaturesSection } from "@/features/landing/features-section";
 import { Hero } from "@/features/landing/hero";
 import { LandingSectionReveal } from "@/features/landing/landing-section-reveal";
-import { ProductShowcase } from "@/features/landing/product-showcase";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata: Metadata = createPageMetadata(
@@ -16,7 +15,6 @@ export default function LandingPage() {
   return (
     <div className="landing-page">
       <Hero />
-      <ProductShowcase />
       <LandingSectionReveal delay={0.05}>
         <FeaturesSection />
       </LandingSectionReveal>

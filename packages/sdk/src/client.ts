@@ -9,7 +9,8 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import { ConfigAccount, MarketAccount, PositionAccount } from "./accounts";
-import { DEVNET, NetworkConfig, RESOLVE_COMPUTE_UNITS } from "./constants";
+import { countBucketBounds, padBucketBounds } from "./buckets";
+import { DEVNET, MAX_BUCKETS, NetworkConfig, RESOLVE_COMPUTE_UNITS } from "./constants";
 import { ProxaEvent, parseEvents } from "./events";
 import proxaIdl from "./idl/proxa.json";
 import type { Proxa } from "./idl/proxa";
@@ -29,6 +30,8 @@ export interface CreateMarketParams {
   fixtureId: number | BN;
   statKey: number;
   numBuckets: number;
+  /** Lower bounds per bucket; defaults to count-style [0,1,2,...,n-1]. */
+  bucketBounds?: number[];
   betsCloseTs: number | BN;
   resolveAfterTs: number | BN;
   resolveDeadlineTs: number | BN;
@@ -92,8 +95,22 @@ export class ProxaClient {
   }
 
   async fetchAllMarkets(): Promise<MarketRecord[]> {
-    const rows = await this.program.account.market.all();
-    return rows.map((row) => ({ address: row.publicKey, account: row.account as unknown as MarketAccount }));
+    const rows = await this.connection.getProgramAccounts(this.programId, {
+      filters: [{ dataSize: this.program.account.market.size }],
+    });
+
+    const markets: MarketRecord[] = [];
+    for (const row of rows) {
+      try {
+        markets.push({
+          address: row.pubkey,
+          account: this.program.coder.accounts.decode("market", row.account.data) as unknown as MarketAccount,
+        });
+      } catch {
+        // Local/devnet may contain accounts from an older Market layout. Skip them so new markets still list.
+      }
+    }
+    return markets;
   }
 
   async fetchMarketsByFixture(fixtureId: number | BN): Promise<MarketRecord[]> {
@@ -160,10 +177,15 @@ export class ProxaClient {
     tokenProgram: PublicKey;
     args: CreateMarketParams;
   }): Promise<TransactionInstruction> {
+    const bounds = padBucketBounds(params.args.bucketBounds ?? countBucketBounds(params.args.numBuckets));
+    if (bounds.length !== MAX_BUCKETS) {
+      throw new Error(`bucketBounds must pad to ${MAX_BUCKETS}`);
+    }
     const args = {
       fixtureId: new BN(params.args.fixtureId.toString()),
       statKey: params.args.statKey,
       numBuckets: params.args.numBuckets,
+      bucketBounds: bounds,
       betsCloseTs: new BN(params.args.betsCloseTs.toString()),
       resolveAfterTs: new BN(params.args.resolveAfterTs.toString()),
       resolveDeadlineTs: new BN(params.args.resolveDeadlineTs.toString()),
@@ -182,7 +204,23 @@ export class ProxaClient {
       .instruction();
   }
 
-  placeBetIx(params: {
+  updateStakeMintIx(params: {
+    authority: PublicKey;
+    stakeMint: PublicKey;
+    treasury: PublicKey;
+  }): Promise<TransactionInstruction> {
+    return (this.program.methods as any)
+      .updateStakeMint()
+      .accountsPartial({
+        authority: params.authority,
+        config: this.configPda(),
+        stakeMint: params.stakeMint,
+        treasury: params.treasury,
+      })
+      .instruction();
+  }
+
+  async placeBetIx(params: {
     bettor: PublicKey;
     marketId: MarketId;
     bucket: number;
@@ -191,14 +229,49 @@ export class ProxaClient {
     stakeMint: PublicKey;
     tokenProgram: PublicKey;
   }): Promise<TransactionInstruction> {
-    return this.program.methods
-      .placeBet(params.bucket, new BN(params.amount.toString()))
+    return (this.program.methods as any)
+      .placeBet(params.bucket, new BN(params.amount.toString()), new BN(0))
       .accountsPartial({
         bettor: params.bettor,
+        config: this.configPda(),
         market: this.marketPda(params.marketId),
         vault: this.vaultPda(params.marketId),
         position: this.positionPda(params.marketId, params.bettor, params.bucket),
         bettorTokenAccount: params.bettorTokenAccount,
+        stakeMint: params.stakeMint,
+        tokenProgram: params.tokenProgram,
+        systemProgram: SystemProgram.programId,
+      })
+      .instruction();
+  }
+
+  async sponsoredPlaceBetIx(params: {
+    payer: PublicKey;
+    bettor: PublicKey;
+    marketId: MarketId;
+    bucket: number;
+    amount: number | BN;
+    relayerFee: number | BN;
+    bettorTokenAccount: PublicKey;
+    treasury: PublicKey;
+    stakeMint: PublicKey;
+    tokenProgram: PublicKey;
+  }): Promise<TransactionInstruction> {
+    return (this.program.methods as any)
+      .sponsoredPlaceBet(
+        params.bucket,
+        new BN(params.amount.toString()),
+        new BN(params.relayerFee.toString()),
+      )
+      .accountsPartial({
+        payer: params.payer,
+        bettor: params.bettor,
+        config: this.configPda(),
+        market: this.marketPda(params.marketId),
+        vault: this.vaultPda(params.marketId),
+        position: this.positionPda(params.marketId, params.bettor, params.bucket),
+        bettorTokenAccount: params.bettorTokenAccount,
+        treasury: params.treasury,
         stakeMint: params.stakeMint,
         tokenProgram: params.tokenProgram,
         systemProgram: SystemProgram.programId,

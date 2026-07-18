@@ -71,3 +71,4 @@ export function bucketPriceCents(market: MarketAccount, bucket: number): number 
   const pct = bucketChancePct(market, bucket);
   return Math.max(1, Math.min(99, Math.round(pct)));
 }
+
