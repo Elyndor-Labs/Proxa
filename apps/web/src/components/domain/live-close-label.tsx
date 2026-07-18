@@ -19,9 +19,6 @@ export function LiveCloseLabel({
   variant = "tag",
   compact,
 }: LiveCloseLabelProps) {
-  const label = useTimeRemaining(targetMs);
-  const isClosed = label === "Closed";
-
   if (variant === "segmented") {
     return (
       <SegmentedCountdown
@@ -31,6 +28,13 @@ export function LiveCloseLabel({
       />
     );
   }
+
+  return <LiveCloseTag targetMs={targetMs} className={className} />;
+}
+
+function LiveCloseTag({ targetMs, className }: { targetMs: number; className?: string }) {
+  const label = useTimeRemaining(targetMs);
+  const isClosed = label === "Closed";
 
   return (
     <span className={cn("countdown-tag", isClosed && "countdown-tag--closed", className)}>

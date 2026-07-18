@@ -45,18 +45,12 @@ export function SegmentedCountdown({ targetMs, className, compact }: SegmentedCo
     );
   }
 
-  const groups = compact
-    ? [
-        ...(parts.days > 0 ? [{ value: pad2(parts.days), label: "d" }] : []),
-        { value: pad2(parts.hours), label: "h" },
-        { value: pad2(parts.minutes), label: "m" },
-      ]
-    : [
-        ...(parts.days > 0 ? [{ value: pad2(parts.days), label: "d" }] : []),
-        { value: pad2(parts.hours), label: "h" },
-        { value: pad2(parts.minutes), label: "m" },
-        { value: pad2(parts.seconds), label: "s" },
-      ];
+  const groups = [
+    ...(parts.days > 0 ? [{ value: pad2(parts.days), label: "d" }] : []),
+    { value: pad2(parts.hours), label: "h" },
+    { value: pad2(parts.minutes), label: "m" },
+    ...(!compact ? [{ value: pad2(parts.seconds), label: "s" }] : []),
+  ];
 
   return (
     <div className={cn("countdown-segments", compact && "countdown-segments--compact", className)} role="timer">

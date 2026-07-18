@@ -2,7 +2,7 @@
 
 import { Check, Copy } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface CopyButtonProps {
@@ -15,12 +15,27 @@ interface CopyButtonProps {
 /** Copy-to-clipboard with icon morph to checkmark (~1.5s). */
 export function CopyButton({ text, emphasized, className, label = "Copy" }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
+  const resetTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (resetTimeoutRef.current !== null) {
+        window.clearTimeout(resetTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleCopy = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
-      window.setTimeout(() => setCopied(false), 1500);
+      if (resetTimeoutRef.current !== null) {
+        window.clearTimeout(resetTimeoutRef.current);
+      }
+      resetTimeoutRef.current = window.setTimeout(() => {
+        setCopied(false);
+        resetTimeoutRef.current = null;
+      }, 1500);
     } catch {
       /* clipboard may be unavailable */
     }

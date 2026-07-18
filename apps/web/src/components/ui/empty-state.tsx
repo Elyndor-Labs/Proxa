@@ -3,7 +3,7 @@
 import type { LucideIcon } from "lucide-react";
 import { CircleDollarSign } from "lucide-react";
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useMounted } from "@/hooks/use-mounted";
 import { emptyStateIcon } from "@/lib/motion/transitions";
 import { cn } from "@/lib/utils";
 
@@ -28,12 +28,8 @@ export function EmptyState({
   compact,
   className,
 }: EmptyStateProps) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useMounted();
   const IllustrationIcon = illustration === "payout" ? CircleDollarSign : Icon;
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   return (
     <div className={cn("empty-state", compact && "empty-state--compact", className)}>

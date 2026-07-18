@@ -46,7 +46,7 @@ export function synthesizeActivityFeed(
   const source = open.length ? open : markets;
   if (!source.length) return [];
 
-  return Array.from({ length: Math.min(count, source.length * 2) }, (_, i) => {
+  const items = Array.from({ length: Math.min(count, source.length * 2) }, (_, i) => {
     const { record, view } = source[i % source.length]!;
     const seed = Number(view.id) * 31 + i * 17;
     const bucket = seed % view.numBuckets;
@@ -68,9 +68,19 @@ export function synthesizeActivityFeed(
       ago: formatAgo(minutesAgo),
       minutesAgo,
     };
-  })
-    .sort((a, b) => a.minutesAgo - b.minutesAgo)
-    .map(({ minutesAgo: _minutesAgo, ...item }) => item);
+  }).sort((a, b) => a.minutesAgo - b.minutesAgo);
+
+  return items.map((item) => ({
+    id: item.id,
+    trader: item.trader,
+    action: item.action,
+    side: item.side,
+    amount: item.amount,
+    marketTitle: item.marketTitle,
+    marketId: item.marketId,
+    outcome: item.outcome,
+    ago: item.ago,
+  }));
 }
 
 export interface LeaderboardEntry {

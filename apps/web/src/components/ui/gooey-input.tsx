@@ -125,20 +125,14 @@ export function GooeyInput({
         animate={isExpanded ? "expanded" : "collapsed"}
         transition={transition}
       >
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={handleExpand}
-          aria-label={isExpanded ? undefined : "Search markets"}
-          aria-expanded={isExpanded}
-          className={cn(
-            "nav-search-pill flex h-10 w-full cursor-pointer items-center gap-2 px-4 text-sm font-semibold outline-none ring-0 ring-offset-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50 [-webkit-tap-highlight-color:transparent]",
-            classNames?.trigger,
-          )}
-        >
-          <Search className="h-4 w-4 shrink-0" aria-hidden />
-          {!isExpanded && <span>Search</span>}
-          {isExpanded && (
+        {isExpanded ? (
+          <div
+            className={cn(
+              "nav-search-pill flex h-10 w-full items-center gap-2 px-4 text-sm font-semibold outline-none ring-0 ring-offset-0 [-webkit-tap-highlight-color:transparent]",
+              classNames?.trigger,
+            )}
+          >
+            <Search className="h-4 w-4 shrink-0" aria-hidden />
             <input
               ref={inputRef}
               type="search"
@@ -150,13 +144,29 @@ export function GooeyInput({
               onKeyDown={handleKeyDown}
               disabled={disabled}
               placeholder={placeholder}
+              aria-label="Search markets"
               className={cn(
                 "h-full min-w-0 flex-1 appearance-none border-0 bg-transparent text-sm font-semibold outline-none ring-0 ring-offset-0 placeholder:opacity-100 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden",
                 classNames?.input,
               )}
             />
-          )}
-        </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={handleExpand}
+            aria-label="Search markets"
+            aria-expanded={false}
+            className={cn(
+              "nav-search-pill flex h-10 w-full cursor-pointer items-center gap-2 px-4 text-sm font-semibold outline-none ring-0 ring-offset-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50 [-webkit-tap-highlight-color:transparent]",
+              classNames?.trigger,
+            )}
+          >
+            <Search className="h-4 w-4 shrink-0" aria-hidden />
+            <span>Search</span>
+          </button>
+        )}
       </motion.div>
     </div>
   );

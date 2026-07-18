@@ -28,15 +28,6 @@ body {
   outline-offset: 2px;
 }
 
-.nav-search-pill:focus,
-.nav-search-pill:focus-visible,
-.nav-search-pill:focus-within,
-.nav-search-pill *:focus,
-.nav-search-pill *:focus-visible {
-  outline: none !important;
-  outline-offset: 0 !important;
-}
-
 input,
 select,
 textarea {

@@ -206,6 +206,12 @@
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
+.nav-search-pill *:focus,
+.nav-search-pill *:focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
+}
+
 .nav-search-pill input {
   color: var(--background);
   font-family: inherit;

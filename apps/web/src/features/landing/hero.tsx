@@ -7,7 +7,6 @@ import { CanvasText } from "@/components/ui/canvas-text";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ActivityTicker } from "@/features/activity/activity-ticker";
-// import { MarketMarquee } from "@/features/landing/market-marquee";
 import { siteConfig } from "@/config/site";
 
 const fadeUp = {
@@ -22,9 +21,6 @@ const fadeUp = {
 export function Hero() {
   return (
     <section className="landing-hero relative overflow-hidden">
-      {/* Card strip marquee — replaced by activity ticker for now
-      <MarketMarquee />
-      */}
       <ActivityTicker />
 
       <div className="landing-shell landing-hero-stage relative z-10 px-[var(--container-padding)]">

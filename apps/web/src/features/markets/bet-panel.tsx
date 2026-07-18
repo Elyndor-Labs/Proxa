@@ -54,24 +54,27 @@ export function BetPanel({
   const noLabel = view.bucketLabels[1] ?? "Outcome 2";
   const stakeTokenLabel = formatStakeTokenLabel((config?.stakeMint ?? account.stakeMint).toBase58());
   const amountNumber = Number(amount);
-  const hasInvalidAmount = !amount || Number.isNaN(amountNumber) || amountNumber <= 0;
-  const insufficientBalance = Boolean(cash && amountNumber > cash.amount);
+  const isValidStake =
+    Number.isFinite(amountNumber) && amountNumber > 0 && amountNumber <= MAX_STAKE;
+  const insufficientBalance = Boolean(isValidStake && cash && amountNumber > cash.amount);
   const maxSpendable = Math.max(0, Math.min(MAX_STAKE, cash?.amount ?? MAX_STAKE));
+  const actionsDisabled = disabled || !isValidStake || insufficientBalance;
 
-  const preview =
-    amount && !Number.isNaN(Number(amount))
-      ? previewBet(account, bucket, toBaseUnits(amount, STAKE_DECIMALS))
-      : null;
+  const preview = isValidStake
+    ? previewBet(account, bucket, toBaseUnits(amount, STAKE_DECIMALS))
+    : null;
 
   const applyPreset = (fraction: number) => {
     setAmount((maxSpendable * fraction).toFixed(2));
   };
 
   const handlePlaceBet = () => {
+    if (!isValidStake || insufficientBalance) return;
     placeBet.mutate({ marketId, bucket, amount }, { onSuccess: () => setAmount("") });
   };
 
   const handleAddToSlip = () => {
+    if (!isValidStake) return;
     addLeg({
       marketId,
       title: view.title,
@@ -212,7 +215,7 @@ export function BetPanel({
             <button
               type="button"
               className="trade-cta trade-cta--brand"
-              disabled={disabled || hasInvalidAmount || insufficientBalance}
+              disabled={actionsDisabled}
               onClick={handlePlaceBet}
             >
               {placeBet.isPending ? "Confirming…" : "Place trade"}
@@ -221,7 +224,7 @@ export function BetPanel({
               type="button"
               className="trade-cta"
               style={{ background: "rgba(255,255,255,0.08)", color: "var(--foreground)", border: "1px solid var(--surface-border)" }}
-              disabled={!amount || Number(amount) <= 0}
+              disabled={actionsDisabled}
               onClick={handleAddToSlip}
             >
               Add to slip

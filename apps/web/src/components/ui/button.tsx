@@ -4,17 +4,17 @@ import { type ButtonHTMLAttributes, forwardRef } from "react";
 import { cn } from "@/lib/utils";
 
 export const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-[var(--radius-control)] font-label font-bold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100",
+  "inline-flex shrink-0 items-center justify-center gap-2 rounded-control font-label font-bold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100",
   {
     variants: {
       variant: {
         default:
           "bg-foreground text-background shadow-sm hover:opacity-90",
         secondary:
-          "border border-[var(--surface-border)] bg-transparent text-foreground hover:border-brand/30 hover:bg-white/[0.03]",
+          "border border-(--surface-border) bg-transparent text-foreground hover:border-brand/30 hover:bg-white/[0.03]",
         inverted: "bg-accent text-accent-foreground hover:bg-accent/80",
         outline:
-          "border border-[var(--surface-border)] bg-transparent text-text-secondary hover:border-brand/35 hover:bg-white/[0.03] hover:text-foreground",
+          "border border-(--surface-border) bg-transparent text-text-secondary hover:border-brand/35 hover:bg-white/[0.03] hover:text-foreground",
         brand:
           "border border-brand/25 bg-[#36b86a] text-brand-foreground shadow-none hover:bg-brand hover:border-brand/35 hover:shadow-none",
         destructive: "bg-destructive text-white hover:bg-destructive/90",

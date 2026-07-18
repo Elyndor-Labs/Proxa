@@ -216,8 +216,11 @@ function VoteBar({
   value: string;
   negative?: boolean;
 }) {
+  const parsed = value === "—" ? Number.NaN : Number.parseFloat(value);
+  const width = Number.isFinite(parsed) ? `${Math.min(100, Math.max(0, parsed))}%` : "0%";
+
   return (
-    <div className="rounded-[var(--radius-control)] border border-[var(--surface-border)] p-3">
+    <div className="rounded-control border border-(--surface-border) p-3">
       <p className="type-caption">{label}</p>
       <p
         className={cn(
@@ -233,7 +236,7 @@ function VoteBar({
             "probability-bar__fill",
             negative ? "probability-bar__fill--negative" : "probability-bar__fill--positive",
           )}
-          style={{ width: value === "—" ? "0%" : "0%" }}
+          style={{ width }}
         />
       </div>
     </div>
