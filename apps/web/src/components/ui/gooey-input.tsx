@@ -1,71 +1,9 @@
 "use client";
 
-import {
-  useState,
-  useRef,
-  useEffect,
-  useId,
-  useMemo,
-  useCallback,
-  type ChangeEvent,
-} from "react";
+import { useState, useRef, useEffect, useCallback, type ChangeEvent } from "react";
+import { Search } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
-
-function GooeyFilter({
-  filterId,
-  blur,
-}: {
-  filterId: string;
-  blur: number;
-}) {
-  return (
-    <svg className="absolute hidden h-0 w-0" aria-hidden>
-      <defs>
-        <filter id={filterId} x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation={blur} result="blur" />
-          <feColorMatrix
-            in="blur"
-            type="matrix"
-            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -10"
-            result="goo"
-          />
-          <feComposite in="SourceGraphic" in2="goo" operator="atop" />
-        </filter>
-      </defs>
-    </svg>
-  );
-}
-
-function SearchIcon({ layoutId }: { layoutId: string }) {
-  return (
-    <motion.svg
-      layoutId={layoutId}
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      className="size-4 shrink-0"
-    >
-      <circle cx="11" cy="11" r="8" />
-      <path d="m21 21-4.3-4.3" />
-    </motion.svg>
-  );
-}
-
-const transition = {
-  duration: 0.4,
-  type: "spring" as const,
-  bounce: 0.25,
-};
-
-const iconBubbleVariants = {
-  collapsed: { scale: 0, opacity: 0 },
-  expanded: { scale: 1, opacity: 1 },
-};
 
 export interface GooeyInputClassNames {
   root?: string;
@@ -81,14 +19,8 @@ export interface GooeyInputProps {
   placeholder?: string;
   className?: string;
   classNames?: GooeyInputClassNames;
-  /** Collapsed control width in px */
   collapsedWidth?: number;
-  /** Expanded control width in px */
   expandedWidth?: number;
-  /** Horizontal offset when expanded (px), aligns detached bubble */
-  expandedOffset?: number;
-  /** Gaussian blur amount for the gooey SVG filter */
-  gooeyBlur?: number;
   value?: string;
   defaultValue?: string;
   onValueChange?: (value: string) => void;
@@ -97,14 +29,21 @@ export interface GooeyInputProps {
   disabled?: boolean;
 }
 
+const transition = {
+  duration: 0.35,
+  type: "spring" as const,
+  bounce: 0.2,
+};
+
+/**
+ * Header search — same surface as Login (fg fill / bg text), quiet focus, no outer glow.
+ */
 export function GooeyInput({
-  placeholder = "Type to search...",
+  placeholder = "Search markets…",
   className,
   classNames,
-  collapsedWidth = 115,
-  expandedWidth = 200,
-  expandedOffset = 50,
-  gooeyBlur = 5,
+  collapsedWidth = 130,
+  expandedWidth = 260,
   value: valueProp,
   defaultValue = "",
   onValueChange,
@@ -112,12 +51,6 @@ export function GooeyInput({
   onSubmit,
   disabled = false,
 }: GooeyInputProps) {
-  const reactId = useId();
-  const safeId = reactId.replace(/:/g, "");
-  const filterId = `gooey-filter-${safeId}`;
-  const iconLayoutId = `gooey-input-icon-${safeId}`;
-  const inputLayoutId = `gooey-input-field-${safeId}`;
-
   const inputRef = useRef<HTMLInputElement>(null);
   const prevExpandedRef = useRef(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -128,9 +61,7 @@ export function GooeyInput({
 
   const setSearchText = useCallback(
     (next: string) => {
-      if (!isControlled) {
-        setUncontrolledValue(next);
-      }
+      if (!isControlled) setUncontrolledValue(next);
       onValueChange?.(next);
     },
     [isControlled, onValueChange],
@@ -153,22 +84,17 @@ export function GooeyInput({
     prevExpandedRef.current = isExpanded;
   }, [isExpanded, setSearchText]);
 
-  const buttonVariants = useMemo(
-    () => ({
-      collapsed: { width: collapsedWidth, marginLeft: 0 },
-      expanded: { width: expandedWidth, marginLeft: expandedOffset },
-    }),
-    [collapsedWidth, expandedWidth, expandedOffset],
-  );
+  const buttonVariants = {
+    collapsed: { width: collapsedWidth },
+    expanded: { width: expandedWidth },
+  };
 
   const handleExpand = useCallback(() => {
     if (!disabled) setExpanded(true);
   }, [disabled, setExpanded]);
 
   const handleChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      setSearchText(e.target.value);
-    },
+    (e: ChangeEvent<HTMLInputElement>) => setSearchText(e.target.value),
     [setSearchText],
   );
 
@@ -182,52 +108,32 @@ export function GooeyInput({
         e.preventDefault();
         onSubmit?.();
       }
+      if (e.key === "Escape") {
+        setExpanded(false);
+        inputRef.current?.blur();
+      }
     },
-    [onSubmit],
+    [onSubmit, setExpanded],
   );
 
-  const surfaceClass =
-    "bg-foreground text-background shadow-sm ring-1 ring-border/60";
-
   return (
-    <div
-      className={cn(
-        "relative flex items-center justify-center",
-        className,
-        classNames?.root,
-      )}
-    >
-      <GooeyFilter filterId={filterId} blur={gooeyBlur} />
-
-      <div
-        className={cn(
-          "relative flex h-10 items-center justify-center",
-          classNames?.filterWrap,
-        )}
-        style={{ filter: `url(#${filterId})` }}
+    <div className={cn("relative flex items-center justify-end", className, classNames?.root)}>
+      <motion.div
+        className={cn("flex h-10 items-center", classNames?.buttonRow)}
+        variants={buttonVariants}
+        initial="collapsed"
+        animate={isExpanded ? "expanded" : "collapsed"}
+        transition={transition}
       >
-        <motion.div
-          className={cn("flex h-10 items-center justify-center", classNames?.buttonRow)}
-          variants={buttonVariants}
-          initial="collapsed"
-          animate={isExpanded ? "expanded" : "collapsed"}
-          transition={transition}
-        >
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={handleExpand}
+        {isExpanded ? (
+          <div
             className={cn(
-              "flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-full px-4 text-sm font-medium outline-none transition-[color,box-shadow] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50",
-              surfaceClass,
+              "nav-search-pill flex h-10 w-full items-center gap-2 px-4 text-sm font-semibold outline-none ring-0 ring-offset-0 [-webkit-tap-highlight-color:transparent]",
               classNames?.trigger,
             )}
           >
-            {!isExpanded ? (
-              <SearchIcon layoutId={iconLayoutId} />
-            ) : null}
-            <motion.input
-              layoutId={inputLayoutId}
+            <Search className="h-4 w-4 shrink-0" aria-hidden />
+            <input
               ref={inputRef}
               type="search"
               enterKeyHint="search"
@@ -236,40 +142,32 @@ export function GooeyInput({
               onChange={handleChange}
               onBlur={handleBlur}
               onKeyDown={handleKeyDown}
-              disabled={disabled || !isExpanded}
+              disabled={disabled}
               placeholder={placeholder}
+              aria-label="Search markets"
               className={cn(
-                "h-full min-w-0 flex-1 bg-transparent text-sm text-background outline-none",
-                isExpanded
-                  ? "placeholder:text-background/50 dark:placeholder:text-background/45"
-                  : "pointer-events-none placeholder:text-background/80 dark:placeholder:text-background/70",
+                "h-full min-w-0 flex-1 appearance-none border-0 bg-transparent text-sm font-semibold outline-none ring-0 ring-offset-0 placeholder:opacity-100 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden",
                 classNames?.input,
               )}
             />
-          </button>
-        </motion.div>
-
-        <motion.div
-          className={cn(
-            "absolute top-1/2 left-0 flex size-10 -translate-y-1/2 items-center justify-center",
-            classNames?.bubble,
-          )}
-          variants={iconBubbleVariants}
-          initial="collapsed"
-          animate={isExpanded ? "expanded" : "collapsed"}
-          transition={transition}
-        >
-          <div
+          </div>
+        ) : (
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={handleExpand}
+            aria-label="Search markets"
+            aria-expanded={false}
             className={cn(
-              "flex size-10 items-center justify-center rounded-full",
-              surfaceClass,
-              classNames?.bubbleSurface,
+              "nav-search-pill flex h-10 w-full cursor-pointer items-center gap-2 px-4 text-sm font-semibold outline-none ring-0 ring-offset-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50 [-webkit-tap-highlight-color:transparent]",
+              classNames?.trigger,
             )}
           >
-            <SearchIcon layoutId={iconLayoutId} />
-          </div>
-        </motion.div>
-      </div>
+            <Search className="h-4 w-4 shrink-0" aria-hidden />
+            <span>Search</span>
+          </button>
+        )}
+      </motion.div>
     </div>
   );
 }

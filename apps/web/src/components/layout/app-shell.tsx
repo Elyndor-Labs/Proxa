@@ -1,5 +1,6 @@
 "use client";
 
+import { ActivityTicker } from "@/features/activity/activity-ticker";
 import { MarketingFooter } from "@/components/layout/marketing-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { BetSlipDrawer } from "@/features/bet-slip/bet-slip-drawer";
@@ -21,6 +22,7 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className="flex min-h-dvh flex-col">
       <SiteHeader />
+      <ActivityTicker />
       <main
         id="main-content"
         className={cn(

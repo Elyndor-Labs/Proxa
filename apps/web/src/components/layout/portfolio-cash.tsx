@@ -1,5 +1,6 @@
 "use client";
 
+import { BN } from "@coral-xyz/anchor";
 import { useEnrichedPositions } from "@/hooks/use-enriched-positions";
 import { useMounted } from "@/hooks/use-mounted";
 import { useStakeTokenBalance } from "@/hooks/use-token-balance";
@@ -20,10 +21,11 @@ export function PortfolioCash({ className }: PortfolioCashProps) {
 
   if (!mounted || !connected) return null;
 
-  const portfolioValue = positions?.reduce(
-    (sum, { position }) => sum + Number(formatStake(position.account.amount)),
-    0,
-  ) ?? 0;
+  const portfolioTotal = (positions ?? []).reduce(
+    (sum, { position }) => sum.add(position.account.amount),
+    new BN(0),
+  );
+  const portfolioValue = Number(formatStake(portfolioTotal));
 
   return (
     <div

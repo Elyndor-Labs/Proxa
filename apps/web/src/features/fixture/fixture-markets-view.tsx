@@ -12,7 +12,7 @@ import { useFixture } from "@/hooks/use-fixture";
 import { useFixtureMarkets } from "@/hooks/use-fixture-markets";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import type { OddsSnapshot } from "@/lib/api/fixtures";
-import { formatOdds } from "@/lib/format/odds";
+import { getOutcomeQuotes } from "@/lib/format/odds";
 
 interface FixtureMarketsViewProps {
   fixtureId: string;
@@ -165,7 +165,8 @@ export function FixtureMarketsView({ fixtureId }: FixtureMarketsViewProps) {
               <MarketCard
                 key={view.id}
                 view={view}
-                odds={Array.from({ length: view.numBuckets }, (_, i) => formatOdds(record.account, i))}
+                account={record.account}
+                outcomes={getOutcomeQuotes(record.account, view.bucketLabels)}
               />
             ))}
           </div>

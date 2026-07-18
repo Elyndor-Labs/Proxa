@@ -7,8 +7,8 @@ import { LandingSectionReveal } from "@/features/landing/landing-section-reveal"
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata: Metadata = createPageMetadata(
-  "Live Sports Prediction Markets",
-  "Proxa - TXOdds-powered sports markets settled on Solana.",
+  "Trade on live match outcomes.",
+  "Live sports prediction markets powered by TXOdds data and settled on Solana.",
 );
 
 export default function LandingPage() {
@@ -27,4 +27,3 @@ export default function LandingPage() {
     </div>
   );
 }
-

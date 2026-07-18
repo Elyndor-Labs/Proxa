@@ -74,12 +74,11 @@ export function SiteHeader() {
             placeholder="Search markets…"
             collapsedWidth={130}
             expandedWidth={260}
-            expandedOffset={48}
             className="justify-end"
             classNames={{
               trigger:
-                "focus-visible:ring-0 focus-visible:ring-offset-0 ring-1 ring-white/10",
-              input: "focus-visible:outline-none",
+                "focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0",
+              input: "focus:outline-none focus-visible:outline-none",
             }}
           />
         </div>
