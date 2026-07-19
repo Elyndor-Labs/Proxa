@@ -6,7 +6,7 @@ import { motion } from "motion/react";
 import { CanvasText } from "@/components/ui/canvas-text";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MarketMarquee } from "@/features/landing/market-marquee";
+import { ActivityTicker } from "@/features/activity/activity-ticker";
 import { siteConfig } from "@/config/site";
 
 const fadeUp = {
@@ -21,7 +21,7 @@ const fadeUp = {
 export function Hero() {
   return (
     <section className="landing-hero relative overflow-hidden">
-      <MarketMarquee />
+      <ActivityTicker />
 
       <div className="landing-shell landing-hero-stage relative z-10 px-[var(--container-padding)]">
         <div className="w-full text-center">

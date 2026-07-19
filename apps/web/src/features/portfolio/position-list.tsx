@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { BN } from "@coral-xyz/anchor";
 import { ArrowRight } from "lucide-react";
 import { ClaimButton } from "@/components/domain/claim-button";
 import { SettlementBadge } from "@/components/domain/settlement-badge";
@@ -27,12 +28,13 @@ export function PositionList() {
   const claimablePositions = positions.filter(({ claimable }) => claimable.gtn(0));
   const historyPositions = positions.filter(({ view }) => !view.isOpen);
 
+  const tokensStakedBn = positions.reduce(
+    (sum, p) => sum.add(p.position.account.amount),
+    new BN(0),
+  );
   const stats = {
     markets: new Set(positions.map((p) => p.marketId)).size,
-    tokensStaked: positions.reduce(
-      (sum, p) => sum + Number(formatStake(p.position.account.amount)),
-      0,
-    ),
+    tokensStaked: Number(formatStake(tokensStakedBn)),
     trades: positions.length,
   };
 

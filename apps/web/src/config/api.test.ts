@@ -20,12 +20,12 @@ describe("api config", () => {
     delete process.env.NEXT_PUBLIC_API_URL;
     expect(isApiEnabled()).toBe(false);
 
-    process.env.NEXT_PUBLIC_API_URL = "https://proxa-gzk8.onrender.com";
+    process.env.NEXT_PUBLIC_API_URL = "https://proxa-kib6.onrender.com";
     expect(isApiEnabled()).toBe(true);
   });
 
   it("allows on-chain txs when wallet is connected", () => {
-    process.env.NEXT_PUBLIC_API_URL = "https://proxa-gzk8.onrender.com";
+    process.env.NEXT_PUBLIC_API_URL = "https://proxa-kib6.onrender.com";
     expect(canSubmitOnChainTx(true)).toBe(true);
     expect(canSubmitOnChainTx(false)).toBe(false);
 

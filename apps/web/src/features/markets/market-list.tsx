@@ -11,7 +11,7 @@ import { useFixtures } from "@/hooks/use-fixtures";
 import { useMarkets } from "@/hooks/use-markets";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import type { FixtureDetail } from "@/lib/api/fixtures";
-import { formatOdds } from "@/lib/format/odds";
+import { getOutcomeQuotes } from "@/lib/format/odds";
 import { filterMarkets, type MarketStatusFilter } from "@/lib/proxa/filters";
 import { cn } from "@/lib/utils";
 
@@ -127,9 +127,8 @@ function MarketFilters({ initialQuery, data }: MarketFiltersProps) {
         <div className="mb-6">
           <MarketCard
             view={featured.view}
-            odds={Array.from({ length: featured.view.numBuckets }, (_, i) =>
-              formatOdds(featured.record.account, i),
-            )}
+            account={featured.record.account}
+            outcomes={getOutcomeQuotes(featured.record.account, featured.view.bucketLabels)}
             featured
           />
         </div>
@@ -148,7 +147,8 @@ function MarketFilters({ initialQuery, data }: MarketFiltersProps) {
             <div key={view.id} className={cn(STAGGER[i % STAGGER.length])}>
               <MarketCard
                 view={view}
-                odds={Array.from({ length: view.numBuckets }, (_, j) => formatOdds(record.account, j))}
+                account={record.account}
+                outcomes={getOutcomeQuotes(record.account, view.bucketLabels)}
               />
             </div>
           ))}

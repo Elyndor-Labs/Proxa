@@ -1,11 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import {
+  Coins,
+  Globe,
+  Landmark,
+  Percent,
+  ScrollText,
+  Shield,
+  Vote,
+} from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { ClusterSwitcher } from "@/components/domain/cluster-switcher";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { FilterTabs } from "@/components/layout/filter-tabs";
 import { useCluster } from "@/components/providers/cluster-provider";
 import { useConfig } from "@/hooks/use-protocol-stats";
 import { truncateAddress } from "@/lib/format/address";
@@ -32,6 +43,20 @@ const UPCOMING_PROPOSALS = [
 
 type Tab = "parameters" | "proposals";
 
+const GOV_TABS = [
+  { label: "Parameters", value: "parameters" },
+  { label: "Proposals", value: "proposals" },
+];
+
+const PARAM_ICONS: Record<string, typeof Globe> = {
+  Network: Globe,
+  "Protocol fee": Percent,
+  "Markets created": ScrollText,
+  Authority: Shield,
+  "Stake mint": Coins,
+  Treasury: Landmark,
+};
+
 /** Protocol parameters from on-chain config with governance roadmap. */
 export function GovernanceView() {
   const [tab, setTab] = useState<Tab>("parameters");
@@ -40,38 +65,31 @@ export function GovernanceView() {
 
   return (
     <>
+      <Breadcrumbs
+        className="mb-4 mt-2"
+        items={[{ label: "Governance" }]}
+      />
       <PageHeader
         title="Governance"
         description="Live protocol parameters and upcoming on-chain governance."
         actions={<ClusterSwitcher />}
+        icon={Shield}
+        className="pt-2"
       />
 
-      <div className="mb-6 flex gap-2" role="tablist" aria-label="Governance sections">
-        {(
-          [
-            { id: "parameters" as const, label: "Parameters" },
-            { id: "proposals" as const, label: "Proposals" },
-          ] as const
-        ).map((item) => (
-          <Button
-            key={item.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === item.id}
-            variant={tab === item.id ? "brand" : "outline"}
-            size="sm"
-            onClick={() => setTab(item.id)}
-          >
-            {item.label}
-          </Button>
-        ))}
-      </div>
+      <FilterTabs
+        tabs={GOV_TABS}
+        value={tab}
+        onChange={(v) => setTab(v as Tab)}
+        aria-label="Governance sections"
+        className="mb-6"
+      />
 
       {tab === "parameters" ? (
         <>
-          <Card className="mb-6 border-brand/20 bg-brand/5">
+          <Card className="mb-6 rounded-[var(--radius-card)] border-[var(--surface-border)] shadow-none">
             <CardHeader>
-              <CardTitle className="text-base">Authority-controlled parameters</CardTitle>
+              <CardTitle className="type-subheading text-base">Authority-controlled parameters</CardTitle>
               <CardDescription>
                 On-chain governance voting is in development. Until deployment, these parameters are
                 updated by the protocol authority multisig. Switch network to inspect live config.
@@ -113,9 +131,9 @@ export function GovernanceView() {
         </>
       ) : (
         <>
-          <Card className="mb-6">
+          <Card className="mb-6 rounded-[var(--radius-card)] border-[var(--surface-border)] shadow-none">
             <CardHeader>
-              <CardTitle className="text-base">Proposal preview</CardTitle>
+              <CardTitle className="type-subheading text-base">Proposal preview</CardTitle>
               <CardDescription>
                 Example proposals below illustrate the upcoming governance UI. Voting is not yet
                 active on-chain.
@@ -125,24 +143,28 @@ export function GovernanceView() {
 
           <div className="space-y-4">
             {UPCOMING_PROPOSALS.map((proposal) => (
-              <Card key={proposal.id} className="opacity-90">
+              <Card
+                key={proposal.id}
+                className="rounded-[var(--radius-card)] border-[var(--surface-border)] opacity-90 shadow-none"
+              >
                 <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
                   <div>
                     <div className="mb-2 flex flex-wrap gap-2">
                       <Badge variant="muted">{proposal.status}</Badge>
                       <Badge variant="outline">{proposal.id}</Badge>
                     </div>
-                    <CardTitle className="text-base">{proposal.title}</CardTitle>
+                    <CardTitle className="text-base font-semibold">{proposal.title}</CardTitle>
                     <CardDescription className="mt-1">Ends: {proposal.ends}</CardDescription>
                   </div>
                   <Button variant="outline" size="sm" disabled>
+                    <Vote className="h-3.5 w-3.5" aria-hidden />
                     Vote
                   </Button>
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <VoteBar label="For" value={proposal.votesFor} />
-                    <VoteBar label="Against" value={proposal.votesAgainst} />
+                    <VoteBar label="Against" value={proposal.votesAgainst} negative />
                   </div>
                 </CardContent>
               </Card>
@@ -165,28 +187,57 @@ function ParamCard({
   loading: boolean;
   governable?: boolean;
 }) {
+  const Icon = PARAM_ICONS[label] ?? ScrollText;
+
   return (
-    <Card>
+    <Card className="rounded-[var(--radius-card)] border-[var(--surface-border)] shadow-none">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="font-label text-xs font-medium text-muted-foreground">{label}</CardTitle>
-          {governable && <Badge variant="muted">Governable</Badge>}
+          <CardTitle className="inline-flex items-center gap-1.5 font-label text-xs font-medium text-text-secondary">
+            <Icon className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
+            {label}
+          </CardTitle>
+          {governable && <Badge variant="outline">Governable</Badge>}
         </div>
       </CardHeader>
       <CardContent>
-        <p className="font-mono text-sm">{loading ? "…" : value}</p>
+        <p className="font-mono text-sm tabular-nums">{loading ? "…" : value}</p>
       </CardContent>
     </Card>
   );
 }
 
-function VoteBar({ label, value }: { label: string; value: string }) {
+function VoteBar({
+  label,
+  value,
+  negative,
+}: {
+  label: string;
+  value: string;
+  negative?: boolean;
+}) {
+  const parsed = value === "—" ? Number.NaN : Number.parseFloat(value);
+  const width = Number.isFinite(parsed) ? `${Math.min(100, Math.max(0, parsed))}%` : "0%";
+
   return (
-    <div className="rounded-lg border border-border p-3">
-      <p className="font-label text-xs text-muted-foreground">{label}</p>
-      <p className={cn("mt-1 font-mono text-sm", label === "For" && "text-brand")}>{value}</p>
-      <div className="mt-2 h-1.5 rounded-full bg-muted">
-        <div className="h-full w-0 rounded-full bg-brand" />
+    <div className="rounded-control border border-(--surface-border) p-3">
+      <p className="type-caption">{label}</p>
+      <p
+        className={cn(
+          "mt-1 font-mono text-sm tabular-nums",
+          negative ? "text-negative" : "text-positive",
+        )}
+      >
+        {value}
+      </p>
+      <div className="probability-bar mt-2">
+        <div
+          className={cn(
+            "probability-bar__fill",
+            negative ? "probability-bar__fill--negative" : "probability-bar__fill--positive",
+          )}
+          style={{ width }}
+        />
       </div>
     </div>
   );

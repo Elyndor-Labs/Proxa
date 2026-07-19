@@ -14,8 +14,7 @@ export const primaryNav: NavItem[] = [
 
 export const footerNav = {
   social: [
-    { label: "Discord", href: "https://discord.gg/" },
-    { label: "Twitter", href: "https://twitter.com/" },
+    { label: "Twitter" },
   ],
   legal: [
     { label: "Terms of Service", href: "/terms" },

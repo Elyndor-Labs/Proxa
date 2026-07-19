@@ -16,6 +16,8 @@ export function useNotifications() {
     enabled: Boolean(owner) && isApiEnabled(),
     queryFn: () => fetchNotifications(owner!),
     refetchInterval: 30_000,
+    // Notifications are best-effort; DB outages should not spam retries.
+    retry: 1,
   });
 }
 

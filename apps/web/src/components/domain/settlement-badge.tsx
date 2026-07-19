@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import type { MarketView } from "@/lib/proxa/market-view";
 import { statusBadgeVariant } from "@/lib/proxa/market-view";
+import { cn } from "@/lib/utils";
 
 interface SettlementBadgeProps {
   status: MarketView["status"];
@@ -16,7 +17,10 @@ const LABELS: Record<MarketView["status"], string> = {
 /** Displays market settlement status with semantic styling. */
 export function SettlementBadge({ status, className }: SettlementBadgeProps) {
   return (
-    <Badge variant={statusBadgeVariant(status)} className={className}>
+    <Badge
+      variant={statusBadgeVariant(status)}
+      className={cn(status === "open" && "badge-pulse", className)}
+    >
       {LABELS[status]}
     </Badge>
   );
